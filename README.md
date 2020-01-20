@@ -59,14 +59,14 @@ output = json
 ```
 
 ## Mfa token
-Logsmith can fetch mfa tokens from your yubikey if you have a suitable cli tools installed.
+Logsmith can fetch mfa tokens from your yubikey if you have a suitable cli tool installed.
 
 For example:
 - ykman (mac)
 - yubioath (linux)
 
 On the logsmith config dialog, you can specify the appropriate command.
-Please keep in mind that you have to provide the whole path/command, for example `/usr/local/bin/ykman oath code` .
+Please keep in mind that you might have to provide the whole path/command, for example `/usr/local/bin/ykman oath code` .
 
 ## Support files
 Inside of the applications config dialog you have the option to let logsmith write files, which you can then use in other scripts.
@@ -95,7 +95,7 @@ For mac, just drop the `dist/logsmith.app` in your application directory.
 ## Icons
 ![](./app/assets/app_icon.png)
 
-This provided by [game-icons.net](https://game-icons.net/) and was made by [Lorc](http://lorcblog.blogspot.com/) under [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
+This icon was provided by [game-icons.net](https://game-icons.net/) and was made by [Lorc](http://lorcblog.blogspot.com/) under [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
 
 The icons in `app/assets` were provided by [material.io](https://material.io/resources/icons/?style=baseline) and are licenced under [Apache license version 2.0.](https://www.apache.org/licenses/LICENSE-2.0.html) 
 
@@ -108,7 +108,7 @@ For those of your interested, providing documentation to other parties is equall
 Please document all notable changes to this project in the provided changelog. Note that this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## License
-Distributed under the Apache License 2.0
+Distributed under Apache License 2.0
 
 ## Known issues
 - some desktop notifications are not shown
