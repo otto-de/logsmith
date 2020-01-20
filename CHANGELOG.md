@@ -7,6 +7,10 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 
 ## Unreleased
 
+### Added
+- config dialog now has a button to test the mfa command
+
+
 ## 3.0.0 - 2020-01-16
 
 ### Changed

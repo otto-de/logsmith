@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QPlainTextEdit, QPushButton, \
 from app import __version__
 from app.core import files
 from app.core.config import Config
+from app.yubico import mfa
 
 
 class ConfigDialog(QDialog):
@@ -28,9 +29,9 @@ class ConfigDialog(QDialog):
         self.text_box.setStyleSheet('color: rgb(0, 0, 0);')
         self.text_box.setTabStopDistance(16)
 
-        self.mfa_label = QLabel("Shell command to fetch mfa token:", self)
-        self.mfa_input = QLineEdit(self)
-        self.mfa_input.setStyleSheet("color: rgb(0, 0, 0);")
+        self.mfa_command_label = QLabel("Shell command to fetch mfa token:", self)
+        self.mfa_command_input = QLineEdit(self)
+        self.mfa_command_input.setStyleSheet("color: rgb(0, 0, 0);")
 
         self.option_active_group_file = QCheckBox('Write active group file', self)
         self.option_team_file = QCheckBox('Write team file', self)
@@ -40,22 +41,26 @@ class ConfigDialog(QDialog):
         self.ok_button.clicked.connect(self.ok)
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.cancel)
+        self.check_command_button = QPushButton("test command")
+        self.check_command_button.clicked.connect(self.check_command)
 
-        self.error_text = QLabel('', self)
-        self.error_text.setGeometry(QRect(0, 0, self.width(), 30))
-        self.error_text.setStyleSheet('color: rgb(255, 0, 0);')
+        self.info_text = QLabel('', self)
+        self.info_text.setGeometry(QRect(0, 0, self.width(), 30))
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.ok_button)
         hbox.addWidget(self.cancel_button)
-        hbox.addWidget(self.error_text)
+        hbox.addWidget(self.info_text)
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(10, 0, 0, 0)
         vbox.addWidget(self.text_box)
-        vbox.addWidget(self.mfa_label)
-        vbox.addWidget(self.mfa_input)
+
+        vbox.addWidget(self.mfa_command_label)
+        vbox.addWidget(self.mfa_command_input)
+        vbox.addWidget(self.check_command_button, alignment=Qt.AlignRight)
+
         vbox.addWidget(self.option_active_group_file)
         vbox.addWidget(self.option_team_file)
         vbox.addWidget(self.option_account_file)
@@ -77,7 +82,7 @@ class ConfigDialog(QDialog):
             config.option_active_group_file = self.option_active_group_file.isChecked()
             config.option_team_file = self.option_team_file.isChecked()
             config.option_account_file = self.option_account_file.isChecked()
-            config.mfa_shell_command = self.mfa_input.text()
+            config.mfa_shell_command = self.mfa_command_input.text()
             self.parent.edit_config(config)
             self.hide()
         else:
@@ -85,6 +90,13 @@ class ConfigDialog(QDialog):
 
     def cancel(self):
         self.hide()
+
+    def check_command(self):
+        token = mfa.fetch_mfa_token_from_shell(self.mfa_command_input.text())
+        if token:
+            self.set_success_text('command successful')
+        else:
+            self.set_error_text('command failed')
 
     def closeEvent(self, event):
         event.ignore()
@@ -106,8 +118,14 @@ class ConfigDialog(QDialog):
         return config
 
     def set_error_text(self, message):
-        self.error_text.setText(message)
-        self.error_text.repaint()
+        self.info_text.setText(message)
+        self.info_text.setStyleSheet('color: rgb(255, 0, 0);')
+        self.info_text.repaint()
+
+    def set_success_text(self, message):
+        self.info_text.setText(message)
+        self.info_text.setStyleSheet('color: rgb(0, 255, 0);')
+        self.info_text.repaint()
 
     def show_dialog(self, config: Config):
         self.text_box.setPlainText(files._dump_yaml(config.to_dict()))
@@ -116,7 +134,7 @@ class ConfigDialog(QDialog):
         self.option_active_group_file.setChecked(config.option_active_group_file)
         self.option_team_file.setChecked(config.option_team_file)
         self.option_account_file.setChecked(config.option_account_file)
-        self.mfa_input.setText(config.mfa_shell_command)
+        self.mfa_command_input.setText(config.mfa_shell_command)
         self.show()
 
 
