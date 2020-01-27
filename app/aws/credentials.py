@@ -59,7 +59,7 @@ def has_access_key() -> Result:
     credentials_file = _load_credentials_file()
 
     if not credentials_file.has_section('access-key'):
-        error_text = 'could not find access_key in .aws/credentials'
+        error_text = 'could not find profile \'access-key\' in .aws/credentials'
         result.error(error_text)
         logger.warning(error_text)
         return result
