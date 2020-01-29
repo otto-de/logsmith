@@ -57,7 +57,7 @@ class TestCredentials(TestCase):
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
-        self.assertEqual('could not find access_key in .aws/credentials', result.error_message)
+        self.assertEqual('could not find profile \'access-key\' in .aws/credentials', result.error_message)
 
     @mock.patch('app.aws.credentials._get_credentials_path')
     def test_check_session__no_session(self, mock_path):
