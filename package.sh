@@ -38,7 +38,7 @@ fi
 dist_path=./dist/$(uname)
 ./venv/bin/pyinstaller \
     --onefile \
-    --distpath ./dist/${dist_path} \
+    --distpath ${dist_path} \
     ./logsmith.spec
 
 if [[ "$(uname)" == "Darwin" ]] && [[ "${mode}" == "linux" ]]; then
