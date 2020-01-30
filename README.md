@@ -111,7 +111,4 @@ Please document all notable changes to this project in the provided changelog. N
 Distributed under Apache License 2.0
 
 ## Known issues
-- some desktop notifications are not shown
-- sometimes dialogs will shown in the background
-- (linux) the profile menu will not update (repaint) on config changes
-- builds under OSX for linux using docker still missing the hidden imports for PyQt5.sip
+[Issues:Bug](https://github.com/otto-de/logsmith/labels/bug)
