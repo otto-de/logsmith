@@ -9,7 +9,7 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 
 ### Added
 - config dialog now has a button to test the mfa command
-- logs will now contain output of failed shell commands 
+- logs will now contain stderr of failed shell commands 
 
 ## 3.0.0 - 2020-01-16
 
