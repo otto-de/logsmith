@@ -50,13 +50,13 @@ aws_secret_access_key = supersecret
 ## Switching region
 Logsmith will use the `.aws/config` to set your region independent of your credentials in `.aws/credentials`. 
 
-If the region in your config should be used if you don't specify a region in your aws call.
-
 ```config
 [profile nonlive]
 region = eu-central-1
 output = json
 ```
+
+The region in your config will be used if you don't specify a region in your aws cli call or set AWS_REGION environment variable.
 
 ## Mfa token
 Logsmith can fetch mfa tokens from your yubikey if you have a suitable cli tool installed.
