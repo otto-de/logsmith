@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+runTests() {
+   ${DIR}/../venv/bin/nosetests
+   if [ "${?}" -ne 0 ]; then
+        echo -e '\x1b[30;41m'
+        cat ${DIR}/buildflags/failed.txt
+        echo -e '\x1b[0m'
+        exit 1
+    else
+        echo -e '\x1b[30;42m'
+        cat ${DIR}/buildflags/passed.txt
+        echo -e '\x1b[0m'
+        exit 0
+    fi
+}
+
+if [ -z "${@}" ]; then
+    runTests
+else
+    case "${@}" in
+        "check" | "test")
+            runTests
+            ;;
+        "deps" | "i")
+            ${DIR}/../setup.sh
+            ;;
+        esac
+fi
