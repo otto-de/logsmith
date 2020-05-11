@@ -7,7 +7,7 @@ usage() { echo "Usage: package.sh [-a]"
           echo "    -w  build for windows"
           exit 1; }
 
-while getopts "lw" opt; do
+while getopts "lwh" opt; do
   case ${opt} in
     l)
       mode="linux"
