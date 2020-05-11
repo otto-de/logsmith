@@ -70,7 +70,8 @@ class MainWindow(QMainWindow):
                 self.to_reset_state()
                 return
 
-        role_result = credentials.fetch_role_credentials(profile_group)
+        user_name = credentials.get_user_name()
+        role_result = credentials.fetch_role_credentials(user_name, profile_group)
         if not self._check_and_signal_error(role_result):
             return
         self.set_region()

@@ -121,7 +121,7 @@ def fetch_session_token(mfa_token: str) -> Result:
     return result
 
 
-def fetch_role_credentials(profile_group: ProfileGroup) -> Result:
+def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Result:
     result = Result()
     credentials_file = _load_credentials_file()
     logger.info('fetch role credentials')
@@ -129,7 +129,7 @@ def fetch_role_credentials(profile_group: ProfileGroup) -> Result:
     try:
         for profile in profile_group.profiles:
             logger.info(f'fetch {profile.profile}')
-            secrets = _assume_role(profile.account, profile.role)
+            secrets = _assume_role(user_name, profile.account, profile.role)
             _add_profile_credentials(credentials_file, profile.profile, secrets)
             if profile.default:
                 _add_profile_credentials(credentials_file, 'default', secrets)
@@ -247,8 +247,8 @@ def _get_session_token(mfa_token) -> dict:
     return response['Credentials']
 
 
-def _assume_role(account_id, role) -> dict:
+def _assume_role(user_name, account_id, role) -> dict:
     client = _get_client('session-token', 'sts')
-    response = client.assume_role(RoleArn='arn:aws:iam::{}:role/{}'.format(account_id, role),
-                                  RoleSessionName='session-{}-{}'.format(account_id, role))
+    response = client.assume_role(RoleArn=f'arn:aws:iam::{account_id}:role/{role}',
+                                  RoleSessionName=user_name)
     return response['Credentials']

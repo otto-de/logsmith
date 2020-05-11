@@ -158,7 +158,7 @@ class TestCredentials(TestCase):
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group())
-        result = credentials.fetch_role_credentials(profile_group)
+        result = credentials.fetch_role_credentials('test_user', profile_group)
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -190,7 +190,7 @@ class TestCredentials(TestCase):
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default())
-        result = credentials.fetch_role_credentials(profile_group)
+        result = credentials.fetch_role_credentials('test-user', profile_group)
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)

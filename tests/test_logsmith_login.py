@@ -115,6 +115,7 @@ class TestLogsmith(TestCase):
     def test_login__valid_session(self, mock_credentials):
         mock_credentials.has_access_key.return_value = get_success_result()
         mock_credentials.check_session.return_value = get_success_result()
+        mock_credentials.get_user_name.return_value = 'test-user'
         mock_credentials.fetch_role_credentials.return_value = get_success_result()
 
         mock_action = Mock()
@@ -129,7 +130,8 @@ class TestLogsmith(TestCase):
 
         expected = [call.has_access_key(),
                     call.check_session(),
-                    call.fetch_role_credentials(profile_group)]
+                    call.get_user_name(),
+                    call.fetch_role_credentials('test-user', profile_group)]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         expected = [call.disable_actions(True)]
@@ -148,6 +150,7 @@ class TestLogsmith(TestCase):
     def test_login__first_login(self, mock_credentials):
         mock_credentials.has_access_key.return_value = get_success_result()
         mock_credentials.check_session.return_value = get_failed_result()
+        mock_credentials.get_user_name.return_value = 'test-user'
         mock_credentials.fetch_role_credentials.return_value = get_success_result()
         self.logsmith._renew_session.return_value = get_success_result()
 
@@ -163,7 +166,8 @@ class TestLogsmith(TestCase):
 
         expected = [call.has_access_key(),
                     call.check_session(),
-                    call.fetch_role_credentials(profile_group)]
+                    call.get_user_name(),
+                    call.fetch_role_credentials('test-user', profile_group)]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         expected = [call.disable_actions(True)]
