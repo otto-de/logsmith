@@ -77,7 +77,6 @@ class MainWindow(QMainWindow):
         self._to_login_state()
 
         logger.info('login success')
-        self._handle_support_files(profile_group)
         self.login_repeater.start(task=self._prepare_login(profile_group=profile_group,
                                                            action=action),
                                   delay_seconds=300)
@@ -102,24 +101,6 @@ class MainWindow(QMainWindow):
             self.login(profile_group=profile_group, action=action)
 
         return login
-
-    def _handle_support_files(self, profile_group: ProfileGroup):
-        logger.info('handle support files')
-        if self.config.option_active_group_file:
-            files.write_active_group_file(profile_group.name)
-        else:
-            files.remove_file(files.get_active_group_file_path())
-
-        if self.config.option_team_file:
-            files.write_team_file(profile_group.team)
-        else:
-            files.remove_file(files.get_team_file_path())
-
-        default_profile = profile_group.get_default_profile()
-        if self.config.option_account_file and default_profile:
-            files.write_account_file(default_profile.account)
-        else:
-            files.remove_file(files.get_account_file_path())
 
     def _to_login_state(self):
         self.last_login = self.get_timestamp()

@@ -9,9 +9,6 @@ logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
 accounts_file_name = 'accounts.yaml'
 log_file_name = 'app.log'
-active_group_file_name = 'active_group'
-team_file_name = 'active_team'
-account_file_name = 'active_account'
 
 
 def get_app_path() -> str:
@@ -32,18 +29,6 @@ def get_accounts_path() -> str:
 
 def get_log_path() -> str:
     return f'{get_app_path()}/{log_file_name}'
-
-
-def get_active_group_file_path() -> str:
-    return f'{get_aws_path()}/{active_group_file_name}'
-
-
-def get_team_file_path() -> str:
-    return f'{get_aws_path()}/{team_file_name}'
-
-
-def get_account_file_path() -> str:
-    return f'{get_aws_path()}/{account_file_name}'
 
 
 def _parse_yaml(text: str):
@@ -92,15 +77,3 @@ def save_accounts_file(account_dict: dict):
 
 def load_logs():
     return _load_file(get_log_path()) or 'no logs found'
-
-
-def write_active_group_file(group_name):
-    _write_file(get_active_group_file_path(), group_name)
-
-
-def write_team_file(team: str) -> None:
-    _write_file(get_team_file_path(), team)
-
-
-def write_account_file(account: str) -> None:
-    _write_file(get_account_file_path(), account)

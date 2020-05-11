@@ -7,16 +7,10 @@ class Config:
         self.valid = False
         self.error = False
 
-        self.option_active_group_file = False
-        self.option_team_file = False
-        self.option_account_file = False
         self.mfa_shell_command = None
 
     def load_from_disk(self):
         config = files.load_config()
-        self.option_active_group_file = config.get('option_active_group_file', False)
-        self.option_team_file = config.get('option_team_file', False)
-        self.option_account_file = config.get('option_account_file', False)
         self.mfa_shell_command = config.get('mfa_shell_command', None)
 
         accounts = files.load_accounts()
@@ -25,9 +19,6 @@ class Config:
     def save_to_disk(self):
         files.save_accounts_file(self.to_dict())
         files.save_config_file({
-            'option_active_group_file': self.option_active_group_file,
-            'option_team_file': self.option_team_file,
-            'option_account_file': self.option_account_file,
             'mfa_shell_command': self.mfa_shell_command,
         })
 

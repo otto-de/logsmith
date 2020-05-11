@@ -15,9 +15,6 @@ class TestConfig(TestCase):
         mock_accounts.return_value = {}
         mock_config.return_value = {}
         self.config.load_from_disk()
-        self.assertEqual(False, self.config.option_active_group_file)
-        self.assertEqual(False, self.config.option_team_file)
-        self.assertEqual(False, self.config.option_account_file)
         self.assertEqual(None, self.config.mfa_shell_command)
 
     @mock.patch('app.core.config.files.load_config')
@@ -25,15 +22,9 @@ class TestConfig(TestCase):
     def test_load_from_disk(self, mock_load_accounts, mock_load_config):
         mock_load_accounts.return_value = get_test_accounts()
         mock_load_config.return_value = {
-            'option_active_group_file': True,
-            'option_team_file': True,
-            'option_account_file': True,
             'mfa_shell_command': 'some command',
         }
         self.config.load_from_disk()
-        self.assertEqual(True, self.config.option_active_group_file)
-        self.assertEqual(True, self.config.option_team_file)
-        self.assertEqual(True, self.config.option_account_file)
         self.assertEqual('some command', self.config.mfa_shell_command)
 
     @mock.patch('app.core.config.files.save_config_file')
@@ -81,9 +72,6 @@ class TestConfig(TestCase):
         )]
 
         expected_config = [call({
-            'option_active_group_file': False,
-            'option_team_file': False,
-            'option_account_file': False,
             'mfa_shell_command': None
         })]
 

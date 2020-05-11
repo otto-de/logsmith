@@ -17,7 +17,6 @@ Logsmith is a desktop trayicon to assume your favorite aws roles.
 - removes unused profiles  
 - icon will change color. You see which profiles you are using
 - set and rotate access key
-- write files with team name, account id and group name
 - fetches mfa token for you
 
 ## Config
@@ -67,17 +66,6 @@ For example:
 
 On the logsmith config dialog, you can specify the appropriate command.
 Please keep in mind that you might have to provide the whole path/command, for example `/usr/local/bin/ykman oath code` .
-
-## Support files
-Inside of the applications config dialog you have the option to let logsmith write files, which you can then use in other scripts.
-This can be useful if you work for multiple teams or in multiple accounts and want to export the account id to other applications/scripts. 
-
-The files will be written to `.aws` to be somewhat decoupled from logsmith.
-
-The options are as follows:
-- write team to `.aws/active_team`
-- write account id of the default profile to `.aws/active_account`
-- write name of the profile group (eg. as the example above 'productive') to `.aws/active_group`
 
 ## How to package
 If you want to build a binary, please use the following steps:

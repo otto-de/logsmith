@@ -7,6 +7,9 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 
 ## Unreleased
 
+### Changed
+- removed writing of support files for active account and team.
+
 ## 3.1.0 - 2020-01-30
 
 ### Added

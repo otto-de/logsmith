@@ -33,10 +33,6 @@ class ConfigDialog(QDialog):
         self.mfa_command_input = QLineEdit(self)
         self.mfa_command_input.setStyleSheet("color: rgb(0, 0, 0);")
 
-        self.option_active_group_file = QCheckBox('Write active group file', self)
-        self.option_team_file = QCheckBox('Write team file', self)
-        self.option_account_file = QCheckBox('Write account file (for default account)', self)
-
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
         self.cancel_button = QPushButton("Cancel")
@@ -61,9 +57,6 @@ class ConfigDialog(QDialog):
         vbox.addWidget(self.mfa_command_input)
         vbox.addWidget(self.check_command_button, alignment=Qt.AlignRight)
 
-        vbox.addWidget(self.option_active_group_file)
-        vbox.addWidget(self.option_team_file)
-        vbox.addWidget(self.option_account_file)
         vbox.addLayout(hbox)
         self.setLayout(vbox)
 
@@ -79,9 +72,6 @@ class ConfigDialog(QDialog):
         config = Config()
         config.set_accounts(account_dict)
         if config.valid:
-            config.option_active_group_file = self.option_active_group_file.isChecked()
-            config.option_team_file = self.option_team_file.isChecked()
-            config.option_account_file = self.option_account_file.isChecked()
             config.mfa_shell_command = self.mfa_command_input.text()
             self.parent.edit_config(config)
             self.hide()
@@ -130,10 +120,6 @@ class ConfigDialog(QDialog):
     def show_dialog(self, config: Config):
         self.text_box.setPlainText(files._dump_yaml(config.to_dict()))
         self.update_error_text(config)
-
-        self.option_active_group_file.setChecked(config.option_active_group_file)
-        self.option_team_file.setChecked(config.option_team_file)
-        self.option_account_file.setChecked(config.option_account_file)
         self.mfa_command_input.setText(config.mfa_shell_command)
         self.show()
 

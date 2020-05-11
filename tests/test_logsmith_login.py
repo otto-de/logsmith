@@ -34,7 +34,6 @@ class TestLogsmith(TestCase):
         self.logsmith.rotate_key_dialog = Mock()
         self.logsmith.login_repeater = Mock()
         self.logsmith._renew_session = Mock()
-        self.logsmith._handle_support_files = Mock()
         self.logsmith._prepare_login = Mock(return_value='_prepare_login')
 
     @mock.patch('app.logsmith.credentials')
@@ -136,8 +135,6 @@ class TestLogsmith(TestCase):
         expected = [call.disable_actions(True)]
         self.assertEqual(expected, self.logsmith.tray_icon.mock_calls)
 
-        self.assertEqual([call(profile_group)], self.logsmith._handle_support_files.mock_calls)
-
         expected = [call(profile_group=profile_group, action=mock_action)]
         self.assertEqual(expected, self.logsmith._prepare_login.mock_calls)
         expected = [call.start(delay_seconds=300,
@@ -171,8 +168,6 @@ class TestLogsmith(TestCase):
 
         expected = [call.disable_actions(True)]
         self.assertEqual(expected, self.logsmith.tray_icon.mock_calls)
-
-        self.assertEqual([call(profile_group)], self.logsmith._handle_support_files.mock_calls)
 
         expected = [call(profile_group=profile_group, action=mock_action)]
         self.assertEqual(expected, self.logsmith._prepare_login.mock_calls)
