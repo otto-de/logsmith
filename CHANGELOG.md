@@ -7,6 +7,8 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 
 ## Unreleased
 
+## 4.0.0 - 2020-05-11
+
 ### Changed
 - removed writing of support files for active account and team.
 - username will be used as session name
