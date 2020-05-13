@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+
+cd ${DIR} || exit
 
 if [[ ! -d ./venv/ ]]; then
     ./setup.sh
