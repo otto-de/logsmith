@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-DIR=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+
+### This resolves the current path of this script, also if it is called through symlinks etc.
+SCRIPT="${BASH_SOURCE[0]}"
+while [ -h "$SCRIPT" ]; do
+  DIR="$( cd -P "$( dirname "$SCRIPT" )" >/dev/null 2>&1 && pwd )"
+  SCRIPT="$(readlink "$SCRIPT")"
+  [[ $SCRIPT != /* ]] && SCRIPT="$DIR/$SCRIPT"
+done
+DIR="$( cd -P "$( dirname "$SCRIPT" )" >/dev/null 2>&1 && pwd )"
 
 cd ${DIR} || exit
 
