@@ -28,13 +28,15 @@ productive:
   color: '#388E3C'            
   profiles:
     - profile: nonlive            
-      account: 123456789123   
+      account: '123456789123'   
       role: developer         
       default: true            
     - profile: live
-      account: 123456789123
+      account: '123456789123'
       role: developer
 ```
+
+If you have account ids with leading zeros, please make sure to put them in quotes.
 
 ## Access key
 Please use the dialog option provided by logsmith to set your access key or save it in `.aws/credentials` 
