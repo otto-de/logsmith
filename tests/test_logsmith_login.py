@@ -181,3 +181,34 @@ class TestLogsmith(TestCase):
 
         self.assertEqual(profile_group, self.logsmith.active_profile_group)
         self.assertEqual(None, self.logsmith.region_override)
+
+    @mock.patch('app.logsmith.credentials')
+    def test_login__logout(self, mock_credentials):
+        mock_credentials.fetch_role_credentials.return_value = get_success_result()
+        mock_credentials.write_profile_config.return_value = get_success_result()
+
+        self.logsmith.logout()
+
+        self.assertEqual(1, self.logsmith.to_reset_state.call_count)
+        self.assertEqual(1, mock_credentials.fetch_role_credentials.call_count)
+        self.assertEqual(1, mock_credentials.write_profile_config.call_count)
+
+        expected = [call.fetch_role_credentials(user_name='none', profile_group=self.logsmith.empty_profile_group),
+                    call.write_profile_config(profile_group=self.logsmith.empty_profile_group, region='')]
+        self.assertEqual(expected, mock_credentials.mock_calls)
+
+    @mock.patch('app.logsmith.credentials')
+    def test_login__logout_error(self, mock_credentials):
+        mock_credentials.fetch_role_credentials.return_value = get_error_result()
+
+        self.logsmith.logout()
+
+        self.assertEqual(1, self.logsmith.to_reset_state.call_count)
+        self.assertEqual(1, mock_credentials.fetch_role_credentials.call_count)
+        self.assertEqual(0, mock_credentials.write_profile_config.call_count)
+
+        expected = [call.fetch_role_credentials(user_name='none', profile_group=self.logsmith.empty_profile_group)]
+        self.assertEqual(expected, mock_credentials.mock_calls)
+
+        expected = [call.show_message('Logsmith Error', 'some error')]
+        self.assertEqual(expected, self.logsmith.tray_icon.mock_calls)

@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
         self.config.load_from_disk()
         self.last_login: str = "never"
         self.active_profile_group: ProfileGroup = None
+        self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {})
         self.region_override: str = None
         self.assets: Assets = Assets()
 
@@ -82,6 +83,18 @@ class MainWindow(QMainWindow):
                                                            action=action),
                                   delay_seconds=300)
         logger.info('repeater started')
+
+    def logout(self):
+        logger.info(f'start logout')
+        self.to_reset_state()
+        role_result = credentials.fetch_role_credentials(user_name='none', profile_group=self.empty_profile_group)
+        if not self._check_and_signal_error(role_result):
+            return
+
+        config_result = credentials.write_profile_config(profile_group=self.empty_profile_group, region='')
+        if not self._check_and_signal_error(config_result):
+            return
+        logger.info('logout success')
 
     def _renew_session(self) -> Result:
         logger.info('renew session')

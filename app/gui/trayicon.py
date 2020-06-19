@@ -35,12 +35,17 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.actions = []
         for profile_group in self.parent.config.list_groups():
             action = menu.addAction(profile_group.name)
-
             action.triggered.connect(partial(self.parent.login,
                                              profile_group=profile_group,
                                              action=action))
             action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
             self.actions.append(action)
+
+        # log out
+        action = menu.addAction('logout')
+        action.triggered.connect(self.parent.logout)
+        action.setIcon(self.assets.get_icon(style='outline', color_code='#FFFFFF'))
+        self.actions.append(action)
 
         menu.addSeparator()
         # active region

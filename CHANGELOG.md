@@ -8,6 +8,7 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 ## Unreleased
 
 ### Added
+- option to logout of your current profiles. All profiles will be removed from your .aws/credentials and .aws/config  
 - session check will now have a timeout to fail faster if no connection can be established 
 
 ## 4.0.0 - 2020-05-11
