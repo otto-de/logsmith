@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import boto3
+import botocore
 from botocore.exceptions import ClientError, ParamValidationError, EndpointConnectionError, \
     NoCredentialsError
 
@@ -48,8 +49,16 @@ def _write_config_file(config: configparser) -> None:
     _write_file(_get_config_path(), config)
 
 
-def _get_client(profile_name: str, service: str):
+def _get_client(profile_name: str, service: str, timeout: int = None, retries: int = None):
     session = boto3.Session(profile_name=profile_name)
+    config_dict = {}
+    if timeout is not None:
+        config_dict['connect_timeout'] = timeout
+    if retries is not None:
+        config_dict['retries'] = {'total_max_attempts': retries}
+    if timeout is not None or retries is not None:
+        config = botocore.config.Config(**config_dict)
+        return session.client(service, config=config)
     return session.client(service)
 
 
@@ -74,7 +83,7 @@ def check_session() -> Result:
         logger.warning('no session token found')
         return result
 
-    client = _get_client('session-token', 'sts')
+    client = _get_client('session-token', 'sts', timeout=1, retries=1)
     try:
         client.get_caller_identity()
     except ClientError:

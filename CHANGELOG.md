@@ -7,10 +7,13 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 
 ## Unreleased
 
+### Added
+- session check will now have a timeout to fail faster if no connection can be established 
+
 ## 4.0.0 - 2020-05-11
 
 ### Changed
-- removed writing of support files for active account and team.
+- removed writing of support files for active account and team
 - username will be used as session name
 
 ## 3.1.0 - 2020-01-30
