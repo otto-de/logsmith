@@ -159,11 +159,14 @@ class TestCredentials(TestCase):
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group())
         result = credentials.fetch_role_credentials('test_user', profile_group)
-
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-        expected = [
+        expected_mock_assume_calls = [call('session-token', 'test_user', '123456789012', 'developer'),
+                                      call('session-token', 'test_user', '123456789012', 'readonly')]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
+
+        expected_mock_add_profile_calls = [
             call(mock_config_parser, 'developer', {'AccessKeyId': 'test-key-id',
                                                    'SecretAccessKey': 'test-access-key',
                                                    'SessionToken': 'test-session-token'}),
@@ -173,10 +176,10 @@ class TestCredentials(TestCase):
             call(mock_config_parser, 'default', {'AccessKeyId': 'test-key-id',
                                                  'SecretAccessKey': 'test-access-key',
                                                  'SessionToken': 'test-session-token'})]
-        self.assertEqual(expected, mock_add_profile.call_args_list)
-        expected = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
+        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
     @mock.patch('app.aws.credentials._remove_unused_profiles')
@@ -191,131 +194,174 @@ class TestCredentials(TestCase):
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default())
         result = credentials.fetch_role_credentials('test-user', profile_group)
-
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-        expected = [
+        expected_mock_assume_calls = [call('session-token', 'test-user', '123456789012', 'developer'),
+                                      call('session-token', 'test-user', '123456789012', 'readonly')]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
+
+        expected_mock_add_profile_calls = [
             call(mock_config_parser, 'developer', {'AccessKeyId': 'test-key-id',
                                                    'SecretAccessKey': 'test-access-key',
                                                    'SessionToken': 'test-session-token'}),
             call(mock_config_parser, 'readonly', {'AccessKeyId': 'test-key-id',
                                                   'SecretAccessKey': 'test-access-key',
                                                   'SessionToken': 'test-session-token'})]
-        self.assertEqual(expected, mock_add_profile.call_args_list)
-        expected = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-
-    def test___remove_unused_profiles(self):
-        mock_config_parser = Mock()
-        mock_config_parser.sections.return_value = ['developer', 'unused-profile', 'access-key', 'session-token']
-
-        mock_profile_group = Mock()
-        mock_profile_group.list_profile_names.return_value = ['developer']
-
-        credentials._remove_unused_profiles(mock_config_parser, mock_profile_group)
-
-        expected = [call('unused-profile')]
-        self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
-
-    @mock.patch('app.aws.credentials._write_config_file')
-    @mock.patch('app.aws.credentials._remove_unused_configs')
-    @mock.patch('app.aws.credentials._add_profile_config')
-    @mock.patch('app.aws.credentials._load_config_file')
-    def test_write_profile_config(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
-        mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
-
-        profile_group = ProfileGroup('test', test_accounts.get_test_group())
-        result = credentials.write_profile_config(profile_group, 'us-east-12')
-
-        self.assertEqual(True, result.was_success)
-        self.assertEqual(False, result.was_error)
-
-        expected = [call(mock_config_parser, 'developer', 'us-east-12'),
-                    call(mock_config_parser, 'readonly', 'us-east-12'),
-                    call(mock_config_parser, 'default', 'us-east-12')]
-        self.assertEqual(expected, mock_add_profile.call_args_list)
-        expected = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-
-    @mock.patch('app.aws.credentials._write_config_file')
-    @mock.patch('app.aws.credentials._remove_unused_configs')
-    @mock.patch('app.aws.credentials._add_profile_config')
-    @mock.patch('app.aws.credentials._load_config_file')
-    def test_write_profile_config__no_default(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
-        mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
-
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default())
-        result = credentials.write_profile_config(profile_group, 'us-east-12')
-
-        self.assertEqual(True, result.was_success)
-        self.assertEqual(False, result.was_error)
-
-        expected = [call(mock_config_parser, 'developer', 'us-east-12'),
-                    call(mock_config_parser, 'readonly', 'us-east-12')]
-        self.assertEqual(expected, mock_add_profile.call_args_list)
-        expected = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-
-    def test___remove_unused_configs(self):
-        mock_config_parser = Mock()
-        mock_config_parser.sections.return_value = ['profile developer',
-                                                    'profile unused-profile',
-                                                    'profile access-key',
-                                                    'profile session-token']
-
-        mock_profile_group = Mock()
-        mock_profile_group.list_profile_names.return_value = ['developer']
-
-        credentials._remove_unused_configs(mock_config_parser, mock_profile_group)
-
-        expected = [call('profile unused-profile'), call('profile session-token')]
-        self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
+        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
+    @mock.patch('app.aws.credentials._remove_unused_profiles')
+    @mock.patch('app.aws.credentials._add_profile_credentials')
+    @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test__set_access_key(self, mock_load_credentials_file, _):
+    def test_fetch_role_credentials__chain_assume(self, mock_credentials, mock_assume, mock_add_profile,
+                                                  mock_remove_profile, _):
         mock_config_parser = Mock()
-        mock_config_parser.has_section.return_value = False
-        mock_load_credentials_file.return_value = mock_config_parser
+        mock_credentials.return_value = mock_config_parser
+        mock_assume.return_value = self.test_secrets
 
-        credentials.set_access_key('key-id', 'access-key')
-        self.assertEqual([call('access-key')],
-                         mock_config_parser.has_section.call_args_list)
-        self.assertEqual([call('access-key')],
-                         mock_config_parser.add_section.call_args_list)
-        self.assertEqual([call('access-key', 'aws_access_key_id', 'key-id'),
-                          call('access-key', 'aws_secret_access_key', 'access-key')],
-                         mock_config_parser.set.call_args_list)
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume())
+        result = credentials.fetch_role_credentials('test-user', profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
 
-    def test___add_profile_credentials(self):
-        mock_config_parser = Mock()
-        mock_config_parser.has_section.return_value = False
+        expected_mock_assume_calls = [call('session-token', 'test-user', '123456789012', 'developer'),
+                                      call('developer', 'test-user', '123456789012', 'service')]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
 
-        credentials._add_profile_credentials(mock_config_parser, 'test-profile', self.test_secrets)
-        self.assertEqual([call('test-profile')],
-                         mock_config_parser.has_section.call_args_list)
-        self.assertEqual([call('test-profile')],
-                         mock_config_parser.add_section.call_args_list)
-        self.assertEqual([call('test-profile', 'aws_access_key_id', 'test-key-id'),
-                          call('test-profile', 'aws_secret_access_key', 'test-access-key'),
-                          call('test-profile', 'aws_session_token', 'test-session-token')],
-                         mock_config_parser.set.call_args_list)
+        expected_mock_add_profile_calls = [
+            call(mock_config_parser, 'developer', {'AccessKeyId': 'test-key-id',
+                                                   'SecretAccessKey': 'test-access-key',
+                                                   'SessionToken': 'test-session-token'}),
+            call(mock_config_parser, 'service', {'AccessKeyId': 'test-key-id',
+                                                 'SecretAccessKey': 'test-access-key',
+                                                 'SessionToken': 'test-session-token'})]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
 
-    def test___add_profile_config(self):
-        mock_config_parser = Mock()
-        mock_config_parser.has_section.return_value = False
+        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
+        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
 
-        credentials._add_profile_config(mock_config_parser, 'test-profile', 'us-east-12')
-        self.assertEqual([call('profile test-profile')],
-                         mock_config_parser.has_section.call_args_list)
-        self.assertEqual([call('profile test-profile')],
-                         mock_config_parser.add_section.call_args_list)
-        self.assertEqual([call('profile test-profile', 'region', 'us-east-12'),
-                          call('profile test-profile', 'output', 'json')],
-                         mock_config_parser.set.call_args_list)
+
+def test___remove_unused_profiles(self):
+    mock_config_parser = Mock()
+    mock_config_parser.sections.return_value = ['developer', 'unused-profile', 'access-key', 'session-token']
+
+    mock_profile_group = Mock()
+    mock_profile_group.list_profile_names.return_value = ['developer']
+
+    credentials._remove_unused_profiles(mock_config_parser, mock_profile_group)
+
+    expected = [call('unused-profile')]
+    self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
+
+
+@mock.patch('app.aws.credentials._write_config_file')
+@mock.patch('app.aws.credentials._remove_unused_configs')
+@mock.patch('app.aws.credentials._add_profile_config')
+@mock.patch('app.aws.credentials._load_config_file')
+def test_write_profile_config(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
+    mock_config_parser = Mock()
+    mock_credentials.return_value = mock_config_parser
+
+    profile_group = ProfileGroup('test', test_accounts.get_test_group())
+    result = credentials.write_profile_config(profile_group, 'us-east-12')
+
+    self.assertEqual(True, result.was_success)
+    self.assertEqual(False, result.was_error)
+
+    expected = [call(mock_config_parser, 'developer', 'us-east-12'),
+                call(mock_config_parser, 'readonly', 'us-east-12'),
+                call(mock_config_parser, 'default', 'us-east-12')]
+    self.assertEqual(expected, mock_add_profile.call_args_list)
+    expected = [call(mock_config_parser, profile_group)]
+    self.assertEqual(expected, mock_remove_profile.call_args_list)
+    self.assertEqual(expected, mock_remove_profile.call_args_list)
+
+
+@mock.patch('app.aws.credentials._write_config_file')
+@mock.patch('app.aws.credentials._remove_unused_configs')
+@mock.patch('app.aws.credentials._add_profile_config')
+@mock.patch('app.aws.credentials._load_config_file')
+def test_write_profile_config__no_default(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
+    mock_config_parser = Mock()
+    mock_credentials.return_value = mock_config_parser
+
+    profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default())
+    result = credentials.write_profile_config(profile_group, 'us-east-12')
+
+    self.assertEqual(True, result.was_success)
+    self.assertEqual(False, result.was_error)
+
+    expected = [call(mock_config_parser, 'developer', 'us-east-12'),
+                call(mock_config_parser, 'readonly', 'us-east-12')]
+    self.assertEqual(expected, mock_add_profile.call_args_list)
+    expected = [call(mock_config_parser, profile_group)]
+    self.assertEqual(expected, mock_remove_profile.call_args_list)
+    self.assertEqual(expected, mock_remove_profile.call_args_list)
+
+
+def test___remove_unused_configs(self):
+    mock_config_parser = Mock()
+    mock_config_parser.sections.return_value = ['profile developer',
+                                                'profile unused-profile',
+                                                'profile access-key',
+                                                'profile session-token']
+
+    mock_profile_group = Mock()
+    mock_profile_group.list_profile_names.return_value = ['developer']
+
+    credentials._remove_unused_configs(mock_config_parser, mock_profile_group)
+
+    expected = [call('profile unused-profile'), call('profile session-token')]
+    self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
+
+
+@mock.patch('app.aws.credentials._write_credentials_file')
+@mock.patch('app.aws.credentials._load_credentials_file')
+def test__set_access_key(self, mock_load_credentials_file, _):
+    mock_config_parser = Mock()
+    mock_config_parser.has_section.return_value = False
+    mock_load_credentials_file.return_value = mock_config_parser
+
+    credentials.set_access_key('key-id', 'access-key')
+    self.assertEqual([call('access-key')],
+                     mock_config_parser.has_section.call_args_list)
+    self.assertEqual([call('access-key')],
+                     mock_config_parser.add_section.call_args_list)
+    self.assertEqual([call('access-key', 'aws_access_key_id', 'key-id'),
+                      call('access-key', 'aws_secret_access_key', 'access-key')],
+                     mock_config_parser.set.call_args_list)
+
+
+def test___add_profile_credentials(self):
+    mock_config_parser = Mock()
+    mock_config_parser.has_section.return_value = False
+
+    credentials._add_profile_credentials(mock_config_parser, 'test-profile', self.test_secrets)
+    self.assertEqual([call('test-profile')],
+                     mock_config_parser.has_section.call_args_list)
+    self.assertEqual([call('test-profile')],
+                     mock_config_parser.add_section.call_args_list)
+    self.assertEqual([call('test-profile', 'aws_access_key_id', 'test-key-id'),
+                      call('test-profile', 'aws_secret_access_key', 'test-access-key'),
+                      call('test-profile', 'aws_session_token', 'test-session-token')],
+                     mock_config_parser.set.call_args_list)
+
+
+def test___add_profile_config(self):
+    mock_config_parser = Mock()
+    mock_config_parser.has_section.return_value = False
+
+    credentials._add_profile_config(mock_config_parser, 'test-profile', 'us-east-12')
+    self.assertEqual([call('profile test-profile')],
+                     mock_config_parser.has_section.call_args_list)
+    self.assertEqual([call('profile test-profile')],
+                     mock_config_parser.add_section.call_args_list)
+    self.assertEqual([call('profile test-profile', 'region', 'us-east-12'),
+                      call('profile test-profile', 'output', 'json')],
+                     mock_config_parser.set.call_args_list)

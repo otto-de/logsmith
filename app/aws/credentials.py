@@ -138,7 +138,8 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
     try:
         for profile in profile_group.profiles:
             logger.info(f'fetch {profile.profile}')
-            secrets = _assume_role(user_name, profile.account, profile.role)
+            source_profile = profile.source or 'session-token'
+            secrets = _assume_role(source_profile, user_name, profile.account, profile.role)
             _add_profile_credentials(credentials_file, profile.profile, secrets)
             if profile.default:
                 _add_profile_credentials(credentials_file, 'default', secrets)
@@ -256,8 +257,8 @@ def _get_session_token(mfa_token) -> dict:
     return response['Credentials']
 
 
-def _assume_role(user_name, account_id, role) -> dict:
-    client = _get_client('session-token', 'sts')
+def _assume_role(source_profile: str, user_name: str, account_id: str, role: str) -> dict:
+    client = _get_client(source_profile, 'sts')
     response = client.assume_role(RoleArn=f'arn:aws:iam::{account_id}:role/{role}',
                                   RoleSessionName=user_name)
     return response['Credentials']

@@ -80,6 +80,27 @@ def get_test_group_no_default():
     }
 
 
+def get_test_group_chain_assume():
+    return {
+        'color': '#388E3C',
+        'team': 'awesome-team',
+        'region': 'us-east-1',
+        'profiles': [
+            {
+                'profile': 'developer',
+                'account': '123456789012',
+                'role': 'developer',
+            },
+            {
+                'profile': 'service',
+                'account': '123456789012',
+                'role': 'service',
+                'source': 'developer'
+            }
+        ]
+    }
+
+
 def get_test_profile():
     return {
         'profile': 'readonly',

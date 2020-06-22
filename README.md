@@ -38,6 +38,28 @@ productive:
 
 If you have account ids with leading zeros, please make sure to put them in quotes.
 
+### Chain Assume
+You may add a "source" profile which will be used to assume the specific 'role'.
+
+This is useful when your own user account can not assume service specific roles. 
+
+```yaml
+productive:                   
+  team: team1                 
+  region: eu-central-1         
+  color: '#388E3C'            
+  profiles:
+    - profile: developer            
+      account: '123456789123'   
+      role: developer-role         
+    - profile: service
+      account: '123456789123'
+      role: service-role
+      source: developer
+```
+
+Please keep in mind that the roles will be assumed in the given order.
+
 ## Access key
 Please use the dialog option provided by logsmith to set your access key or save it in `.aws/credentials` 
 under the profile name *access-key*.

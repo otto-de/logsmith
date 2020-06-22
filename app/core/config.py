@@ -1,9 +1,11 @@
+from typing import List, Dict
+
 from app.core import files
 
 
 class Config:
     def __init__(self):
-        self.profile_groups = {}
+        self.profile_groups: Dict[ProfileGroup] = {}
         self.valid = False
         self.error = False
 
@@ -57,11 +59,11 @@ class Config:
 
 class ProfileGroup:
     def __init__(self, name, group: dict):
-        self.name = name
-        self.team = group.get('team', None)
-        self.region = group.get('region', None)
-        self.color = group.get('color', None)
-        self.profiles = []
+        self.name: str = name
+        self.team: str = group.get('team', None)
+        self.region: str = group.get('region', None)
+        self.color: str = group.get('color', None)
+        self.profiles: List[Profile] = []
         for profile in group.get('profiles', []):
             self.profiles.append(Profile(self, profile))
 
@@ -110,6 +112,7 @@ class Profile:
         self.account = profile.get('account', None)
         self.role = profile.get('role', None)
         self.default = profile.get('default', 'false') in ['True', 'true', True]
+        self.source = profile.get('source', None)
 
     def validate(self) -> (bool, str):
         if not self.profile:
@@ -126,6 +129,8 @@ class Profile:
             'account': self.account,
             'role': self.role,
         }
+        if self.source:
+            d['source'] = self.source
         if self.default:
             d['default'] = True
         return d
