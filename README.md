@@ -91,6 +91,14 @@ For example:
 On the logsmith config dialog, you can specify the appropriate command.
 Please keep in mind that you might have to provide the whole path/command, for example `/usr/local/bin/ykman oath code` .
 
+## Group file
+Logsmith will write the active profile group to `${HOME}/.logsmith/active_group`. This could be used to include the current profile group in your shell prompt.
+
+Example:
+```bash
+some_directory [master] (production) %
+```
+
 ## How to package
 If you want to build a binary, please use the following steps:
 

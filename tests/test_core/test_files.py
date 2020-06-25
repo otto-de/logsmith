@@ -33,6 +33,10 @@ class Test(TestCase):
     def test_get_log_path(self, _):
         self.assertEqual('home/.logsmith/app.log', files.get_log_path())
 
+    @mock.patch('app.core.files.Path.home', return_value='home')
+    def test_get_active_group_file_path(self, _):
+        self.assertEqual('home/.logsmith/active_group', files.get_active_group_file_path())
+
     def test__parse_yaml(self):
         yaml = files._parse_yaml('test: true')
         expected = {'test': True}
