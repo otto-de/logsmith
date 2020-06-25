@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
-## Unreleased
+## 4.1.0 - 2020-06-25
 
 ### Added
 - option to logout of your current profiles. All profiles will be removed from your .aws/credentials and .aws/config  
