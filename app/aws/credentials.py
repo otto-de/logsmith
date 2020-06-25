@@ -143,6 +143,7 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
             _add_profile_credentials(credentials_file, profile.profile, secrets)
             if profile.default:
                 _add_profile_credentials(credentials_file, 'default', secrets)
+            _write_credentials_file(credentials_file)
 
         credentials_file = _remove_unused_profiles(credentials_file, profile_group)
     except Exception:

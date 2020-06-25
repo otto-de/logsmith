@@ -152,7 +152,8 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials(self, mock_credentials, mock_assume, mock_add_profile, mock_remove_profile, _):
+    def test_fetch_role_credentials(self, mock_credentials, mock_assume, mock_add_profile, mock_remove_profile,
+                                    mock_write_credentials):
         mock_config_parser = Mock()
         mock_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
@@ -161,6 +162,8 @@ class TestCredentials(TestCase):
         result = credentials.fetch_role_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
+
+        self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [call('session-token', 'test_user', '123456789012', 'developer'),
                                       call('session-token', 'test_user', '123456789012', 'readonly')]
@@ -187,7 +190,7 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
     def test_fetch_role_credentials__no_default(self, mock_credentials, mock_assume, mock_add_profile,
-                                                mock_remove_profile, _):
+                                                mock_remove_profile, mock_write_credentials):
         mock_config_parser = Mock()
         mock_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
@@ -196,6 +199,8 @@ class TestCredentials(TestCase):
         result = credentials.fetch_role_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
+
+        self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [call('session-token', 'test-user', '123456789012', 'developer'),
                                       call('session-token', 'test-user', '123456789012', 'readonly')]
@@ -219,7 +224,7 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
     def test_fetch_role_credentials__chain_assume(self, mock_credentials, mock_assume, mock_add_profile,
-                                                  mock_remove_profile, _):
+                                                  mock_remove_profile, mock_write_credentials):
         mock_config_parser = Mock()
         mock_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
@@ -228,6 +233,8 @@ class TestCredentials(TestCase):
         result = credentials.fetch_role_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
+
+        self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [call('session-token', 'test-user', '123456789012', 'developer'),
                                       call('developer', 'test-user', '123456789012', 'service')]
@@ -246,7 +253,6 @@ class TestCredentials(TestCase):
         self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
         self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
 
-
     def test___remove_unused_profiles(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = ['developer', 'unused-profile', 'access-key', 'session-token']
@@ -258,7 +264,6 @@ class TestCredentials(TestCase):
 
         expected = [call('unused-profile')]
         self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
-
 
     @mock.patch('app.aws.credentials._write_config_file')
     @mock.patch('app.aws.credentials._remove_unused_configs')
@@ -282,7 +287,6 @@ class TestCredentials(TestCase):
         self.assertEqual(expected, mock_remove_profile.call_args_list)
         self.assertEqual(expected, mock_remove_profile.call_args_list)
 
-
     @mock.patch('app.aws.credentials._write_config_file')
     @mock.patch('app.aws.credentials._remove_unused_configs')
     @mock.patch('app.aws.credentials._add_profile_config')
@@ -304,7 +308,6 @@ class TestCredentials(TestCase):
         self.assertEqual(expected, mock_remove_profile.call_args_list)
         self.assertEqual(expected, mock_remove_profile.call_args_list)
 
-
     def test___remove_unused_configs(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = ['profile developer',
@@ -319,7 +322,6 @@ class TestCredentials(TestCase):
 
         expected = [call('profile unused-profile'), call('profile session-token')]
         self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
-
 
     @mock.patch('app.aws.credentials._write_credentials_file')
     @mock.patch('app.aws.credentials._load_credentials_file')
@@ -337,7 +339,6 @@ class TestCredentials(TestCase):
                           call('access-key', 'aws_secret_access_key', 'access-key')],
                          mock_config_parser.set.call_args_list)
 
-
     def test___add_profile_credentials(self):
         mock_config_parser = Mock()
         mock_config_parser.has_section.return_value = False
@@ -351,7 +352,6 @@ class TestCredentials(TestCase):
                           call('test-profile', 'aws_secret_access_key', 'test-access-key'),
                           call('test-profile', 'aws_session_token', 'test-session-token')],
                          mock_config_parser.set.call_args_list)
-
 
     def test___add_profile_config(self):
         mock_config_parser = Mock()
