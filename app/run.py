@@ -3,6 +3,7 @@ import os
 import sys
 
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QTimer
 
 from app.core import files
 from app.logsmith import MainWindow
@@ -37,9 +38,15 @@ def main():
 
     logging.info(f'config dir {app_path}')
     logging.info('start app')
+
     try:
         app = QApplication(sys.argv)
         MainWindow(app)
+
+        timer = QTimer()
+        timer.timeout.connect(lambda: None)
+        timer.start(100)
+
         sys.exit(app.exec_())
     except Exception:
         logging.error('unexpected error', exc_info=True)

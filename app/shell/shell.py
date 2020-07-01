@@ -5,16 +5,19 @@ import subprocess as sp
 logger = logging.getLogger('logsmith')
 
 
-def run(command):
+def run(command, timeout=3):
     proc = None
     try:
         proc = sp.run(shlex.split(command),
                       stdout=sp.PIPE,
                       stderr=sp.PIPE,
-                      timeout=3,
+                      timeout=timeout,
                       universal_newlines=True)
         proc.check_returncode()
         return proc.stdout.rstrip()
+    except sp.TimeoutExpired:
+        logger.warning(f'command {command} took too long and was aborted')
+        return None
     except FileNotFoundError:
         logger.warning(f'command {command} not found')
         return None
