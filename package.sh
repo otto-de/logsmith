@@ -1,65 +1,67 @@
 #!/usr/bin/env bash
-dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-usage() { echo "Usage: package.sh [-a]"
-          echo "    packages logsmith into a executable"
-          echo ""
-          echo "Options:"
-          echo "    -l  build for linux"
-          echo "    -w  build for windows"
-          echo "    -g  use system python"
-          echo "    -z  zip after build"
-          exit 1; }
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+usage() {
+  echo "Usage: package.sh [-a]"
+  echo "    packages logsmith into a executable"
+  echo ""
+  echo "Options:"
+  echo "    -l  build for linux"
+  echo "    -w  build for windows"
+  echo "    -g  use system python"
+  echo "    -z  zip after build"
+  exit 1
+}
 global_mode=false
 zip_mode=false
 ignore_mode=false
 while getopts "lwgzih" opt; do
   case ${opt} in
-    l)
-      mode="linux"
-      ;;
-    w)
-      mode="windows"
-      ;;
-    g)
-      global_mode=true
-      ;;
-    z)
-      zip_mode=true
-      ;;
-    i)
-      ignore_mode=true
-      ;;
-    h)
-      usage
-      ;;
-    *)
-      echo -e "Invalid option: -${OPTARG}"
-      usage
-      ;;
+  l)
+    mode="linux"
+    ;;
+  w)
+    mode="windows"
+    ;;
+  g)
+    global_mode=true
+    ;;
+  z)
+    zip_mode=true
+    ;;
+  i)
+    ignore_mode=true
+    ;;
+  h)
+    usage
+    ;;
+  *)
+    echo -e "Invalid option: -${OPTARG}"
+    usage
+    ;;
   esac
 done
 
 local_changes=$(git status --porcelain -uno)
 untracked_files=$(git ls-files --others --exclude-standar)
 if ! ${ignore_mode} && [ "${local_changes}" != "" ]; then
-    echo -e " local changes found."
-    echo "${local_changes}"
-    exit 1
+  echo -e " local changes found."
+  echo "${local_changes}"
+  exit 1
 fi
 if ! ${ignore_mode} && [ "${untracked_files}" != "" ]; then
-    echo -e " untracked files found."
-    echo "${untracked_files}"
-    exit 1
+  echo -e " untracked files found."
+  echo "${untracked_files}"
+  exit 1
 fi
 
 if [[ ! -d ./venv/ ]] && [[ "${global_mode}" == "false" ]]; then
-    ./setup.sh
+  ./setup.sh
 fi
 if [[ -d ./dist/ ]]; then
-    rm -rf dist
+  rm -rf dist
 fi
 if [[ -d ./build/ ]]; then
-    rm -rf build
+  rm -rf build
 fi
 
 if [[ "${global_mode}" == "false" ]]; then
@@ -72,9 +74,9 @@ dist=$(uname)
 dist=$(echo "${dist}" | tr '[:upper:]' '[:lower:]')
 dist_path=${dir}/dist/${dist}
 ${bundler} \
-    --onefile \
-    --distpath "${dist_path}" \
-    ./logsmith.spec
+  --onefile \
+  --distpath "${dist_path}" \
+  ./logsmith.spec
 
 if [[ "${dist}" == "darwin" ]] && [[ "${mode}" == "linux" ]]; then
   docker run \
@@ -84,10 +86,10 @@ if [[ "${dist}" == "darwin" ]] && [[ "${mode}" == "linux" ]]; then
 fi
 
 if [[ "${mode}" == "windows" ]]; then
-    docker run \
-        -v "$(pwd):/src/" \
-        cdrx/pyinstaller-windows \
-        "pyinstaller --onefile --hidden-import PyQt5.sip ./logsmith.spec"
+  docker run \
+    -v "$(pwd):/src/" \
+    cdrx/pyinstaller-windows \
+    "pyinstaller --onefile --hidden-import PyQt5.sip ./logsmith.spec"
 fi
 
 if ${zip_mode}; then
