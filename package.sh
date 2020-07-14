@@ -91,7 +91,7 @@ if [[ "${mode}" == "windows" ]]; then
 fi
 
 if ${zip_mode}; then
-  version=$(python -c "from app.__version__ import __version__; print('.'.join(str(i) for i in __version__))" )
+  version=$(python3 -c "from app.__version__ import __version__; print('.'.join(str(i) for i in __version__))")
   cd "${dist_path}" || exit
   zip -r logsmith_${dist}_${version}.zip ./logsmith*
 fi
