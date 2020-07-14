@@ -69,17 +69,18 @@ else
 fi
 
 dist=$(uname)
+dist=$(echo "${dist}" | tr '[:upper:]' '[:lower:]')
 dist_path=${dir}/dist/${dist}
 ${bundler} \
     --onefile \
     --distpath "${dist_path}" \
     ./logsmith.spec
 
-if [[ "$(uname)" == "Darwin" ]] && [[ "${mode}" == "linux" ]]; then
-    docker run \
-        -v "$(pwd):/src/" \
-        cdrx/pyinstaller-linux \
-        "pyinstaller --onefile --hidden-import PyQt5.sip --distpath ${dist_path} ./logsmith.spec"
+if [[ "${dist}" == "darwin" ]] && [[ "${mode}" == "linux" ]]; then
+  docker run \
+    -v "$(pwd):/src/" \
+    cdrx/pyinstaller-linux \
+    "pyinstaller --onefile --hidden-import PyQt5.sip --distpath ${dist_path} ./logsmith.spec"
 fi
 
 if [[ "${mode}" == "windows" ]]; then
