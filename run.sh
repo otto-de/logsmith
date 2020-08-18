@@ -15,4 +15,4 @@ if [[ ! -d ./venv/ ]]; then
     ./setup.sh
 fi
 export PYTHONPATH=${PYTHONPATH}:${DIR}
-./venv/bin/python ./app/run.py
+./venv/bin/python ./app/run.py ${@}
