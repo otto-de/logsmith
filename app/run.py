@@ -5,7 +5,7 @@ import sys
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication
 
-from app.core import files
+from app.core import files, arguments
 from app.logsmith import MainWindow
 
 
@@ -22,7 +22,8 @@ def main():
     if not os.path.exists(aws_path):
         os.mkdir(aws_path)
 
-    logging.basicConfig(level=logging.WARNING)
+    args = arguments.parse(sys.argv[1:])
+    logging.basicConfig(level=logging.getLevelName(args.loglevel))
     logger = logging.getLogger('logsmith')
     logger.propagate = False
     logger.setLevel(logging.DEBUG)

@@ -16,8 +16,7 @@ class ConfigDialog(QDialog):
         super(ConfigDialog, self).__init__(parent)
         self.parent = parent
 
-        version = '.'.join(str(i) for i in __version__.__version__)
-        self.setWindowTitle(f'Config - v{version}')
+        self.setWindowTitle(f'Config - v{__version__.__version_string__}')
         self.initial_width = 600
         self.initial_height = 600
         self.resize(self.initial_width, self.initial_height)
