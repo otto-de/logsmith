@@ -44,6 +44,7 @@ class LogDialog(QDialog):
         self.show()
         self.resizeEvent(None)
         self.scroll_area.verticalScrollBar().setValue(self.scroll_area.verticalScrollBar().maximum())
+        self.activateWindow()
 
 
 if __name__ == '__main__':

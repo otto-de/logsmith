@@ -93,6 +93,7 @@ class SetKeyDialog(QDialog):
         self.key_id_input.repaint()
         self.set_error_text(message)
         self.show()
+        self.activateWindow()
 
 
 if __name__ == '__main__':
