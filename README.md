@@ -39,7 +39,7 @@ productive:
 If you have account ids with leading zeros, please make sure to put them in quotes.
 
 ### Chain Assume
-You may add a "source" profile which will be used to assume the specific 'role'.
+You may add a "source" profile which will be used to assume a given role.
 
 This is useful when your own user account can not assume service specific roles. 
 
@@ -57,6 +57,7 @@ productive:
       role: service-role
       source: developer
 ```
+In this example, logsmith will first assume the role 'developer-role', write the credentials in profile 'developer' and the uses the said profile to assume the role 'service-role'.
 
 Please keep in mind that the roles will be assumed in the given order.
 
@@ -88,8 +89,11 @@ For example:
 - ykman (mac)
 - yubioath (linux)
 
-On the logsmith config dialog, you can specify the appropriate command.
-Please keep in mind that you might have to provide the whole path/command, for example `/usr/local/bin/ykman oath code` .
+On the logsmith config dialog, you can specify the appropriate command to fetch the token. Your command should return the 6 digit code.
+Please also keep in mind that you might have to provide the whole path/command.
+
+Example:
+`/usr/local/bin/ykman oath code  | awk 'NF>1{print $NF}'` .
 
 ## Group file
 Logsmith will write the active profile group to `${HOME}/.logsmith/active_group`. This could be used to include the current profile group in your shell prompt.

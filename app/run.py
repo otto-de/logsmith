@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 
-from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication
 
 from app.core import files
 from app.logsmith import MainWindow

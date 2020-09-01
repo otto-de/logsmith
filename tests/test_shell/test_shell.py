@@ -5,6 +5,7 @@ from app.shell import shell
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
+
 class Test(TestCase):
     def test_run(self):
         self.assertEqual('test', shell.run('echo test'))

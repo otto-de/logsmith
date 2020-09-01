@@ -5,6 +5,15 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
+## Unreleased
+
+### Changed
+- MFA shell command fetcher does not assume specific token-string format anymore, but you have to provide a bash command that fetches the exact token (see README for example).
+
+### Fixed
+- catch and handle shell timeouts
+- react to keyboard input while qt event loop is running
+
 ## 4.1.0 - 2020-06-25
 
 ### Added
