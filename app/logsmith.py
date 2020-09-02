@@ -106,8 +106,6 @@ class MainWindow(QMainWindow):
             token = MfaDialog().get_mfa_token()
             if not token:
                 return Result()
-        logger.info(f'got token {token}')
-
         session_result = credentials.fetch_session_token(token)
         return session_result
 
