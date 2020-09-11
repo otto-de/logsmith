@@ -118,7 +118,7 @@ class ConfigDialog(QDialog):
         self.info_text.repaint()
 
     def show_dialog(self, config: Config):
-        self.text_box.setPlainText(files._dump_yaml(config.to_dict()))
+        self.text_box.setPlainText(files.dump_yaml(config.to_dict()))
         self.update_error_text(config)
         self.mfa_command_input.setText(config.mfa_shell_command)
         self.show()

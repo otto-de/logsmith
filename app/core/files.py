@@ -43,7 +43,7 @@ def parse_yaml(text: str):
         return {}
 
 
-def _dump_yaml(d: dict):
+def dump_yaml(d: dict):
     return yaml.dump(d, indent=4, default_flow_style=False, sort_keys=False)
 
 
@@ -73,11 +73,11 @@ def load_accounts():
 
 
 def save_config_file(config_dict: dict):
-    _write_file(get_config_path(), _dump_yaml(config_dict))
+    _write_file(get_config_path(), dump_yaml(config_dict))
 
 
 def save_accounts_file(account_dict: dict):
-    _write_file(get_accounts_path(), _dump_yaml(account_dict))
+    _write_file(get_accounts_path(), dump_yaml(account_dict))
 
 
 def load_logs():

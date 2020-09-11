@@ -46,8 +46,8 @@ class Test(TestCase):
         yaml = files.parse_yaml('test: true test: true')
         self.assertEqual({}, yaml)
 
-    def test__dump_yaml(self):
-        text = files._dump_yaml({'test': True})
+    def test_dump_yaml(self):
+        text = files.dump_yaml({'test': True})
         expected = 'test: true\n'
         self.assertEqual(expected, text)
 
