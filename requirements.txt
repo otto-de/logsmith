@@ -1,5 +1,5 @@
-boto3==1.13.6
-PyQt5==5.14.2
-PyInstaller==3.6
+boto3==1.14.59
+PyQt5==5.15.0
+PyInstaller==4.0
 ruamel.yaml==0.16.12
 nose==1.3.7
