@@ -37,13 +37,13 @@ class Test(TestCase):
     def test_get_active_group_file_path(self, _):
         self.assertEqual('home/.logsmith/active_group', files.get_active_group_file_path())
 
-    def test__parse_yaml(self):
-        yaml = files._parse_yaml('test: true')
+    def test_parse_yaml(self):
+        yaml = files.parse_yaml('test: true')
         expected = {'test': True}
         self.assertEqual(expected, yaml)
 
-    def test__parse_yaml__invalid_yaml(self):
-        yaml = files._parse_yaml('test: true test: true')
+    def test_parse_yaml__invalid_yaml(self):
+        yaml = files.parse_yaml('test: true test: true')
         self.assertEqual({}, yaml)
 
     def test__dump_yaml(self):

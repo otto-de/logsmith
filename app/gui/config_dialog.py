@@ -64,7 +64,7 @@ class ConfigDialog(QDialog):
         text = self.text_box.toPlainText()
         text = text.replace('\t', '  ')
 
-        account_dict = files._parse_yaml(text)
+        account_dict = files.parse_yaml(text)
         if not account_dict:
             self.set_error_text('config invalid')
             return

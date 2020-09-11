@@ -36,7 +36,7 @@ def get_active_group_file_path() -> str:
     return f'{get_app_path()}/{active_group_file_name}'
 
 
-def _parse_yaml(text: str):
+def parse_yaml(text: str):
     try:
         return yaml.safe_load(text) or {}
     except (ParserError, ScannerError):
@@ -65,11 +65,11 @@ def remove_file(path):
 
 
 def load_config():
-    return _parse_yaml(_load_file(get_config_path()))
+    return parse_yaml(_load_file(get_config_path()))
 
 
 def load_accounts():
-    return _parse_yaml(_load_file(get_accounts_path()))
+    return parse_yaml(_load_file(get_accounts_path()))
 
 
 def save_config_file(config_dict: dict):
