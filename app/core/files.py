@@ -2,8 +2,8 @@ import logging
 import os
 from pathlib import Path
 
-import yaml
-from yaml.parser import ParserError, ScannerError
+from ruamel import yaml
+from ruamel.yaml.parser import ParserError, ScannerError
 
 logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
@@ -44,7 +44,7 @@ def parse_yaml(text: str):
 
 
 def dump_yaml(d: dict):
-    return yaml.dump(d, indent=4, default_flow_style=False, sort_keys=False)
+    return yaml.round_trip_dump(d, indent=4, default_flow_style=False)
 
 
 def _load_file(path):

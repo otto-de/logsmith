@@ -11,6 +11,7 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 - MFA shell command fetcher does not assume specific token-string format anymore, but you have to provide a bash command that fetches the exact token (see README for example).
 
 ### Fixed
+- handling of account ids with leading zeros
 - catch and handle shell timeouts
 - react to keyboard input while qt event loop is running
 

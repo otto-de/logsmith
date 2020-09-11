@@ -51,6 +51,16 @@ class Test(TestCase):
         expected = 'test: true\n'
         self.assertEqual(expected, text)
 
+    def test_dump_yaml__leading_zero(self):
+        text = files.dump_yaml({'test': '043156558'})
+        expected = 'test: \'043156558\'\n'
+        self.assertEqual(expected, text)
+
+    def test_dump_yaml__do_not_sort_keys(self):
+        text = files.dump_yaml({'z': 'dog', 'a': 'cat'})
+        expected = 'z: dog\na: cat\n'
+        self.assertEqual(expected, text)
+
     def test__load_file(self):
         text = files._load_file(self.test_file)
         expected = 'this is a test'
