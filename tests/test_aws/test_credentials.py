@@ -166,7 +166,7 @@ class TestCredentials(TestCase):
         self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [call('session-token', 'test_user', '123456789012', 'developer'),
-                                      call('session-token', 'test_user', '123456789012', 'readonly')]
+                                      call('session-token', 'test_user', '012345678901', 'readonly')]
         self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
 
         expected_mock_add_profile_calls = [
@@ -203,7 +203,7 @@ class TestCredentials(TestCase):
         self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [call('session-token', 'test-user', '123456789012', 'developer'),
-                                      call('session-token', 'test-user', '123456789012', 'readonly')]
+                                      call('session-token', 'test-user', '012345678901', 'readonly')]
         self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
 
         expected_mock_add_profile_calls = [
@@ -237,7 +237,7 @@ class TestCredentials(TestCase):
         self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [call('session-token', 'test-user', '123456789012', 'developer'),
-                                      call('developer', 'test-user', '123456789012', 'service')]
+                                      call('developer', 'test-user', '012345678901', 'service')]
         self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
 
         expected_mock_add_profile_calls = [

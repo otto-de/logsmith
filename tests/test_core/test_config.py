@@ -46,7 +46,7 @@ class TestConfig(TestCase):
                     },
                     {
                         'profile': 'readonly',
-                        'account': '123495678901',
+                        'account': '012349567890',
                         'role': 'readonly'
                     }
                 ]
@@ -63,7 +63,7 @@ class TestConfig(TestCase):
                             'default': True},
                         {
                             'profile': 'readonly',
-                            'account': '123456789012',
+                            'account': '012345678901',
                             'role': 'readonly'
                         }
                     ]
@@ -100,7 +100,7 @@ class TestConfig(TestCase):
         profile = development_group.profiles[1]
         self.assertEqual(development_group, profile.group)
         self.assertEqual('readonly', profile.profile)
-        self.assertEqual('123495678901', profile.account)
+        self.assertEqual('012349567890', profile.account)
         self.assertEqual('readonly', profile.role)
         self.assertEqual(False, profile.default)
 
