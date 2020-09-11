@@ -4,7 +4,7 @@ import subprocess
 logger = logging.getLogger('logsmith')
 
 
-def run(command, timeout=3):
+def run(command, timeout=5):
     proc = None
     try:
         bash_command = ['bash', '-c', command]
