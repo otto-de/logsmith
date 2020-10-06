@@ -7,8 +7,11 @@ This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.
 
 ## Unreleased
 
+### Fixed
+- dialogs should now be opened in the foreground (thanks to @TomVollerthun1337)
+
 ### Added
-- Add some basic command line arguments
+- Add some basic command line arguments (thanks to @TomVollerthun1337)
 
 ## 5.0.0 - 2020-09-11
 
