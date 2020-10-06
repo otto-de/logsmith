@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
+## Unreleased
+
+### Added
+- Add some basic command line arguments
+
 ## 5.0.0 - 2020-09-11
 
 ### Changed
