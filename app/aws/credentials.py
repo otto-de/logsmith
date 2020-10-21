@@ -6,7 +6,7 @@ from pathlib import Path
 import boto3
 import botocore
 from botocore.exceptions import ClientError, ParamValidationError, EndpointConnectionError, \
-    NoCredentialsError
+    NoCredentialsError, ReadTimeoutError
 
 from app.core.config import ProfileGroup
 from app.core.result import Result
@@ -83,13 +83,13 @@ def check_session() -> Result:
         logger.warning('no session token found')
         return result
 
-    client = _get_client('session-token', 'sts', timeout=1, retries=1)
     try:
+        client = _get_client('session-token', 'sts', timeout=1, retries=1)
         client.get_caller_identity()
     except ClientError:
         # this is the normal case when the session token is not valid. Proceed then to fetch a new one
         return result
-    except EndpointConnectionError:
+    except (EndpointConnectionError, ReadTimeoutError) as e:
         error_text = 'could not reach sts service'
         result.error(error_text)
         logger.error(error_text, exc_info=True)
