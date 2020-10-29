@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 from unittest.mock import Mock, call
 
 from botocore.exceptions import ClientError, EndpointConnectionError, ParamValidationError, \
-    NoCredentialsError
+    NoCredentialsError, ReadTimeoutError
 
 from app.aws import credentials
 from app.core.config import ProfileGroup
@@ -24,6 +24,7 @@ class TestCredentials(TestCase):
         cls.param_validation_error = ParamValidationError(report='test')
         cls.no_credentials_error = NoCredentialsError()
         cls.endpoint_error = EndpointConnectionError(endpoint_url='test')
+        cls.timeout_error = ReadTimeoutError(endpoint_url='test')
 
         cls.test_secrets = {'AccessKeyId': 'test-key-id',
                             'SecretAccessKey': 'test-access-key',
@@ -89,6 +90,19 @@ class TestCredentials(TestCase):
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(False, result.was_error)
+
+    @mock.patch('app.aws.credentials._get_client')
+    @mock.patch('app.aws.credentials._get_credentials_path')
+    def test_check_session__connection_timeout(self, mock_path, mock_get_client):
+        mock_path.return_value = self.test_credentials_file_path
+        mock_client = Mock()
+        mock_client.get_caller_identity.side_effect = self.timeout_error
+        mock_get_client.return_value = mock_client
+
+        result = credentials.check_session()
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
     @mock.patch('app.aws.credentials._add_profile_credentials')
