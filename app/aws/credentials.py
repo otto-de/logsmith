@@ -84,7 +84,7 @@ def check_access_key() -> Result:
 
     result = Result()
     try:
-        client = _get_client('access-key', 'sts', timeout=3, retries=3)
+        client = _get_client('access-key', 'sts', timeout=2, retries=2)
         client.get_caller_identity()
     except ClientError:
         error_text = 'access key is not valid'
@@ -108,7 +108,7 @@ def check_session() -> Result:
         return result
 
     try:
-        client = _get_client('session-token', 'sts', timeout=3, retries=3)
+        client = _get_client('session-token', 'sts', timeout=2, retries=2)
         client.get_caller_identity()
     except ClientError:
         # this is the normal case when the session token is not valid. Proceed then to fetch a new one
