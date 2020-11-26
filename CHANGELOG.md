@@ -5,13 +5,20 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
-## Unreleased
+## 6.0.0 - 2020-11-26
 
-### Fixed
-- dialogs should now be opened in the foreground (thanks to @TomVollerthun1337)
+### Changed
+- Gui and core are now decoupled in order to provide different interfaces.
 
 ### Added
 - Add some basic command line arguments (thanks to @TomVollerthun1337)
+- Add cli interface for all basic functions
+
+### Fixed
+- dialogs should now be opened in the foreground (thanks to @TomVollerthun1337)
+- profiles will correctly updates if config is changed
+- slightly increase sts timeouts to avoid sts availability issues
+- set text color and text background color to black/white to that not everything is back on a dark themed os
 
 ## 5.0.0 - 2020-09-11
 
