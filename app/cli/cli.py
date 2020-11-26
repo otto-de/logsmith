@@ -50,7 +50,7 @@ class Cli:
             self._check_and_signal_error(region_result)
         self._info('login successful')
 
-        time.sleep(10)
+        time.sleep(300)
         self.login(profile_group_name, region)
 
     def logout(self):

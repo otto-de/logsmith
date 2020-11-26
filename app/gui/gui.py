@@ -53,7 +53,7 @@ class Gui(QMainWindow):
         logger.info('start repeater')
         prepare_login = partial(self.login, profile_group=profile_group)
         self.login_repeater.start(task=prepare_login,
-                                  delay_seconds=10)
+                                  delay_seconds=300)
         self._to_login_state()
 
     def logout(self):
