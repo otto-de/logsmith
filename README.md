@@ -18,6 +18,7 @@ Logsmith is a desktop trayicon to assume your favorite aws roles.
 - icon will change color. You see which profiles you are using
 - set and rotate access key
 - fetches mfa token for you
+- has a graphical user interface and a cli
 
 ## Config
 The config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
@@ -102,6 +103,22 @@ Example:
 ```bash
 some_directory [master] (production) %
 ```
+
+## Cli
+If you provide one of the following parameter logsmith will automatically start in cli mode:
+```bash
+  --list                lists profile groups
+  --login LOGIN         Login with group
+  --logout              Remove profiles
+  --region REGION       Overwrite region to login to
+  --set-access-key      set access key
+  --rotate-access-key   rotate access key
+```
+
+Example to login with cli mode:
+```bash
+  ./logsmith --login team1
+``` 
 
 ## How to package
 If you want to build a binary, please use the following steps:
