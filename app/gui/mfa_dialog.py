@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class MfaDialog(QDialog):
     def __init__(self, parent=None):
-        super(MfaDialog, self).__init__(parent)  # , Qt.FramelessWindowHint
+        super(MfaDialog, self).__init__(parent)
         self.gui: Gui = parent
         self.pressed_cancel = False
         self.setWindowTitle('Mfa')
