@@ -22,12 +22,12 @@ class SetKeyDialog(QDialog):
         self.key_id_text = QLabel("Key ID:", self)
 
         self.key_id_input = QLineEdit(self)
-        self.key_id_input.setStyleSheet("color: rgb(0, 0, 0);")
+        self.key_id_input.setStyleSheet("color: black; background-color: white;")
 
         self.access_key_text = QLabel("Secret Access Key:", self)
 
         self.access_key_input = QLineEdit(self)
-        self.access_key_input.setStyleSheet("color: rgb(0, 0, 0);")
+        self.access_key_input.setStyleSheet("color: black; background-color: white;")
         self.access_key_input.setEchoMode(QLineEdit.Password)
 
         self.ok_button = QPushButton("OK")

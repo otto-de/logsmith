@@ -29,12 +29,12 @@ class ConfigDialog(QDialog):
         font = QtGui.QFont("Courier")
         font.setPointSize(14)
         self.text_box.setFont(font)
-        self.text_box.setStyleSheet('color: rgb(0, 0, 0);')
+        self.text_box.setStyleSheet("color: black; background-color: white;")
         self.text_box.setTabStopDistance(16)
 
         self.mfa_command_label = QLabel("Shell command to fetch mfa token:", self)
         self.mfa_command_input = QLineEdit(self)
-        self.mfa_command_input.setStyleSheet("color: rgb(0, 0, 0);")
+        self.mfa_command_input.setStyleSheet("color: black; background-color: white;")
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)

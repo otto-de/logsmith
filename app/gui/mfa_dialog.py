@@ -18,7 +18,7 @@ class MfaDialog(QDialog):
         self.text = QLabel("Mfa Token:", self)
 
         self.input_field = QLineEdit(self)
-        self.input_field.setStyleSheet("color: rgb(0, 0, 0);")
+        self.input_field.setStyleSheet("color: black; background-color: white;")
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)

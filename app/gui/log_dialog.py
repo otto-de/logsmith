@@ -20,6 +20,7 @@ class LogDialog(QDialog):
 
         self.text_box = QLabel('no logs', self)
         self.text_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.text_box.setStyleSheet("color: black; background-color: white;")
         self.text_box.setAlignment(Qt.AlignTop)
 
         self.scroll_area = QScrollArea(self)
