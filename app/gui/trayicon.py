@@ -1,16 +1,19 @@
 import os
 from functools import partial
+from typing import List, TYPE_CHECKING
 
 from PyQt5.QtWidgets import QSystemTrayIcon, QMenu
 
 from app.aws import regions
+from core.config import ProfileGroup
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
+if TYPE_CHECKING:
+    from gui.gui import Gui
 
 
 class SystemTrayIcon(QSystemTrayIcon):
-    def __init__(self, parent, assets):
-        self.parent = parent
+    def __init__(self, parent, assets, profile_list: List[ProfileGroup]):
+        self.gui: Gui = parent
         self.assets = assets
 
         self.log_action = None
@@ -25,25 +28,24 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.actions = []
         self.previous_action = None
 
-        QSystemTrayIcon.__init__(self, self.assets.standard, self.parent)
+        QSystemTrayIcon.__init__(self, self.assets.standard, self.gui)
         self.setIcon(self.assets.get_icon(style='full'))
-        self.populate_context_menu()
+        self.populate_context_menu(profile_list)
 
-    def populate_context_menu(self):
-        menu = QMenu(self.parent)
+    def populate_context_menu(self, profile_list: List[ProfileGroup]):
+        menu = QMenu(self.gui)
 
         self.actions = []
-        for profile_group in self.parent.config.list_groups():
+        for profile_group in profile_list:
             action = menu.addAction(profile_group.name)
-            action.triggered.connect(partial(self.parent.login,
-                                             profile_group=profile_group,
-                                             action=action))
+            action.triggered.connect(partial(self.gui.login,
+                                             profile_group=profile_group))
             action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
             self.actions.append(action)
 
         # log out
         action = menu.addAction('logout')
-        action.triggered.connect(self.parent.logout)
+        action.triggered.connect(self.gui.logout)
         action.setIcon(self.assets.get_icon(style='outline', color_code='#FFFFFF'))
         self.actions.append(action)
 
@@ -65,26 +67,26 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
         self.config_action = menu.addAction('Edit config')
-        self.config_action.triggered.connect(self.parent.show_config_dialog)
+        self.config_action.triggered.connect(self.gui.show_config_dialog)
 
         key_menu = QMenu('Access Key', menu)
         menu.addMenu(key_menu)
         self.add_access_key_action = key_menu.addAction('Set access key')
-        self.add_access_key_action.triggered.connect(self.parent.show_set_key_dialog)
+        self.add_access_key_action.triggered.connect(self.gui.show_set_key_dialog)
         self.rotate_access_key_action = key_menu.addAction('Rotate access key')
-        self.rotate_access_key_action.triggered.connect(self.parent.show_access_key_rotation_dialog)
+        self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
 
         menu.addSeparator()
         self.log_action = menu.addAction("Show logs")
-        self.log_action.triggered.connect(self.parent.show_logs)
+        self.log_action.triggered.connect(self.gui.show_logs)
 
         menu.addSeparator()
-        self.last_login = menu.addAction(f'last login {self.parent.last_login}')
+        self.last_login = menu.addAction(f'last login never')
         self.last_login.setDisabled(True)
 
         menu.addSeparator()
         exit_action = menu.addAction("Exit")
-        exit_action.triggered.connect(self.parent.stop_and_exit)
+        exit_action.triggered.connect(self.gui.stop_and_exit)
 
         self.setContextMenu(menu)
         menu.repaint()
@@ -96,39 +98,23 @@ class SystemTrayIcon(QSystemTrayIcon):
     def update_last_login(self, timestamp: str):
         self.last_login.setText(f'last login {timestamp}')
 
-    def set_override_region(self, region: str):
-        self.parent.region_override = region
-        self.parent.set_region()
-
     def set_region_to_default(self):
-        self.parent.region_override = None
-        self.parent.set_region()
+        self.gui.set_region(None)
+        self.region_menu.setTitle('default region')
+
+    def set_override_region(self, region: str):
+        self.gui.set_region(region)
+        self.region_menu.setTitle(region)
 
     def update_region_text(self, region: str):
-        if self.parent.region_override:
-            self.region_menu.setTitle(region)
-        else:
-            self.region_menu.setTitle('default region')
-
         if region:
             self.active_region.setText(region)
         else:
             self.active_region.setText(self.default_region_text)
 
-    def reset_previous_action(self, action):
-        pass
-        # if self.previous_action:
-        #     self.previous_action.setIcon(self.assets.get_icon(style='full'))
-        #
-        #     text = action.text()
-        #     text.replace('-> ', '')
-        #     action.setText(text)
-        # self.previous_action = action
-
     def show_message(self, title, message):
         self.showMessage(
             title,
             message,
-            # QSystemTrayIcon.Information,
             self.assets.get_icon(),
             8000)

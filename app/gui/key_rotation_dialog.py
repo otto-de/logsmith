@@ -1,12 +1,17 @@
+from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QLabel, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton
 
+if TYPE_CHECKING:
+    from gui.gui import Gui
+
 
 class RotateKeyDialog(QDialog):
     def __init__(self, parent=None):
-        super(RotateKeyDialog, self).__init__(parent)  # , Qt.FramelessWindowHint
-        self.parent = parent
+        super(RotateKeyDialog, self).__init__(parent)
+        self.gui: Gui = parent
         self.setWindowTitle('Key Rotation')
 
         self.width = 400
@@ -35,7 +40,7 @@ class RotateKeyDialog(QDialog):
         self.installEventFilter(self)
 
     def ok(self):
-        self.parent.rotate_access_key()
+        self.gui.rotate_access_key()
         self.hide()
 
     def cancel(self):

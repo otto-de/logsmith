@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import sys
 
-from app.core import arguments
+import arguments
 from app import __version__
 
 
@@ -17,6 +17,7 @@ def captured_output():
         yield sys.stdout, sys.stderr
     finally:
         sys.stdout, sys.stderr = old_out, old_err
+
 
 class Test(TestCase):
 
@@ -75,5 +76,3 @@ class Test(TestCase):
         self.assertRegex(err.getvalue(), "logsmith: error: unrecognized arguments: --foobar")
         self.assertEqual(out.getvalue(), '')
         self.assertNotEqual(cm.exception.code, 0)
-
-

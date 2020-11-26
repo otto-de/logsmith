@@ -2,11 +2,10 @@ import logging
 import os
 import sys
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication
-
-from app.core import files, arguments
-from app.logsmith import MainWindow
+import arguments
+from app.core import files
+from cli.main import start_cli
+from gui.main import start_gui
 
 
 def main():
@@ -40,17 +39,10 @@ def main():
     logging.info(f'config dir {app_path}')
     logging.info('start app')
 
-    try:
-        app = QApplication(sys.argv)
-        MainWindow(app)
-
-        timer = QTimer()
-        timer.timeout.connect(lambda: None)
-        timer.start(100)
-
-        sys.exit(app.exec_())
-    except Exception:
-        logging.error('unexpected error', exc_info=True)
+    if arguments.use_cli(args):
+        start_cli(args)
+    else:
+        start_gui()
 
 
 if __name__ == '__main__':

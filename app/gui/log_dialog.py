@@ -1,12 +1,17 @@
+from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QLabel, QSizePolicy, QScrollArea, QVBoxLayout, \
     QDialog
+
+if TYPE_CHECKING:
+    from gui.gui import Gui
 
 
 class LogDialog(QDialog):
     def __init__(self, parent=None):
         super(LogDialog, self).__init__(parent)
-        self.parent = parent
+        self.gui: Gui = parent
         self.setWindowTitle('Logs')
 
         self.initial_width = 600

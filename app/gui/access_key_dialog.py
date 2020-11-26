@@ -1,12 +1,17 @@
+from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton
+
+if TYPE_CHECKING:
+    from gui.gui import Gui
 
 
 class SetKeyDialog(QDialog):
     def __init__(self, parent=None):
         super(SetKeyDialog, self).__init__(parent)
-        self.parent = parent
+        self.gui: Gui = parent
         self.setWindowTitle('Access Key')
 
         self.width = 400
@@ -61,7 +66,7 @@ class SetKeyDialog(QDialog):
         if not access_key:
             self.set_error_text('missing access key')
             return
-        self.parent.set_access_key(key_id=key_id, access_key=access_key)
+        self.gui.set_access_key(key_id=key_id, access_key=access_key)
         self.hide()
 
     def cancel(self):

@@ -1,20 +1,24 @@
 import sys
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtWidgets import QApplication, QLabel, QPlainTextEdit, QPushButton, \
-    QHBoxLayout, QVBoxLayout, QDialog, QCheckBox, QLineEdit
+    QHBoxLayout, QVBoxLayout, QDialog, QLineEdit
 
 from app import __version__
 from app.core import files
 from app.core.config import Config
 from app.yubico import mfa
 
+if TYPE_CHECKING:
+    from gui.gui import Gui
+
 
 class ConfigDialog(QDialog):
     def __init__(self, parent=None):
         super(ConfigDialog, self).__init__(parent)
-        self.parent = parent
+        self.gui: Gui = parent
 
         self.setWindowTitle(f'Config - v{__version__.__version_string__}')
         self.initial_width = 600
@@ -63,16 +67,16 @@ class ConfigDialog(QDialog):
         text = self.text_box.toPlainText()
         text = text.replace('\t', '  ')
 
-        account_dict = files.parse_yaml(text)
-        if not account_dict:
+        raw_config_dict = files.parse_yaml(text)
+        if not raw_config_dict:
             self.set_error_text('config invalid')
             return
 
         config = Config()
-        config.set_accounts(account_dict)
+        config.set_accounts(raw_config_dict)
         if config.valid:
             config.mfa_shell_command = self.mfa_command_input.text()
-            self.parent.edit_config(config)
+            self.gui.edit_config(config)
             self.hide()
         else:
             self.set_error_text(config.error)

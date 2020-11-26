@@ -63,7 +63,7 @@ def _get_client(profile_name: str, service: str, timeout: int = None, retries: i
 
 
 def has_access_key() -> Result:
-    logger.info('check access key')
+    logger.info('has access key')
     result = Result()
     credentials_file = _load_credentials_file()
 
@@ -71,6 +71,30 @@ def has_access_key() -> Result:
         error_text = 'could not find profile \'access-key\' in .aws/credentials'
         result.error(error_text)
         logger.warning(error_text)
+        return result
+    result.set_success()
+    return result
+
+
+def check_access_key() -> Result:
+    logger.info('check access key')
+    access_key_result = has_access_key()
+    if not access_key_result.was_success:
+        return access_key_result
+
+    result = Result()
+    try:
+        client = _get_client('access-key', 'sts', timeout=3, retries=3)
+        client.get_caller_identity()
+    except ClientError:
+        error_text = 'access key is not valid'
+        result.error(error_text)
+        logger.warning(error_text)
+        return result
+    except (EndpointConnectionError, ReadTimeoutError):
+        error_text = 'could not reach sts service'
+        result.error(error_text)
+        logger.error(error_text, exc_info=True)
         return result
     result.set_success()
     return result
@@ -84,12 +108,12 @@ def check_session() -> Result:
         return result
 
     try:
-        client = _get_client('session-token', 'sts', timeout=1, retries=1)
+        client = _get_client('session-token', 'sts', timeout=3, retries=3)
         client.get_caller_identity()
     except ClientError:
         # this is the normal case when the session token is not valid. Proceed then to fetch a new one
         return result
-    except (EndpointConnectionError, ReadTimeoutError) as e:
+    except (EndpointConnectionError, ReadTimeoutError):
         error_text = 'could not reach sts service'
         result.error(error_text)
         logger.error(error_text, exc_info=True)

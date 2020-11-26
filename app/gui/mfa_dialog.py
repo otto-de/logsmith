@@ -1,12 +1,17 @@
+from typing import TYPE_CHECKING
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton
+
+if TYPE_CHECKING:
+    from gui.gui import Gui
 
 
 class MfaDialog(QDialog):
     def __init__(self, parent=None):
         super(MfaDialog, self).__init__(parent)  # , Qt.FramelessWindowHint
-        self.parent = parent
+        self.gui: Gui = parent
         self.pressed_cancel = False
         self.setWindowTitle('Mfa')
 
@@ -58,6 +63,7 @@ class MfaDialog(QDialog):
 
     def get_mfa_token(self):
         self.exec_()
+        self.activateWindow()
         if self.pressed_cancel:
             return None
         return self.get_value()

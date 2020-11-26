@@ -48,7 +48,7 @@ class Config:
         return list(self.profile_groups.values())
 
     def get_group(self, name):
-        return self.profile_groups[name]
+        return self.profile_groups.get(name, None)
 
     def to_dict(self):
         d = {}
