@@ -57,26 +57,6 @@ class TestCore(TestCase):
         self.assertEqual(expected, self.core._renew_session.mock_calls)
         self.assertEqual(self.error_result, result)
 
-    # @mock.patch('app.core.core.credentials')
-    # def test_login__mfa_no_token(self, mock_credentials):
-    #     mock_credentials.check_access_key.return_value = get_success_result()
-    #     mock_credentials.check_session.return_value = get_failed_result()
-    #     self.core._renew_session.return_value = get_failed_result()
-    #
-    #     mock_mfa_callback = Mock()
-    #     mock_mfa_callback.return_value = ''
-    #     result = self.core.login(self.config.get_group('development'), mock_mfa_callback)
-    #
-    #     expected = [call.check_access_key(), call.check_session()]
-    #     self.assertEqual(expected, mock_credentials.mock_calls)
-    #
-    #     expected = [call(None)]
-    #     self.assertEqual(expected, self.core._renew_session.mock_calls)
-    #
-    #     self.assertEqual(False, result.was_success)
-    #     self.assertEqual(True, result.was_error)
-    #     self.assertEqual('some error', result.error_message)
-
     @mock.patch('app.core.core.files')
     @mock.patch('app.core.core.credentials')
     def test_login__successful_login(self, mock_credentials, _):
