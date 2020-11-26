@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import sys
 
-import arguments
+from app import arguments
 from app import __version__
 
 

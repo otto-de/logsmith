@@ -3,14 +3,14 @@ from unittest.mock import call, Mock
 
 from app.core.config import Config
 from app.core.result import Result
-from core.core import Core
+from app.core.core import Core
 from tests.test_data.test_accounts import get_test_accounts
 from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
 
 
 class TestCore(TestCase):
 
-    @mock.patch('core.core.Config.load_from_disk')
+    @mock.patch('app.core.core.Config.load_from_disk')
     def setUp(self, mock_config):
         self.core = Core()
         self.config = Config()
@@ -21,7 +21,7 @@ class TestCore(TestCase):
         self.fail_result = get_failed_result()
         self.error_result = get_error_result()
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test_login__no_access_key(self, mock_credentials):
         mock_credentials.check_access_key.return_value = self.error_result
         result = self.core.login(self.config.get_group('development'), None)
@@ -30,7 +30,7 @@ class TestCore(TestCase):
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test_login__session_token_error(self, mock_credentials):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.error_result
@@ -41,7 +41,7 @@ class TestCore(TestCase):
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test_login__mfa_error(self, mock_credentials):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.fail_result
@@ -57,7 +57,7 @@ class TestCore(TestCase):
         self.assertEqual(expected, self.core._renew_session.mock_calls)
         self.assertEqual(self.error_result, result)
 
-    # @mock.patch('core.core.credentials')
+    # @mock.patch('app.core.core.credentials')
     # def test_login__mfa_no_token(self, mock_credentials):
     #     mock_credentials.check_access_key.return_value = get_success_result()
     #     mock_credentials.check_session.return_value = get_failed_result()
@@ -77,8 +77,8 @@ class TestCore(TestCase):
     #     self.assertEqual(True, result.was_error)
     #     self.assertEqual('some error', result.error_message)
 
-    @mock.patch('core.core.files')
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.files')
+    @mock.patch('app.core.core.credentials')
     def test_login__successful_login(self, mock_credentials, _):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.success_result
@@ -109,7 +109,7 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test_login__logout(self, mock_credentials):
         mock_credentials.fetch_role_credentials.return_value = self.success_result
         mock_credentials.write_profile_config.return_value = self.success_result
@@ -123,7 +123,7 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test_login__logout_error(self, mock_credentials):
         mock_credentials.fetch_role_credentials.return_value = self.error_result
 
@@ -134,7 +134,7 @@ class TestCore(TestCase):
 
         self.assertEqual(self.error_result, result)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test_rotate_access_key__no_access_key(self, mock_credentials):
         mock_credentials.check_access_key.return_value = self.error_result
         result = self.core.rotate_access_key()
@@ -143,8 +143,8 @@ class TestCore(TestCase):
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
 
-    @mock.patch('core.core.iam')
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.iam')
+    @mock.patch('app.core.core.credentials')
     def test_rotate_access_key__successful_rotate(self, mock_credentials, mock_iam):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.success_result
@@ -191,8 +191,8 @@ class TestCore(TestCase):
         region = self.core.get_region()
         self.assertEqual('eu-north-1', region)
 
-    @mock.patch('core.core.mfa')
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.mfa')
+    @mock.patch('app.core.core.credentials')
     def test__renew_session__token_from_shell(self, mock_credentials, mock_mfa_shell):
         mock_mfa_shell.fetch_mfa_token_from_shell.return_value = '12345'
         mock_credentials.fetch_session_token.return_value = self.success_result
@@ -208,8 +208,8 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-    @mock.patch('core.core.mfa')
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.mfa')
+    @mock.patch('app.core.core.credentials')
     def test__renew_session__no_token_from_mfa_callback(self, mock_credentials, mock_mfa_shell):
         mock_mfa_shell.fetch_mfa_token_from_shell.return_value = None
         mock_credentials.fetch_session_token.return_value = self.success_result
@@ -226,8 +226,8 @@ class TestCore(TestCase):
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
 
-    @mock.patch('core.core.mfa')
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.mfa')
+    @mock.patch('app.core.core.credentials')
     def test__renew_session__token_from_mfa_callback(self, mock_credentials, mock_mfa_shell):
         mock_mfa_shell.fetch_mfa_token_from_shell.return_value = None
         mock_credentials.fetch_session_token.return_value = self.success_result
@@ -244,7 +244,7 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test__set_region__not_logged_in(self, mock_credentials):
         mock_credentials.write_profile_config.return_value = self.success_result
 
@@ -257,7 +257,7 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-    @mock.patch('core.core.credentials')
+    @mock.patch('app.core.core.credentials')
     def test__set_region__logged_in(self, mock_credentials):
         mock_credentials.write_profile_config.return_value = self.success_result
         self.core.active_profile_group = self.config.get_group('development')
