@@ -141,7 +141,7 @@ class Gui(QMainWindow):
         return datetime.now().strftime('%H:%M')
 
     def stop_and_exit(self):
-        self.core.stop_login_repeater()
+        self.login_repeater.stop()
         self.exit()
 
     @staticmethod
