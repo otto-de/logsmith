@@ -6,7 +6,7 @@ def start_cli(args):
     if args.list:
         cli.list()
     if args.login:
-        cli.login(args.login, args.region)
+        cli.login(args.login, args.region, args.oneshot)
     if args.logout:
         cli.logout()
     if args.rotate_access_key:

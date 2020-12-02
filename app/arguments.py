@@ -22,6 +22,8 @@ def parse(args):
                         help='set access key')
     parser.add_argument('--rotate-access-key', action='store_true',
                         help='rotate access key')
+    parser.add_argument('-o', '--oneshot', action='store_true',
+                        help='When used in combination with --login, the program will finish after login instead of running an infinite refresh loop')
     return parser.parse_args(args)
 
 
