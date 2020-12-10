@@ -28,7 +28,7 @@ class Cli:
         for group in profile_groups_list:
             print(group.name)
 
-    def login(self, profile_group_name, region):
+    def login(self, profile_group_name, region, oneshot=False):
         profile_group = self.core.config.get_group(profile_group_name)
         if not profile_group:
             self._error('profile group not found')
@@ -49,6 +49,9 @@ class Cli:
             region_result = self.core.set_region(region=region)
             self._check_and_signal_error(region_result)
         self._info('login successful')
+
+        if oneshot:
+            return
 
         time.sleep(300)
         self.login(profile_group_name, region)
