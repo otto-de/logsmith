@@ -113,6 +113,7 @@ If you provide one of the following parameter logsmith will automatically start 
   --region REGION       Overwrite region to login to
   --set-access-key      set access key
   --rotate-access-key   rotate access key
+  -o --oneshot          exit after login
 ```
 
 Example to login with cli mode:

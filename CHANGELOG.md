@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
+## 6.1.0 - 2020-01-12
+
+### Added
+- Add command line arguments to exit after login (thanks to @TomVollerthun1337)
+
 ## 6.0.0 - 2020-11-26
 
 ### Changed
