@@ -54,7 +54,7 @@ if sys.platform == 'darwin':
                  },
                  icon='./app/assets/app_icon.icns')
 
-if sys.platform == 'win32' or sys.platform == 'win64' or sys.platform == 'linux':
+if sys.platform == 'linux':
     exe = EXE(pyz,
               a.scripts,
               a.binaries,
@@ -67,3 +67,17 @@ if sys.platform == 'win32' or sys.platform == 'win64' or sys.platform == 'linux'
               runtime_tmpdir=None,
               console=False,
               icon='./app/assets/app_icon.png')
+
+if sys.platform == 'win32' or sys.platform == 'win64':
+    exe = EXE(pyz,
+              a.scripts,
+              a.binaries,
+              a.zipfiles,
+              a.datas,
+              name=app_name,
+              debug=False,
+              strip=False,
+              upx=True,
+              runtime_tmpdir=None,
+              console=False,
+              icon='./app/assets/app_icon.ico')
