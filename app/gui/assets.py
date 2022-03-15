@@ -1,8 +1,8 @@
 import os
 import sys
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap, QColor
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon, QPixmap, QColor
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,7 +26,7 @@ class Assets:
     @staticmethod
     def _color_icon(icon, color_code):
         pix_map = QPixmap(icon)
-        mask = pix_map.createMaskFromColor(QColor('black'), Qt.MaskOutColor)
+        mask = pix_map.createMaskFromColor(QColor('black'), Qt.MaskMode.MaskOutColor)
         pix_map.fill(QColor(color_code))
         pix_map.setMask(mask)
         return QIcon(pix_map)

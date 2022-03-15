@@ -1,8 +1,8 @@
 import logging
 import sys
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication
 
 from app.gui.gui import Gui
 
@@ -18,6 +18,6 @@ def start_gui():
         timer.timeout.connect(lambda: None)
         timer.start(100)
 
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
     except Exception:
         logging.error('unexpected error', exc_info=True)

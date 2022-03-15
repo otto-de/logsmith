@@ -82,14 +82,14 @@ if [[ "${dist}" == "darwin" ]] && [[ "${mode}" == "linux" ]]; then
   docker run \
     -v "$(pwd):/src/" \
     cdrx/pyinstaller-linux \
-    "pyinstaller --onefile --hidden-import PyQt5.sip --distpath ${dist_path} ./logsmith.spec"
+    "pyinstaller --onefile --hidden-import PyQt6.sip --distpath ${dist_path} ./logsmith.spec"
 fi
 
 if [[ "${mode}" == "windows" ]]; then
   docker run \
     -v "$(pwd):/src/" \
     cdrx/pyinstaller-windows \
-    "pyinstaller --onefile --hidden-import PyQt5.sip ./logsmith.spec"
+    "pyinstaller --onefile --hidden-import PyQt6.sip ./logsmith.spec"
 fi
 
 if ${zip_mode}; then

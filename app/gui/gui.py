@@ -2,8 +2,8 @@ import logging
 from datetime import datetime
 from functools import partial
 
-from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtWidgets import QMainWindow
+from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtWidgets import QMainWindow
 
 from app.aws import credentials
 from app.core import files

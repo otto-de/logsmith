@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QLabel, QSizePolicy, QScrollArea, QVBoxLayout, \
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QLabel, QSizePolicy, QScrollArea, QVBoxLayout, \
     QDialog
 
 if TYPE_CHECKING:
@@ -19,9 +19,9 @@ class LogDialog(QDialog):
         self.resize(self.initial_width, self.initial_height)
 
         self.text_box = QLabel('no logs', self)
-        self.text_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.text_box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.text_box.setStyleSheet("color: black; background-color: white;")
-        self.text_box.setAlignment(Qt.AlignTop)
+        self.text_box.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setVisible(True)

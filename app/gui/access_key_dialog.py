@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class SetKeyDialog(QDialog):
 
         self.access_key_input = QLineEdit(self)
         self.access_key_input.setStyleSheet("color: black; background-color: white;")
-        self.access_key_input.setEchoMode(QLineEdit.Password)
+        self.access_key_input.setEchoMode(QLineEdit.EchoMode.Password)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)

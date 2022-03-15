@@ -1,9 +1,9 @@
 import sys
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QApplication, QLabel, QPlainTextEdit, QPushButton, \
+from PyQt6 import QtGui
+from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtWidgets import QApplication, QLabel, QPlainTextEdit, QPushButton, \
     QHBoxLayout, QVBoxLayout, QDialog, QLineEdit
 
 from app import __version__
@@ -58,7 +58,7 @@ class ConfigDialog(QDialog):
 
         vbox.addWidget(self.mfa_command_label)
         vbox.addWidget(self.mfa_command_input)
-        vbox.addWidget(self.check_command_button, alignment=Qt.AlignRight)
+        vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignRight)
 
         vbox.addLayout(hbox)
         self.setLayout(vbox)
