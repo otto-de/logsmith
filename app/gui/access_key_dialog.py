@@ -80,11 +80,11 @@ class SetKeyDialog(QDialog):
         self.hide()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() == Qt.Key.Key_Return:
             self.ok()
-        elif event.key() == Qt.Key_Enter:
+        elif event.key() == Qt.Key.Key_Enter:
             self.ok()
-        elif event.key() == Qt.Key_Escape:
+        elif event.key() == Qt.Key.Key_Escape:
             self.cancel()
 
     def set_error_text(self, message):

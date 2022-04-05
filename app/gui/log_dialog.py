@@ -40,7 +40,7 @@ class LogDialog(QDialog):
         self.hide()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             self.hide()
 
     def show_dialog(self, logs_as_text):
@@ -57,4 +57,4 @@ if __name__ == '__main__':
     app = QApplication([])
     ex = LogDialog()
     ex.show_dialog('')
-    app.exec_()
+    app.exec()
