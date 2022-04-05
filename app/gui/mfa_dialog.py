@@ -54,15 +54,15 @@ class MfaDialog(QDialog):
         self.hide()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() == Qt.Key.Key_Return:
             self.ok()
-        elif event.key() == Qt.Key_Enter:
+        elif event.key() == Qt.Key.Key_Enter:
             self.ok()
-        elif event.key() == Qt.Key_Escape:
+        elif event.key() == Qt.Key.Key_Escape:
             self.cancel()
 
     def get_mfa_token(self):
-        self.exec_()
+        self.exec()
         self.activateWindow()
         if self.pressed_cancel:
             return None
@@ -73,4 +73,4 @@ if __name__ == '__main__':
     app = QApplication([])
     ex = MfaDialog()
     ex.show()
-    app.exec_()
+    app.exec()
