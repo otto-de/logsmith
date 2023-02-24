@@ -98,6 +98,7 @@ class SetKeyDialog(QDialog):
         self.key_id_input.repaint()
         self.set_error_text(message)
         self.show()
+        self.raise_()
         self.activateWindow()
 
 

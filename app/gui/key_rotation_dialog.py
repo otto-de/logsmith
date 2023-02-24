@@ -60,6 +60,7 @@ class RotateKeyDialog(QDialog):
 
     def show_dialog(self):
         self.show()
+        self.raise_()
         self.activateWindow()
 
 
