@@ -63,6 +63,7 @@ class MfaDialog(QDialog):
 
     def get_mfa_token(self):
         self.exec()
+        self.raise_()
         self.activateWindow()
         if self.pressed_cancel:
             return None

@@ -125,6 +125,7 @@ class ConfigDialog(QDialog):
         self.update_error_text(config)
         self.mfa_command_input.setText(config.mfa_shell_command)
         self.show()
+        self.raise_()
         self.activateWindow()
 
 
