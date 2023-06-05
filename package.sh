@@ -74,7 +74,6 @@ dist=$(uname)
 dist=$(echo "${dist}" | tr '[:upper:]' '[:lower:]')
 dist_path=${dir}/dist/${dist}
 ${bundler} \
-  --onefile \
   --distpath "${dist_path}" \
   ./logsmith.spec
 
