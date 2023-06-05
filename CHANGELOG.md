@@ -5,6 +5,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
+## 6.2.0 - 2023-06-05
+
+### Fixed
+- Dialogs should now appear in front (thanks to @MartinStarkNL)
+
+### Changed
+- Upgrade PyQT to Version 6
+
 ## 6.1.0 - 2020-01-12
 
 ### Added
