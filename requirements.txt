@@ -1,5 +1,5 @@
 boto3==1.28.62
 PyQt6==6.5.0
 PyInstaller==5.10.1
-ruamel.yaml==0.17.21
+ruamel.yaml==0.17.35
 nose==1.3.7
