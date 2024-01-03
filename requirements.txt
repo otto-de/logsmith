@@ -1,4 +1,4 @@
-boto3==1.28.62
+boto3==1.34.11
 PyQt6==6.5.0
 PyInstaller==6.0.0
 ruamel.yaml==0.17.35
