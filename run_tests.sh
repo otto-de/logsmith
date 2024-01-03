@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-./venv/bin/nosetests
+cd tests || exit
+../venv/bin/nosetests
