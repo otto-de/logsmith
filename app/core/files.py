@@ -1,8 +1,9 @@
+import io
 import logging
 import os
 from pathlib import Path
 
-from ruamel import yaml
+from ruamel.yaml import YAML
 from ruamel.yaml.parser import ParserError, ScannerError
 
 logger = logging.getLogger('logsmith')
@@ -10,6 +11,11 @@ config_file_name = 'config.yaml'
 accounts_file_name = 'accounts.yaml'
 log_file_name = 'app.log'
 active_group_file_name = 'active_group'
+
+yamli = YAML(typ='safe')
+yamli.default_flow_style = False
+yamli.sort_base_mapping_type_on_output = False
+yamli.indent(sequence=4)
 
 
 def get_app_path() -> str:
@@ -38,13 +44,15 @@ def get_active_group_file_path() -> str:
 
 def parse_yaml(text: str):
     try:
-        return yaml.safe_load(text) or {}
+        return yamli.load(text) or {}
     except (ParserError, ScannerError):
         return {}
 
 
 def dump_yaml(d: dict):
-    return yaml.round_trip_dump(d, indent=4, default_flow_style=False)
+    buffer = io.BytesIO()
+    yamli.dump(d, buffer)
+    return buffer.getvalue().decode("utf-8")
 
 
 def _load_file(path):

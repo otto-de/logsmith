@@ -61,6 +61,11 @@ class Test(TestCase):
         expected = 'z: dog\na: cat\n'
         self.assertEqual(expected, text)
 
+    def test_dump_yaml__indentation(self):
+        text = files.dump_yaml({'a': 'cat', 'b': {'c': 'dog'}})
+        expected = 'a: cat\nb:\n  c: dog\n'
+        self.assertEqual(expected, text)
+
     def test__load_file(self):
         text = files._load_file(self.test_file)
         expected = 'this is a test'
