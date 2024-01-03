@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
 
+## 6.2.1 - 2024-01-03
+
+### Fixed
+- Dependency updates
+
 ## 6.2.0 - 2023-06-05
 
 ### Fixed
