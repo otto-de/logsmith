@@ -3,12 +3,29 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/)
+This changelog is inspired by [keepachangelog.com](http://http://keepachangelog.com/de/).
 
-## 6.2.1 - 2024-01-03
+Changes will be grouped by the following categories (and their respective version number changes):
+- 'Changed' for changes in existing functionality (Major). 
+- 'Removed' for now removed features (Major). 
+- 'Added' for new features. (Minor).
+- 'Deprecated' for soon-to-be removed features (Minor). 
+- 'Fixed' for any bug fixes (Patch). 
+- 'Dependency' for dependency updates (Patch).
+- 'Security' in case of vulnerabilities (Patch).
+- 'Notes' for additional notes.
 
-### Fixed
+Release dates will be in YYYY-MM-DD format.
+
+## Unreleased
+
+## 6.2.1 - 2024-01-04
+
+### Dependency
 - Dependency updates
+
+### Notes
+- This version will be a Re-Release via github action.
 
 ## 6.2.0 - 2023-06-05
 

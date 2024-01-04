@@ -147,7 +147,29 @@ requests.
 
 For those of your interested, providing documentation to other parties is equally welcome.
 
-Please document all notable changes to this project in the provided changelog. Note that this project adheres to [Semantic Versioning](http://semver.org/).
+Please document all notable changes to this project in the provided changelog under 'Unreleased' with usage of the provided format and categories.
+
+Note that this project adheres to [Semantic Versioning](http://semver.org/).
+
+## Releases
+To create a new release, please use the following steps:
+
+- update the CHANGELOG.md with the changes that will be in the release. Please use the provided format and categories to choose the new version number.
+- update the version number in `app/__version__.py`.
+- create a commit with the new version number as commit message which includes the changes mentioned above.
+- tag the commit with the new version number.
+- Use the github action to create a release.
+- Update the release description with the changes from the CHANGELOG.md.
+
+### Yanking of releases
+If a release is broken or contains security issues of any kind, it should be yanked.
+
+If you want to yank a release, please use the following steps:
+
+- update the release version to `yanked-<version>`.
+- update github release name accordingly and delete the all uploaded files.
+- update CHANGELOG.md accordingly and if possible, provide a reason.
+- update commit tag accordingly.
 
 ## License
 Distributed under Apache License 2.0
