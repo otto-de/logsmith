@@ -40,7 +40,7 @@ def main():
             if os.fstat(file_obj.fileno()).st_size == 0:
                 raise RuntimeError(f'can not attach empty file {asset}')
 
-    print(f'Check for release {release["name"]}')
+    print(f'Check for release')
     created, release = create_release(token=token, repo=repo,
                                       tag=version, commit_hash=commit,
                                       exclusive=exclusive, prerelease=prerelease)
