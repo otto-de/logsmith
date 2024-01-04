@@ -160,6 +160,7 @@ To create a new release, please use the following steps:
 - tag the commit with the new version number.
 - Use the github action to create a release.
 - Update the release description with the changes from the CHANGELOG.md.
+- Publish the release.
 
 ### Yanking of releases
 If a release is broken or contains security issues of any kind, it should be yanked.
