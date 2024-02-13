@@ -1,5 +1,7 @@
 # logsmith
-Logsmith is a desktop trayicon to assume your favorite aws roles.
+Logsmith is a desktop trayicon to:
+- assume your favorite aws roles, and
+- login & configure your gcloud config
 
 ```
 “Who are you and how did you get in here?” -
@@ -21,7 +23,7 @@ Logsmith is a desktop trayicon to assume your favorite aws roles.
 - has a graphical user interface and a cli
 
 ## Config
-The config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
+The aws config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
 ```yaml
 productive:                   
   team: team1                 
@@ -35,6 +37,18 @@ productive:
     - profile: live
       account: '123456789123'
       role: developer
+# if gcp project
+brain-zero-dev:
+  team: incai
+  region: europe-west1
+  color: '#388E3C'
+  type: gcp 
+
+
+brain-analysis-attr-dev:
+  team: aaa
+  region: europe-west1
+  type: gcp
 ```
 
 If you have account ids with leading zeros, please make sure to put them in quotes.
