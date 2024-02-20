@@ -37,15 +37,19 @@ productive:
     - profile: live
       account: '123456789123'
       role: developer
-# if gcp project
+
+# for google cloud:
+#  - gcp project is the profile group name
+#  - region and type are mandatory
+#  - profiles section is no longer needed
 brain-zero-dev:
+  color: '#FF0000'
   team: incai
   region: europe-west1
-  color: '#388E3C'
-  type: gcp 
-
+  type: gcp
 
 brain-analysis-attr-dev:
+  color: '#388E3C'
   team: aaa
   region: europe-west1
   type: gcp

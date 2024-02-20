@@ -172,10 +172,9 @@ class TestCore(TestCase):
         self.assertEqual('eu-north-1', region)
 
     def test_get_region__gcp(self):
-        self.core.active_profile_group = self.config.get_group('development')
-        self.core.region_override = 'eu-north-1'
+        self.core.active_profile_group = self.config.get_group('gcp-project-dev')
         region = self.core.get_region()
-        self.assertEqual('eu-north-1', region)
+        self.assertEqual('europe-west1', region)
 
     @mock.patch('app.core.core.mfa')
     @mock.patch('app.core.core.credentials')
