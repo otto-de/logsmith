@@ -42,20 +42,30 @@ productive:
 #  - gcp project is the profile group name
 #  - region and type are mandatory
 #  - profiles section is no longer needed
-brain-zero-dev:
+gcp-project-dev:
   color: '#FF0000'
-  team: incai
+  team: teama
   region: europe-west1
   type: gcp
 
-brain-analysis-attr-dev:
+gcp-project-prd:
   color: '#388E3C'
-  team: aaa
+  team: teama
   region: europe-west1
   type: gcp
 ```
 
 If you have account ids with leading zeros, please make sure to put them in quotes.
+
+### Google Cloud login
+Click on the project that you want to use, this will trigger the typical login flow for user and application
+credentials using browser. 
+
+If you have multiple browser profiles, please select the correct active browser. 
+
+The login flow will be automatically stopped after 60 seconds of inactivity or not completion.
+
+It will trigger the login flow again after 8 hours.
 
 ### Chain Assume
 You may add a "source" profile which will be used to assume a given role.
