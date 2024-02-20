@@ -76,8 +76,8 @@ class ProfileGroup:
             return False, f'{self.name} has no region'
         if not self.color:
             return False, f'{self.name} has no color'
-        if len(self.profiles) == 0:
-            return False, f'{self.name} has no profiles'
+        if self.type == "aws" and len(self.profiles) == 0:
+            return False, f'aws "{self.name}" has no profiles'
         for profile in self.profiles:
             valid, error = profile.validate()
             if not valid:

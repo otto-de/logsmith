@@ -36,7 +36,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         self.actions = []
         for profile_group in profile_list:
-            action = menu.addAction(profile_group.name)
+            action = menu.addAction(profile_group.name if profile_group.type == "aws" else "[GCP] " + profile_group.name)
             action.triggered.connect(partial(self.gui.login,
                                              profile_group=profile_group))
             action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))

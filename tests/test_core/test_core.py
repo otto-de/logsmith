@@ -171,6 +171,12 @@ class TestCore(TestCase):
         region = self.core.get_region()
         self.assertEqual('eu-north-1', region)
 
+    def test_get_region__gcp(self):
+        self.core.active_profile_group = self.config.get_group('development')
+        self.core.region_override = 'eu-north-1'
+        region = self.core.get_region()
+        self.assertEqual('eu-north-1', region)
+
     @mock.patch('app.core.core.mfa')
     @mock.patch('app.core.core.credentials')
     def test__renew_session__token_from_shell(self, mock_credentials, mock_mfa_shell):

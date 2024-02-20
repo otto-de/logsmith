@@ -15,9 +15,9 @@ from app.gui.config_dialog import ConfigDialog
 from app.gui.key_rotation_dialog import RotateKeyDialog
 from app.gui.log_dialog import LogDialog
 from app.gui.trayicon import SystemTrayIcon
-from core.core import Core
-from gui.mfa_dialog import MfaDialog
-from gui.repeater import Repeater
+from app.core.core import Core
+from app.gui.mfa_dialog import MfaDialog
+from app.gui.repeater import Repeater
 
 logger = logging.getLogger('logsmith')
 
