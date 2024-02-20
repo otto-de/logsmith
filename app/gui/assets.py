@@ -12,6 +12,7 @@ class Assets:
         self.cloud = self._resource_path('assets/cloud.svg')
         self.cloud_outline = self._resource_path('assets/cloud-outline.svg')
         self.cloud_done = self._resource_path('assets/cloud-done.svg')
+        self.cloud_google = self._resource_path('assets/google-cloud.svg')
         self.bug = self._resource_path('assets/bug.svg')
         self.standard = self.get_icon()
 
@@ -20,6 +21,8 @@ class Assets:
             return self._color_icon(self.cloud_outline, color_code)
         if style == 'error':
             return self._color_icon(self.bug, color_code)
+        if style == 'gcp':
+            return self._color_icon(self.cloud_google, color_code)
         else:
             return self._color_icon(self.cloud, color_code)
 

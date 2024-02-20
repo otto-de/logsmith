@@ -124,7 +124,8 @@ class Gui(QMainWindow):
         self.log_dialog.show_dialog(logs_as_text)
 
     def _to_login_state(self):
-        self.tray_icon.setIcon(self.assets.get_icon(color_code=self.core.get_active_profile_color()))
+        style = "full" if self.core.active_profile_group.type == "aws" else "gcp"
+        self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=self.core.get_active_profile_color()))
         self.tray_icon.disable_actions(False)
         self.tray_icon.update_last_login(self.get_timestamp())
 

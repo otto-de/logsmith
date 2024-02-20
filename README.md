@@ -23,7 +23,7 @@ Logsmith is a desktop trayicon to:
 - has a graphical user interface and a cli
 
 ## Config
-The aws config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
+The config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
 ```yaml
 productive:                   
   team: team1                 

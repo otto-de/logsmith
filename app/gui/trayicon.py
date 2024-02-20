@@ -55,7 +55,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                 action = menu.addAction("[GCP] " + profile_group.name)
                 action.triggered.connect(partial(self.gui.login_gcp,
                                                  profile_group=profile_group))
-                action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
+                action.setIcon(self.assets.get_icon(style='gcp', color_code=profile_group.color))
                 self.actions.append(action)
 
         menu.addSeparator()
