@@ -36,17 +36,27 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         self.actions = []
         for profile_group in profile_list:
-            action = menu.addAction(profile_group.name if profile_group.type == "aws" else "[GCP] " + profile_group.name)
-            action.triggered.connect(partial(self.gui.login,
-                                             profile_group=profile_group))
-            action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
-            self.actions.append(action)
+            if profile_group.type == "aws":
+                action = menu.addAction(profile_group.name)
+                action.triggered.connect(partial(self.gui.login,
+                                                 profile_group=profile_group))
+                action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
+                self.actions.append(action)
 
         # log out
         action = menu.addAction('logout')
         action.triggered.connect(self.gui.logout)
         action.setIcon(self.assets.get_icon(style='outline', color_code='#FFFFFF'))
         self.actions.append(action)
+
+        menu.addSeparator()
+        for profile_group in profile_list:
+            if profile_group.type == "gcp":
+                action = menu.addAction("[GCP] " + profile_group.name)
+                action.triggered.connect(partial(self.gui.login_gcp,
+                                                 profile_group=profile_group))
+                action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
+                self.actions.append(action)
 
         menu.addSeparator()
         # active region

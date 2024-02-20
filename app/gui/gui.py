@@ -55,6 +55,21 @@ class Gui(QMainWindow):
                                   delay_seconds=300)
         self._to_login_state()
 
+    def login_gcp(self, profile_group: ProfileGroup):
+        self._to_reset_state()
+        self.tray_icon.disable_actions(True)
+
+        result = self.core.login_gcp(profile_group=profile_group)
+        if not self._check_and_signal_error(result):
+            self._to_error_state()
+            return
+
+        logger.info('start repeater to remind login in 8 hours')
+        prepare_login = partial(self.login_gcp, profile_group=profile_group)
+        self.login_repeater.start(task=prepare_login,
+                                  delay_seconds=8 * 60 * 60)
+        self._to_login_state()
+
     def logout(self):
         result = self.core.logout()
         self._check_and_signal_error(result)
