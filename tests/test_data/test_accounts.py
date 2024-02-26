@@ -35,6 +35,12 @@ def get_test_accounts() -> dict:
                     'role': 'readonly',
                 }
             ]
+        },
+        'gcp-project-dev': {
+            'color': '#FF0000',
+            'team': 'another-team',
+            'region': 'europe-west1',
+            'type': 'gcp',
         }
     }
 

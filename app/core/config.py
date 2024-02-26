@@ -64,6 +64,8 @@ class ProfileGroup:
         self.region: str = group.get('region', None)
         self.color: str = group.get('color', None)
         self.profiles: List[Profile] = []
+        self.type: str = group.get("type", "aws")  # only aws (default) & gcp as values are allowed
+
         for profile in group.get('profiles', []):
             self.profiles.append(Profile(self, profile))
 
@@ -74,8 +76,8 @@ class ProfileGroup:
             return False, f'{self.name} has no region'
         if not self.color:
             return False, f'{self.name} has no color'
-        if len(self.profiles) == 0:
-            return False, f'{self.name} has no profiles'
+        if self.type == "aws" and len(self.profiles) == 0:
+            return False, f'aws "{self.name}" has no profiles'
         for profile in self.profiles:
             valid, error = profile.validate()
             if not valid:
@@ -94,15 +96,15 @@ class ProfileGroup:
         return next((profile for profile in self.profiles if profile.default), None)
 
     def to_dict(self):
-        profiles = []
-        for profile in self.profiles:
-            profiles.append(profile.to_dict())
-        return {
+        result_dict = {
             'color': self.color,
             'team': self.team,
             'region': self.region,
-            'profiles': profiles,
+            'profiles': [profile.to_dict() for profile in self.profiles],
         }
+        if self.type != "aws":
+            result_dict["type"] = self.type
+        return result_dict
 
 
 class Profile:

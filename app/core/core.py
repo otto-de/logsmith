@@ -6,6 +6,7 @@ from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
 from app.yubico import mfa
+from app.gcp import login, config
 
 logger = logging.getLogger('logsmith')
 
@@ -47,6 +48,48 @@ class Core:
         logger.info('login success')
         self._handle_support_files(profile_group)
         result.set_success()
+        return result
+
+    def login_gcp(self, profile_group: ProfileGroup) -> Result:
+
+        result = Result()
+        self.active_profile_group = profile_group
+        logger.info('gcp login detected')
+
+        # first login
+        user_login = login.gcloud_auth_login()
+        if user_login is None:
+            result.error("gcloud auth login command failed")
+            return result
+
+        # second login for application default credentials
+        adc_login = login.gcloud_auth_application_login()
+        if adc_login is None:
+            result.error("gcloud auth application-default login command failed")
+            return result
+
+        # set project
+        config_project = config.set_default_project(project=profile_group.name)
+        if config_project is None:
+            result.error("config gcp project failed")
+            return result
+
+        # set region
+        config_region = config.set_default_region(region=profile_group.region)
+        if config_region is None:
+            result.error("config gcp region failed")
+            return result
+
+        # set quota-project
+        config_quota_project = config.set_default_quota_project(project=profile_group.name)
+        if config_quota_project is None:
+            result.error("config gcp quota-project failed")
+            return result
+
+        logger.info('login success')
+        self._handle_support_files(profile_group)
+        result.set_success()
+
         return result
 
     def logout(self):

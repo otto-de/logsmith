@@ -15,9 +15,9 @@ from app.gui.config_dialog import ConfigDialog
 from app.gui.key_rotation_dialog import RotateKeyDialog
 from app.gui.log_dialog import LogDialog
 from app.gui.trayicon import SystemTrayIcon
-from core.core import Core
-from gui.mfa_dialog import MfaDialog
-from gui.repeater import Repeater
+from app.core.core import Core
+from app.gui.mfa_dialog import MfaDialog
+from app.gui.repeater import Repeater
 
 logger = logging.getLogger('logsmith')
 
@@ -53,6 +53,21 @@ class Gui(QMainWindow):
         prepare_login = partial(self.login, profile_group=profile_group)
         self.login_repeater.start(task=prepare_login,
                                   delay_seconds=300)
+        self._to_login_state()
+
+    def login_gcp(self, profile_group: ProfileGroup):
+        self._to_reset_state()
+        self.tray_icon.disable_actions(True)
+
+        result = self.core.login_gcp(profile_group=profile_group)
+        if not self._check_and_signal_error(result):
+            self._to_error_state()
+            return
+
+        logger.info('start repeater to remind login in 8 hours')
+        prepare_login = partial(self.login_gcp, profile_group=profile_group)
+        self.login_repeater.start(task=prepare_login,
+                                  delay_seconds=8 * 60 * 60)
         self._to_login_state()
 
     def logout(self):
@@ -109,7 +124,8 @@ class Gui(QMainWindow):
         self.log_dialog.show_dialog(logs_as_text)
 
     def _to_login_state(self):
-        self.tray_icon.setIcon(self.assets.get_icon(color_code=self.core.get_active_profile_color()))
+        style = "full" if self.core.active_profile_group.type == "aws" else "gcp"
+        self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=self.core.get_active_profile_color()))
         self.tray_icon.disable_actions(False)
         self.tray_icon.update_last_login(self.get_timestamp())
 
