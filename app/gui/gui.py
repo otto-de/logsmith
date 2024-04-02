@@ -4,8 +4,10 @@ from functools import partial
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import QMainWindow
+from core.core import Core
+from gui.mfa_dialog import MfaDialog
+from gui.repeater import Repeater
 
-from app.aws import credentials
 from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
@@ -85,23 +87,22 @@ class Gui(QMainWindow):
             region = 'not logged in'
         self.tray_icon.update_region_text(region)
 
-    def rotate_access_key(self):
-        logger.info('initiate key rotation')
-        logger.info('check access key')
-        result = self.core.rotate_access_key()
-        if not self._check_and_signal_error(result):
-            return
-        self._signal('Success', 'key was rotated')
-
     def edit_config(self, config: Config):
         result = self.core.edit_config(config)
         if self._check_and_signal_error(result):
             self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
 
-    def set_access_key(self, key_id, access_key):
-        self.core.set_access_key(key_id=key_id, access_key=access_key)
+    def set_access_key(self, key_name, key_id, access_key):
+        self.core.set_access_key(key_name=key_name, key_id=key_id, access_key=access_key)
         self._signal('Success', 'access key was set')
+
+    def rotate_access_key(self, key_name: str):
+        logger.info('initiate key rotation')
+        result = self.core.rotate_access_key(key_name=key_name)
+        if not self._check_and_signal_error(result):
+            return
+        self._signal('Success', 'key was rotated')
 
     @staticmethod
     def show_mfa_token_fetch_dialog():
@@ -111,13 +112,10 @@ class Gui(QMainWindow):
         self.config_dialog.show_dialog(self.core.config)
 
     def show_set_key_dialog(self):
-        text = ''
-        if credentials.has_access_key().was_success:
-            text = 'this will overwrite the existing key'
-        self.set_key_dialog.show_dialog(text)
+        self.set_key_dialog.show_dialog(access_key_list=self.core.get_access_key_list())
 
     def show_access_key_rotation_dialog(self):
-        self.rotate_key_dialog.show_dialog()
+        self.rotate_key_dialog.show_dialog(access_key_list=self.core.get_access_key_list())
 
     def show_logs(self):
         logs_as_text = files.load_logs()

@@ -62,13 +62,13 @@ def _get_client(profile_name: str, service: str, timeout: int = None, retries: i
     return session.client(service)
 
 
-def has_access_key() -> Result:
+def has_access_key(access_key: str) -> Result:
     logger.info('has access key')
     result = Result()
     credentials_file = _load_credentials_file()
 
-    if not credentials_file.has_section('access-key'):
-        error_text = 'could not find profile \'access-key\' in .aws/credentials'
+    if not credentials_file.has_section(access_key):
+        error_text = f'could not find access-key \'{access_key}\' in .aws/credentials'
         result.error(error_text)
         logger.warning(error_text)
         return result
@@ -76,15 +76,15 @@ def has_access_key() -> Result:
     return result
 
 
-def check_access_key() -> Result:
+def check_access_key(access_key: str) -> Result:
     logger.info('check access key')
-    access_key_result = has_access_key()
+    access_key_result = has_access_key(access_key=access_key)
     if not access_key_result.was_success:
         return access_key_result
 
     result = Result()
     try:
-        client = _get_client('access-key', 'sts', timeout=2, retries=2)
+        client = _get_client(access_key, 'sts', timeout=2, retries=2)
         client.get_caller_identity()
     except ClientError:
         error_text = 'access key is not valid'
@@ -123,14 +123,14 @@ def check_session() -> Result:
     return result
 
 
-def fetch_session_token(mfa_token: str) -> Result:
+def fetch_session_token(access_key: str, mfa_token: str) -> Result:
     result = Result()
     credentials_file = _load_credentials_file()
     logger.info('fetch session-token')
     profile = 'session-token'
 
     try:
-        secrets = _get_session_token(mfa_token)
+        secrets = _get_session_token(access_key=access_key, mfa_token=mfa_token)
     except ClientError:
         error_text = 'could not fetch session token'
         result.error(error_text)
@@ -183,11 +183,10 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
 
 def _remove_unused_profiles(credentials_file, profile_group: ProfileGroup):
     used_profiles = profile_group.list_profile_names()
-    used_profiles.append('access-key')
     used_profiles.append('session-token')
 
     for profile in credentials_file.sections():
-        if profile not in used_profiles:
+        if profile not in used_profiles and not profile.startswith('access-key'):
             credentials_file.remove_section(profile)
     return credentials_file
 
@@ -225,14 +224,22 @@ def _remove_unused_configs(config_file: configparser, profile_group: ProfileGrou
     return config_file
 
 
-def set_access_key(key_id: str, access_key: str) -> None:
+def set_access_key(key_name: str, key_id: str, key_secret: str) -> None:
     credentials_file = _load_credentials_file()
-    profile = 'access-key'
-    if not credentials_file.has_section(profile):
-        credentials_file.add_section(profile)
-    credentials_file.set(profile, 'aws_access_key_id', key_id)
-    credentials_file.set(profile, 'aws_secret_access_key', access_key)
+    if not credentials_file.has_section(key_name):
+        credentials_file.add_section(key_name)
+    credentials_file.set(key_name, 'aws_access_key_id', key_id)
+    credentials_file.set(key_name, 'aws_secret_access_key', key_secret)
     _write_credentials_file(credentials_file)
+
+
+def get_access_key_list() -> list:
+    credentials_file = _load_credentials_file()
+    access_key_list = []
+    for profile in credentials_file.sections():
+        if profile.startswith('access-key'):
+            access_key_list.append(profile)
+    return access_key_list
 
 
 def get_access_key_id():
@@ -256,8 +263,8 @@ def _add_profile_config(option_file: configparser, profile: str, region: str) ->
     option_file.set(config_name, 'output', 'json')
 
 
-def get_user_name() -> str:
-    client = _get_client('access-key', 'sts')
+def get_user_name(access_key) -> str:
+    client = _get_client(access_key, 'sts')
     identity = client.get_caller_identity()
     return _extract_user_from_identity(identity)
 
@@ -266,8 +273,8 @@ def _extract_user_from_identity(identity):
     return identity['Arn'].split('/')[-1]
 
 
-def _get_session_token(mfa_token) -> dict:
-    client = _get_client('access-key', 'sts')
+def _get_session_token(access_key: str, mfa_token: str) -> dict:
+    client = _get_client(access_key, 'sts')
 
     identity = client.get_caller_identity()
     duration = 43200  # 12 * 60 * 60

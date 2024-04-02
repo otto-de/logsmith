@@ -36,6 +36,10 @@ class ConfigDialog(QDialog):
         self.mfa_command_input = QLineEdit(self)
         self.mfa_command_input.setStyleSheet("color: black; background-color: white;")
 
+        self.default_access_key_label = QLabel("Default access key name:", self)
+        self.default_access_key_input = QLineEdit(self)
+        self.default_access_key_input.setStyleSheet("color: black; background-color: white;")
+
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
         self.cancel_button = QPushButton("Cancel")
@@ -58,7 +62,9 @@ class ConfigDialog(QDialog):
 
         vbox.addWidget(self.mfa_command_label)
         vbox.addWidget(self.mfa_command_input)
-        vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignRight)
+        vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        vbox.addWidget(self.default_access_key_label)
+        vbox.addWidget(self.default_access_key_input)
 
         vbox.addLayout(hbox)
         self.setLayout(vbox)
@@ -72,10 +78,15 @@ class ConfigDialog(QDialog):
             self.set_error_text('config invalid')
             return
 
+        default_access_key = self.default_access_key_input.text()
+        if not default_access_key:
+            self.set_error_text('default access-key must not be empty')
+            return
+
         config = Config()
-        config.set_accounts(raw_config_dict)
+        config.set_accounts(raw_config_dict, default_access_key)
         if config.valid:
-            config.mfa_shell_command = self.mfa_command_input.text()
+            config.set_mfa_shell_command(self.mfa_command_input.text())
             self.gui.edit_config(config)
             self.hide()
         else:
@@ -124,6 +135,7 @@ class ConfigDialog(QDialog):
         self.text_box.setPlainText(files.dump_yaml(config.to_dict()))
         self.update_error_text(config)
         self.mfa_command_input.setText(config.mfa_shell_command)
+        self.default_access_key_input.setText(config.default_access_key)
         self.show()
         self.raise_()
         self.activateWindow()

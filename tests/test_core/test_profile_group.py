@@ -7,7 +7,7 @@ from tests.test_data.test_accounts import get_test_group, get_test_group_no_defa
 
 class TestProfileGroup(TestCase):
     def setUp(self):
-        self.profile_group = ProfileGroup('test', get_test_group())
+        self.profile_group = ProfileGroup('test', get_test_group(), 'default')
 
     def test_init(self):
         self.assertEqual('test', self.profile_group.name)
@@ -65,7 +65,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(expected, self.profile_group.list_profile_names())
 
     def test_list_profile_names_no_default(self):
-        profile_group = ProfileGroup('test', get_test_group_no_default())
+        profile_group = ProfileGroup('test', get_test_group_no_default(), 'some-access-key')
         expected = ['developer', 'readonly']
         self.assertEqual(expected, profile_group.list_profile_names())
 
@@ -74,7 +74,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual('readonly', result.profile)
 
     def test_get_default_profile_no_default(self):
-        profile_group = ProfileGroup('test', get_test_group_no_default())
+        profile_group = ProfileGroup('test', get_test_group_no_default(), 'some-access-key')
         result = profile_group.get_default_profile()
         self.assertEqual(None, result)
 
@@ -92,9 +92,12 @@ class TestProfileGroup(TestCase):
         self.assertEqual(1, mock_profile2.to_dict.call_count)
         self.assertEqual(1, mock_profile3.to_dict.call_count)
 
-        expected = {'color': '#388E3C',
-                    'profiles': ['profile 1', 'profile 2', 'profile 3'],
-                    'region': 'us-east-1',
-                    'team': 'awesome-team'}
+        expected = {
+            'color': '#388E3C',
+            'profiles': ['profile 1', 'profile 2', 'profile 3'],
+            'region': 'us-east-1',
+            'team': 'awesome-team',
+            'access_key': None,
+        }
 
         self.assertEqual(expected, result)

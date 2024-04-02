@@ -41,6 +41,7 @@ def get_test_accounts() -> dict:
             'team': 'another-team',
             'region': 'europe-west1',
             'type': 'gcp',
+            'profiles': [],  # this will be automatically added
         }
     }
 

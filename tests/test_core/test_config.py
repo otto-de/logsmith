@@ -30,31 +30,34 @@ class TestConfig(TestCase):
     @mock.patch('app.core.config.files.save_config_file')
     @mock.patch('app.core.config.files.save_accounts_file')
     def test_save_to_disk(self, mock_save_accounts_file, mock_save_config_file):
-        self.config.set_accounts(get_test_accounts())
+        self.config.set_accounts(get_test_accounts(), 'some-access-key')
         self.config.save_to_disk()
         expected_accounts = [call(
-            {'development': {
-                'color': '#388E3C',
-                'team': 'awesome-team',
-                'region': 'us-east-1',
-                'profiles': [
-                    {
-                        'profile': 'developer',
-                        'account': '123495678901',
-                        'role': 'developer',
-                        'default': True
-                    },
-                    {
-                        'profile': 'readonly',
-                        'account': '012349567890',
-                        'role': 'readonly'
-                    }
-                ]
-            },
+            {
+                'development': {
+                    'color': '#388E3C',
+                    'team': 'awesome-team',
+                    'region': 'us-east-1',
+                    'access_key': None,
+                    'profiles': [
+                        {
+                            'profile': 'developer',
+                            'account': '123495678901',
+                            'role': 'developer',
+                            'default': True,
+                        },
+                        {
+                            'profile': 'readonly',
+                            'account': '012349567890',
+                            'role': 'readonly'
+                        }
+                    ]
+                },
                 'live': {
                     'color': '#388E3C',
                     'team': 'awesome-team',
                     'region': 'us-east-1',
+                    'access_key': None,
                     'profiles': [
                         {
                             'profile': 'developer',
@@ -73,20 +76,22 @@ class TestConfig(TestCase):
                     'team': 'another-team',
                     'region': 'europe-west1',
                     'type': 'gcp',
+                    'access_key': None,
                     'profiles': [],  # this will be automatically added
                 }
             }
         )]
 
         expected_config = [call({
-            'mfa_shell_command': None
+            'mfa_shell_command': None,
+            'default_access_key': 'some-access-key'
         })]
 
         self.assertEqual(expected_accounts, mock_save_accounts_file.mock_calls)
         self.assertEqual(expected_config, mock_save_config_file.mock_calls)
 
     def test_set_accounts(self):
-        self.config.set_accounts(get_test_accounts())
+        accounts = self.config.set_accounts(get_test_accounts(), 'some-access-key')
 
         groups = ['development', 'live', 'gcp-project-dev']
         self.assertEqual(groups, list(self.config.profile_groups.keys()))
@@ -113,7 +118,7 @@ class TestConfig(TestCase):
         self.assertEqual(False, profile.default)
 
     def test_validate(self):
-        self.config.set_accounts(get_test_accounts())
+        self.config.set_accounts(get_test_accounts(), 'some-access-key')
         self.config.validate()
         self.assertEqual(True, self.config.valid)
         self.assertEqual('', self.config.error)

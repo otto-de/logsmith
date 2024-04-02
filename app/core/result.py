@@ -1,4 +1,6 @@
-from datetime import datetime
+import logging
+
+logger = logging.getLogger('logsmith')
 
 
 class Result:
@@ -15,6 +17,6 @@ class Result:
         self.payload = content
 
     def error(self, message):
+        logger.error(message)
         self.was_error = True
         self.error_message = message
-        timestamp = datetime.now().strftime('%H:%M:%S')

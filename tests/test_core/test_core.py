@@ -2,19 +2,25 @@ from unittest import TestCase, mock
 from unittest.mock import call, Mock
 
 from app.core.config import Config
-from app.core.result import Result
 from app.core.core import Core
+from app.core.result import Result
 from tests.test_data.test_accounts import get_test_accounts
 from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
 
+if 'unittest.util' in __import__('sys').modules:
+    # Show full diff in self.assertEqual.
+    __import__('sys').modules['unittest.util']._MAX_LENGTH = 999999999
 
 class TestCore(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.maxDiff = None
 
     @mock.patch('app.core.core.Config.load_from_disk')
     def setUp(self, mock_config):
         self.core = Core()
         self.config = Config()
-        self.config.set_accounts(get_test_accounts())
+        self.config.set_accounts(get_test_accounts(), 'some-access-key')
         self.core.config = self.config
 
         self.success_result = get_success_result()
@@ -26,7 +32,7 @@ class TestCore(TestCase):
         mock_credentials.check_access_key.return_value = self.error_result
         result = self.core.login(self.config.get_group('development'), None)
 
-        expected = [call.check_access_key()]
+        expected = [call.check_access_key(access_key='some-access-key')]
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
 
@@ -37,7 +43,7 @@ class TestCore(TestCase):
 
         result = self.core.login(self.config.get_group('development'), None)
 
-        expected = [call.check_access_key(), call.check_session()]
+        expected = [call.check_access_key(access_key='some-access-key'), call.check_session()]
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
 
@@ -50,10 +56,10 @@ class TestCore(TestCase):
 
         result = self.core.login(self.config.get_group('development'), None)
 
-        expected = [call.check_access_key(), call.check_session()]
+        expected = [call.check_access_key(access_key='some-access-key'), call.check_session()]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
-        expected = [call(None)]
+        expected = [call(access_key='some-access-key', mfa_callback=None)]
         self.assertEqual(expected, self.core._renew_session.mock_calls)
         self.assertEqual(self.error_result, result)
 
@@ -73,9 +79,9 @@ class TestCore(TestCase):
         profile_group = self.config.get_group('development')
         result = self.core.login(profile_group, mock_mfa_callback)
 
-        expected = [call.check_access_key(),
+        expected = [call.check_access_key(access_key='some-access-key'),
                     call.check_session(),
-                    call.get_user_name(),
+                    call.get_user_name(access_key='some-access-key'),
                     call.fetch_role_credentials('test-user', profile_group),
                     call.write_profile_config(profile_group, 'us-east-1')]
         self.assertEqual(expected, mock_credentials.mock_calls)
@@ -117,11 +123,33 @@ class TestCore(TestCase):
     @mock.patch('app.core.core.credentials')
     def test_rotate_access_key__no_access_key(self, mock_credentials):
         mock_credentials.check_access_key.return_value = self.error_result
-        result = self.core.rotate_access_key()
+        result = self.core.rotate_access_key('rotate-this-key')
 
-        expected = [call.check_access_key()]
+        expected = [call.check_access_key(access_key='rotate-this-key')]
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
+
+    @mock.patch('app.core.core.iam')
+    @mock.patch('app.core.core.credentials')
+    def test_rotate_access_key__access_key_is_not_logged_in_and_cannot_be_rotated(self, mock_credentials, mock_iam):
+        mock_credentials.check_access_key.return_value = self.success_result
+        mock_credentials.check_session.return_value = self.success_result
+        mock_credentials.get_user_name.return_value = 'test-user'
+        mock_credentials.get_access_key_id.return_value = '12345'
+
+        access_key_result = Result()
+        access_key_result.add_payload({'AccessKeyId': 12345, 'SecretAccessKey': 67890})
+        access_key_result.set_success()
+
+        mock_iam.create_access_key.return_value = access_key_result
+
+        result = self.core.rotate_access_key('rotate-this-key')
+
+        expected = [call.check_access_key(access_key='rotate-this-key')]
+        self.assertEqual(expected, mock_credentials.mock_calls)
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
 
     @mock.patch('app.core.core.iam')
     @mock.patch('app.core.core.credentials')
@@ -132,21 +160,20 @@ class TestCore(TestCase):
         mock_credentials.get_access_key_id.return_value = '12345'
 
         access_key_result = Result()
-        access_key_result.add_payload({
-            'AccessKeyId': 12345,
-            'SecretAccessKey': 67890
-        })
+        access_key_result.add_payload({'AccessKeyId': 12345, 'SecretAccessKey': 67890})
         access_key_result.set_success()
 
         mock_iam.create_access_key.return_value = access_key_result
 
-        result = self.core.rotate_access_key()
+        # Login ino profile, then rotate the key
+        self.core.active_profile_group = self.config.get_group('development')
+        result = self.core.rotate_access_key('some-access-key')
 
-        expected = [call.check_access_key(),
+        expected = [call.check_access_key(access_key='some-access-key'),
                     call.check_session(),
-                    call.get_user_name(),
+                    call.get_user_name('some-access-key'),
                     call.get_access_key_id(),
-                    call.set_access_key(key_id=12345, access_key=67890)]
+                    call.set_access_key(key_name='some-access-key', key_id=12345, key_secret=67890)]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         expected = [call.create_access_key('test-user'),
@@ -183,11 +210,11 @@ class TestCore(TestCase):
         mock_credentials.fetch_session_token.return_value = self.success_result
 
         mock_mfa_callback = Mock()
-        result = self.core._renew_session(mock_mfa_callback)
+        result = self.core._renew_session('access-key', mock_mfa_callback)
 
         self.assertEqual(0, mock_mfa_callback.call_count)
 
-        expected = [call.fetch_session_token('12345')]
+        expected = [call.fetch_session_token(access_key='access-key', mfa_token='12345')]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         self.assertEqual(True, result.was_success)
@@ -201,7 +228,7 @@ class TestCore(TestCase):
 
         mock_mfa_callback = Mock()
         mock_mfa_callback.return_value = ''
-        result = self.core._renew_session(mock_mfa_callback)
+        result = self.core._renew_session('access-key', mock_mfa_callback)
 
         self.assertEqual(1, mock_mfa_callback.call_count)
 
@@ -219,11 +246,11 @@ class TestCore(TestCase):
 
         mock_mfa_callback = Mock()
         mock_mfa_callback.return_value = '12345'
-        result = self.core._renew_session(mock_mfa_callback)
+        result = self.core._renew_session('access-key', mock_mfa_callback)
 
         self.assertEqual(1, mock_mfa_callback.call_count)
 
-        expected = [call.fetch_session_token('12345')]
+        expected = [call.fetch_session_token(access_key='access-key', mfa_token='12345')]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         self.assertEqual(True, result.was_success)

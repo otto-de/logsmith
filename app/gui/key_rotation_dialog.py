@@ -1,8 +1,8 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QApplication, QHBoxLayout, QVBoxLayout, \
-    QPushButton
+    QPushButton, QComboBox
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -12,12 +12,14 @@ class RotateKeyDialog(QDialog):
     def __init__(self, parent=None):
         super(RotateKeyDialog, self).__init__(parent)
         self.gui: Gui = parent
-        self.setWindowTitle('Key Rotation')
+        self.setWindowTitle('Rotate Access Key')
 
         self.width = 400
         self.height = 100
 
         self.resize(self.width, self.height)
+
+        self.access_key_selection = QComboBox()
 
         self.text = QLabel("This will create a new key and delete the old one!", self)
         self.text.setStyleSheet('color: rgb(255, 0, 0);')
@@ -33,6 +35,7 @@ class RotateKeyDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
+        vbox.addWidget(self.access_key_selection)
         vbox.addWidget(self.text)
         vbox.addLayout(hbox)
 
@@ -40,7 +43,8 @@ class RotateKeyDialog(QDialog):
         self.installEventFilter(self)
 
     def ok(self):
-        self.gui.rotate_access_key()
+        selected_key = self.access_key_selection.currentText()
+        self.gui.rotate_access_key(key_name=selected_key)
         self.hide()
 
     def cancel(self):
@@ -58,7 +62,12 @@ class RotateKeyDialog(QDialog):
         elif event.key() == Qt.Key.Key_Escape:
             self.cancel()
 
-    def show_dialog(self):
+    def show_dialog(self, access_key_list: List[str]):
+        self.access_key_selection.blockSignals(True)
+        self.access_key_selection.clear()
+        self.access_key_selection.blockSignals(False)
+        for access_key in access_key_list:
+            self.access_key_selection.addItem(access_key)
         self.show()
         self.raise_()
         self.activateWindow()
@@ -67,5 +76,5 @@ class RotateKeyDialog(QDialog):
 if __name__ == '__main__':
     app = QApplication([])
     ex = RotateKeyDialog()
-    ex.show_dialog()
-    app.exec_()
+    ex.show_dialog(['access-key-test'])
+    app.exec()

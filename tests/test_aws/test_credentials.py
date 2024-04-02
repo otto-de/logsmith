@@ -46,7 +46,7 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._get_credentials_path')
     def test_has_access_key(self, mock_path):
         mock_path.return_value = self.test_credentials_file_path
-        result = credentials.has_access_key()
+        result = credentials.has_access_key('access-key')
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -54,11 +54,11 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._get_credentials_path')
     def test_has_access_key__no_access_key(self, mock_path):
         mock_path.return_value = self.test_credentials_file_path_without_keys
-        result = credentials.has_access_key()
+        result = credentials.has_access_key('access-key')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
-        self.assertEqual('could not find profile \'access-key\' in .aws/credentials', result.error_message)
+        self.assertEqual('could not find access-key \'access-key\' in .aws/credentials', result.error_message)
 
     @mock.patch('app.aws.credentials._get_credentials_path')
     def test_check_session__no_session(self, mock_path):
@@ -111,7 +111,7 @@ class TestCredentials(TestCase):
     def test_fetch_session_token(self, mock_credentials, mock_session, mock_add_profile, mock_write):
         mock_session.return_value = self.test_secrets
 
-        result = credentials.fetch_session_token('some-token')
+        result = credentials.fetch_session_token('some-token', 'mfa-token')
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -131,7 +131,7 @@ class TestCredentials(TestCase):
         mock_session.return_value = {}
         mock_session.side_effect = self.client_error
 
-        result = credentials.fetch_session_token('some-token')
+        result = credentials.fetch_session_token('some-token', 'mfa-token')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -143,7 +143,7 @@ class TestCredentials(TestCase):
         mock_session.return_value = {}
         mock_session.side_effect = self.param_validation_error
 
-        result = credentials.fetch_session_token('some-token')
+        result = credentials.fetch_session_token('some-token', 'mfa-token')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -155,7 +155,7 @@ class TestCredentials(TestCase):
         mock_session.return_value = {}
         mock_session.side_effect = self.no_credentials_error
 
-        result = credentials.fetch_session_token('some-token')
+        result = credentials.fetch_session_token('some-token', 'mfa-token')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -172,7 +172,7 @@ class TestCredentials(TestCase):
         mock_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group())
+        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default')
         result = credentials.fetch_role_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -209,7 +209,7 @@ class TestCredentials(TestCase):
         mock_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default())
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default')
         result = credentials.fetch_role_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -243,7 +243,7 @@ class TestCredentials(TestCase):
         mock_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume())
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default')
         result = credentials.fetch_role_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -287,7 +287,7 @@ class TestCredentials(TestCase):
         mock_config_parser = Mock()
         mock_credentials.return_value = mock_config_parser
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group())
+        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default')
         result = credentials.write_profile_config(profile_group, 'us-east-12')
 
         self.assertEqual(True, result.was_success)
@@ -305,11 +305,11 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._remove_unused_configs')
     @mock.patch('app.aws.credentials._add_profile_config')
     @mock.patch('app.aws.credentials._load_config_file')
-    def test_write_profile_config__no_default(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
+    def test_write_profile_config__no_default_region(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
         mock_config_parser = Mock()
         mock_credentials.return_value = mock_config_parser
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default())
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default')
         result = credentials.write_profile_config(profile_group, 'us-east-12')
 
         self.assertEqual(True, result.was_success)
@@ -334,7 +334,8 @@ class TestCredentials(TestCase):
 
         credentials._remove_unused_configs(mock_config_parser, mock_profile_group)
 
-        expected = [call('profile unused-profile'), call('profile session-token')]
+        expected = [call('profile unused-profile'),
+                    call('profile session-token')]
         self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
@@ -344,13 +345,13 @@ class TestCredentials(TestCase):
         mock_config_parser.has_section.return_value = False
         mock_load_credentials_file.return_value = mock_config_parser
 
-        credentials.set_access_key('key-id', 'access-key')
-        self.assertEqual([call('access-key')],
+        credentials.set_access_key('key-name', 'key-id', 'access-key')
+        self.assertEqual([call('key-name')],
                          mock_config_parser.has_section.call_args_list)
-        self.assertEqual([call('access-key')],
+        self.assertEqual([call('key-name')],
                          mock_config_parser.add_section.call_args_list)
-        self.assertEqual([call('access-key', 'aws_access_key_id', 'key-id'),
-                          call('access-key', 'aws_secret_access_key', 'access-key')],
+        self.assertEqual([call('key-name', 'aws_access_key_id', 'key-id'),
+                          call('key-name', 'aws_secret_access_key', 'access-key')],
                          mock_config_parser.set.call_args_list)
 
     def test___add_profile_credentials(self):

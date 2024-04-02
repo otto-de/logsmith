@@ -69,7 +69,7 @@ class Cli:
     def set_access_key(self):
         key_id = getpass(prompt='Key ID: ')
         access_key = getpass(prompt='Secret Access Key: ')
-        self.core.set_access_key(key_id=key_id, access_key=access_key)
+        self.core.set_access_key(key_id=key_id, key_secret=access_key)
         self._info('key was successfully rotated')
 
     @staticmethod
