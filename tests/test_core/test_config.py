@@ -67,6 +67,13 @@ class TestConfig(TestCase):
                             'role': 'readonly'
                         }
                     ]
+                },
+                'gcp-project-dev': {
+                    'color': '#FF0000',
+                    'team': 'another-team',
+                    'region': 'europe-west1',
+                    'type': 'gcp',
+                    'profiles': [],  # this will be automatically added
                 }
             }
         )]
@@ -81,7 +88,7 @@ class TestConfig(TestCase):
     def test_set_accounts(self):
         self.config.set_accounts(get_test_accounts())
 
-        groups = ['development', 'live']
+        groups = ['development', 'live', 'gcp-project-dev']
         self.assertEqual(groups, list(self.config.profile_groups.keys()))
 
         development_group = self.config.get_group('development')
@@ -89,6 +96,7 @@ class TestConfig(TestCase):
         self.assertEqual('awesome-team', development_group.team)
         self.assertEqual('us-east-1', development_group.region)
         self.assertEqual('#388E3C', development_group.color)
+        self.assertEqual('aws', development_group.type)
 
         profile = development_group.profiles[0]
         self.assertEqual(development_group, profile.group)

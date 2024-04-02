@@ -1,5 +1,7 @@
 # logsmith
-Logsmith is a desktop trayicon to assume your favorite aws roles.
+Logsmith is a desktop trayicon to:
+- assume your favorite aws roles, and
+- login & configure your gcloud config
 
 ```
 “Who are you and how did you get in here?” -
@@ -35,9 +37,35 @@ productive:
     - profile: live
       account: '123456789123'
       role: developer
+
+# for google cloud:
+#  - gcp project is the profile group name
+#  - region and type are mandatory
+#  - profiles section is no longer needed
+gcp-project-dev:
+  color: '#FF0000'
+  team: teama
+  region: europe-west1
+  type: gcp
+
+gcp-project-prd:
+  color: '#388E3C'
+  team: teama
+  region: europe-west1
+  type: gcp
 ```
 
 If you have account ids with leading zeros, please make sure to put them in quotes.
+
+### Google Cloud login
+Click on the project that you want to use, this will trigger the typical login flow for user and application
+credentials using browser. 
+
+If you have multiple browser profiles, please select the correct active browser. 
+
+The login flow will be automatically stopped after 60 seconds of inactivity or not completion.
+
+It will trigger the login flow again after 8 hours.
 
 ### Chain Assume
 You may add a "source" profile which will be used to assume a given role.
