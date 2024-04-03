@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QApplication, QHBoxLayout, QVBoxLayout, \
-    QPushButton, QComboBox
+    QPushButton, QListWidget
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -19,7 +19,7 @@ class RotateKeyDialog(QDialog):
 
         self.resize(self.width, self.height)
 
-        self.access_key_selection = QComboBox()
+        self.access_key_selection = QListWidget()
 
         self.text = QLabel("This will create a new key and delete the old one!", self)
         self.text.setStyleSheet('color: rgb(255, 0, 0);')
@@ -43,7 +43,7 @@ class RotateKeyDialog(QDialog):
         self.installEventFilter(self)
 
     def ok(self):
-        selected_key = self.access_key_selection.currentText()
+        selected_key = self.access_key_selection.currentItem().text()
         self.gui.rotate_access_key(key_name=selected_key)
         self.hide()
 
@@ -63,9 +63,7 @@ class RotateKeyDialog(QDialog):
             self.cancel()
 
     def show_dialog(self, access_key_list: List[str]):
-        self.access_key_selection.blockSignals(True)
         self.access_key_selection.clear()
-        self.access_key_selection.blockSignals(False)
         for access_key in access_key_list:
             self.access_key_selection.addItem(access_key)
         self.show()
