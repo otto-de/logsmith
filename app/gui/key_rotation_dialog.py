@@ -19,6 +19,7 @@ class RotateKeyDialog(QDialog):
 
         self.resize(self.width, self.height)
 
+        self.access_key_selection_text = QLabel("Select existing access-key:", self)
         self.access_key_selection = QListWidget()
 
         self.text = QLabel("This will create a new key and delete the old one!", self)
@@ -35,6 +36,7 @@ class RotateKeyDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
+        vbox.addWidget(self.access_key_selection_text)
         vbox.addWidget(self.access_key_selection)
         vbox.addWidget(self.text)
         vbox.addLayout(hbox)
@@ -64,8 +66,7 @@ class RotateKeyDialog(QDialog):
 
     def show_dialog(self, access_key_list: List[str]):
         self.access_key_selection.clear()
-        for access_key in access_key_list:
-            self.access_key_selection.addItem(access_key)
+        self.access_key_selection.addItems(access_key_list)
         self.show()
         self.raise_()
         self.activateWindow()

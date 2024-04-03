@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, List
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
-    QPushButton
+    QPushButton, QListWidget
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -20,16 +20,22 @@ class SetKeyDialog(QDialog):
 
         self.resize(self.width, self.height)
 
-        self.key_name_text = QLabel("Key Name:", self)
+        self.access_key_selection_text = QLabel("Select existing access-key:", self)
+        self.access_key_selection = QListWidget()
+        self.deselect_button = QPushButton("Deselect")
+        self.deselect_button.clicked.connect(self.deselect)
+
+        self.key_name_text = QLabel("New Key name:", self)
         self.key_name_input = QLineEdit(self)
         self.key_name_input.setStyleSheet("color: black; background-color: white;")
         self.key_name_input.textChanged.connect(self.check_access_key_name)
+        self.key_name_input.setPlaceholderText('access-key-<name>')
 
         self.key_id_text = QLabel("Key ID:", self)
         self.key_id_input = QLineEdit(self)
         self.key_id_input.setStyleSheet("color: black; background-color: white;")
 
-        self.access_key_text = QLabel("Secret Access Key:", self)
+        self.access_key_text = QLabel("Key secret:", self)
         self.access_key_input = QLineEdit(self)
         self.access_key_input.setStyleSheet("color: black; background-color: white;")
         self.access_key_input.setEchoMode(QLineEdit.EchoMode.Password)
@@ -49,6 +55,9 @@ class SetKeyDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
+        vbox.addWidget(self.access_key_selection_text)
+        vbox.addWidget(self.access_key_selection)
+        vbox.addWidget(self.deselect_button)
         vbox.addWidget(self.key_name_text)
         vbox.addWidget(self.key_name_input)
         vbox.addWidget(self.key_id_text)
@@ -63,14 +72,28 @@ class SetKeyDialog(QDialog):
     def check_access_key_name(self, new_value: str):
         if new_value in self.existing_access_key_list:
             self.set_error_text('access key name already exists and will be overwritten')
-        if not new_value.startswith('access-key'):
-            self.set_error_text('access key name must start with \'access-key\'')
+        elif new_value != '' and not new_value.startswith('access-key'):
+            self.set_error_text('new key names must start with \'access-key\'')
         else:
             self.set_error_text('')
+        self.access_key_selection.clearSelection()
+
+    def deselect(self):
+        self.access_key_selection.clearSelection()
 
     def ok(self):
-        key_name = self.key_name_input.text()
-        key_name = key_name.strip()
+        if self.access_key_selection.selectedItems():
+            selected_key = self.access_key_selection.currentItem().text()
+        else:
+            selected_key = ''
+        new_key_name = self.key_name_input.text()
+        new_key_name = new_key_name.strip()
+
+        if selected_key != '':
+            key_name = selected_key
+        else:
+            key_name = new_key_name
+
         key_id = self.key_id_input.text()
         key_id = key_id.strip()
         access_key = self.access_key_input.text()
@@ -85,10 +108,11 @@ class SetKeyDialog(QDialog):
         if not access_key:
             self.set_error_text('missing access key')
             return
-        if not key_name.startswith('access-key'):
-            self.set_error_text('key name must start with \'access-key\'')
+        if key_name != '' and not key_name.startswith('access-key'):
+            self.set_error_text('new key names must start with \'access-key\'')
             return
-        self.gui.set_access_key(key_name=key_name, key_id=key_id, access_key=access_key)
+        print(f'key_name={key_name}, key_id={key_id}, access_key={access_key}')
+        # self.gui.set_access_key(key_name=key_name, key_id=key_id, access_key=access_key)
         self.hide()
 
     def cancel(self):
@@ -111,7 +135,9 @@ class SetKeyDialog(QDialog):
         self.error_text.repaint()
 
     def show_dialog(self, access_key_list: List[str]):
-        self.key_name_input.setText('access-key')
+        self.access_key_selection.clear()
+        self.access_key_selection.addItems(access_key_list)
+        self.key_name_input.setText('')
         self.key_name_input.repaint()
         self.key_id_input.setText('')
         self.key_id_input.repaint()
