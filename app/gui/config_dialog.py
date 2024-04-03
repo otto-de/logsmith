@@ -26,7 +26,7 @@ class ConfigDialog(QDialog):
         self.resize(self.initial_width, self.initial_height)
 
         self.text_box = QPlainTextEdit(self)
-        font = QtGui.QFont("Courier")
+        font = QtGui.QFont("Courier New")
         font.setPointSize(14)
         self.text_box.setFont(font)
         self.text_box.setStyleSheet("color: black; background-color: white;")
