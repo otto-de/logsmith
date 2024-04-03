@@ -1,13 +1,12 @@
 import logging
-import sys
 from typing import Optional, Callable
 
 from app.aws import credentials, iam
 from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
-from app.yubico import mfa
 from app.gcp import login, config
+from app.yubico import mfa
 
 logger = logging.getLogger('logsmith')
 
@@ -130,25 +129,22 @@ class Core:
     def get_active_profile_color(self):
         return self.active_profile_group.color
 
-    def rotate_access_key(self, key_name: str) -> Result:
+    def rotate_access_key(self, key_name: str, mfa_callback: Callable) -> Result:
         result = Result()
         logger.info('initiate key rotation')
+
+        logger.info('logout')
+        self.logout()
+
         logger.info('check access key')
         access_key_result = credentials.check_access_key(access_key=key_name)
         if not access_key_result.was_success:
             return access_key_result
 
-        logger.info(f'check if access key {key_name} is in use and can be rotated')
-        if not self.active_profile_group or self.active_profile_group.get_access_key() != key_name:
-            result = Result()
-            result.error(f'Please login with a profile that uses \'{key_name}\' first')
-            return result
-
-        logger.info('check session')
-        check_session_result = credentials.check_session()
-        if not check_session_result.was_success:
-            check_session_result.error('Access Denied. Please log first')
-            return check_session_result
+        logger.info('fetch session')
+        renew_session_result = self._renew_session(access_key=key_name, mfa_callback=mfa_callback)
+        if not renew_session_result.was_success:
+            return renew_session_result
 
         logger.info('create key')
         user = credentials.get_user_name(key_name)
@@ -158,13 +154,16 @@ class Core:
 
         logger.info('delete key')
         previous_access_key_id = credentials.get_access_key_id()
-        iam.delete_iam_access_key(user, previous_access_key_id)
+        delete_access_key_result = iam.delete_iam_access_key(user, previous_access_key_id)
+        if not delete_access_key_result.was_success:
+            return delete_access_key_result
 
         logger.info('save key')
         credentials.set_access_key(key_name=key_name,
                                    key_id=create_access_key_result.payload['AccessKeyId'],
                                    key_secret=create_access_key_result.payload['SecretAccessKey'])
 
+        self.logout()
         result.set_success()
         return result
 

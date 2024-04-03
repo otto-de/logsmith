@@ -10,16 +10,16 @@ from gui.repeater import Repeater
 
 from app.core import files
 from app.core.config import Config, ProfileGroup
+from app.core.core import Core
 from app.core.result import Result
 from app.gui.access_key_dialog import SetKeyDialog
 from app.gui.assets import Assets
 from app.gui.config_dialog import ConfigDialog
 from app.gui.key_rotation_dialog import RotateKeyDialog
 from app.gui.log_dialog import LogDialog
-from app.gui.trayicon import SystemTrayIcon
-from app.core.core import Core
 from app.gui.mfa_dialog import MfaDialog
 from app.gui.repeater import Repeater
+from app.gui.trayicon import SystemTrayIcon
 
 logger = logging.getLogger('logsmith')
 
@@ -99,7 +99,7 @@ class Gui(QMainWindow):
 
     def rotate_access_key(self, key_name: str):
         logger.info('initiate key rotation')
-        result = self.core.rotate_access_key(key_name=key_name)
+        result = self.core.rotate_access_key(key_name=key_name, mfa_callback=self.show_mfa_token_fetch_dialog)
         if not self._check_and_signal_error(result):
             return
         self._signal('Success', 'key was rotated')

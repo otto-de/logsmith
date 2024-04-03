@@ -11,6 +11,7 @@ if 'unittest.util' in __import__('sys').modules:
     # Show full diff in self.assertEqual.
     __import__('sys').modules['unittest.util']._MAX_LENGTH = 999999999
 
+
 class TestCore(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -120,68 +121,56 @@ class TestCore(TestCase):
 
         self.assertEqual(self.error_result, result)
 
+    @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__no_access_key(self, mock_credentials):
+    def test_rotate_access_key__no_access_key(self, mock_credentials, mock_logout):
         mock_credentials.check_access_key.return_value = self.error_result
-        result = self.core.rotate_access_key('rotate-this-key')
+        mock_mfa_callback = Mock()
+        result = self.core.rotate_access_key('rotate-this-key', mock_mfa_callback)
 
         expected = [call.check_access_key(access_key='rotate-this-key')]
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual(self.error_result, result)
+        self.assertEqual(1, mock_logout.call_count)
 
+    @mock.patch('app.core.core.Core._renew_session')
+    @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.iam')
     @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__access_key_is_not_logged_in_and_cannot_be_rotated(self, mock_credentials, mock_iam):
+    def test_rotate_access_key__successful_rotate(self, mock_credentials, mock_iam, mock_logout, mock_renew_session):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'test-user'
         mock_credentials.get_access_key_id.return_value = '12345'
+        mock_renew_session.return_value = self.success_result
 
         access_key_result = Result()
         access_key_result.add_payload({'AccessKeyId': 12345, 'SecretAccessKey': 67890})
         access_key_result.set_success()
 
         mock_iam.create_access_key.return_value = access_key_result
+        mock_iam.delete_iam_access_key.return_value = self.success_result
 
-        result = self.core.rotate_access_key('rotate-this-key')
+        mock_mfa_callback = Mock()
+        result = self.core.rotate_access_key('some-access-key', mock_mfa_callback)
 
-        expected = [call.check_access_key(access_key='rotate-this-key')]
-        self.assertEqual(expected, mock_credentials.mock_calls)
+        expected_credential_calls = [call.check_access_key(access_key='some-access-key'),
+                                     # call.check_session(), # TODO can't make sure if the session is valid because there is only one "session"
+                                     call.get_user_name('some-access-key'),
+                                     call.get_access_key_id(),
+                                     call.set_access_key(key_name='some-access-key', key_id=12345, key_secret=67890)]
+        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
 
-        self.assertEqual(False, result.was_success)
-        self.assertEqual(True, result.was_error)
+        renew_session_calls = [call(access_key='some-access-key', mfa_callback=mock_mfa_callback)]
+        self.assertEqual(renew_session_calls, mock_renew_session.mock_calls)
 
-    @mock.patch('app.core.core.iam')
-    @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__successful_rotate(self, mock_credentials, mock_iam):
-        mock_credentials.check_access_key.return_value = self.success_result
-        mock_credentials.check_session.return_value = self.success_result
-        mock_credentials.get_user_name.return_value = 'test-user'
-        mock_credentials.get_access_key_id.return_value = '12345'
-
-        access_key_result = Result()
-        access_key_result.add_payload({'AccessKeyId': 12345, 'SecretAccessKey': 67890})
-        access_key_result.set_success()
-
-        mock_iam.create_access_key.return_value = access_key_result
-
-        # Login ino profile, then rotate the key
-        self.core.active_profile_group = self.config.get_group('development')
-        result = self.core.rotate_access_key('some-access-key')
-
-        expected = [call.check_access_key(access_key='some-access-key'),
-                    call.check_session(),
-                    call.get_user_name('some-access-key'),
-                    call.get_access_key_id(),
-                    call.set_access_key(key_name='some-access-key', key_id=12345, key_secret=67890)]
-        self.assertEqual(expected, mock_credentials.mock_calls)
-
-        expected = [call.create_access_key('test-user'),
-                    call.delete_iam_access_key('test-user', '12345')]
-        self.assertEqual(expected, mock_iam.mock_calls)
+        expected_iam_calls = [call.create_access_key('test-user'),
+                              call.delete_iam_access_key('test-user', '12345')]
+        self.assertEqual(expected_iam_calls, mock_iam.mock_calls)
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
+        self.assertEqual(2, mock_logout.call_count)
 
     def test_get_region__not_logged_in(self):
         region = self.core.get_region()
