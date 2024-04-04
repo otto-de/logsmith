@@ -44,13 +44,13 @@ productive:
 #  - profiles section is no longer needed
 gcp-project-dev:
   color: '#FF0000'
-  team: teama
+  team: team2
   region: europe-west1
   type: gcp
 
 gcp-project-prd:
   color: '#388E3C'
-  team: teama
+  team: team2
   region: europe-west1
   type: gcp
 ```
@@ -67,10 +67,10 @@ The login flow will be automatically stopped after 60 seconds of inactivity or n
 
 It will trigger the login flow again after 8 hours.
 
-### Chain Assume
+### AWS Chain Assume
 You may add a "source" profile which will be used to assume a given role.
 
-This is useful when your own user account can not assume service specific roles. 
+This is useful when your want to assume specific service roles, but can not do so from your user directly. 
 
 ```yaml
 productive:                   
@@ -90,7 +90,7 @@ In this example, logsmith will first assume the role 'developer-role', write the
 
 Please keep in mind that the roles will be assumed in the given order.
 
-## Access key
+## AWS Access key
 Please use the dialog option provided by logsmith to set your access key or save it in `.aws/credentials` 
 under the profile name *access-key*.
 
@@ -100,7 +100,7 @@ aws_access_key_id = blablubb
 aws_secret_access_key = supersecret
 ```
 
-## Switching region
+## AWS Regions
 Logsmith will use the `.aws/config` to set your region independent of your credentials in `.aws/credentials`. 
 
 ```config

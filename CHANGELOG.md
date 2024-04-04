@@ -19,6 +19,12 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## 6.3.0 - 2024-04-04
+
+### Added
+- Support for Google cloud projects (thanks to @3cham)
+- Support for multiple aws access keys 
+
 ## 6.2.1 - 2024-01-04
 
 ### Dependency
