@@ -10,6 +10,6 @@ def start_cli(args):
     if args.logout:
         cli.logout()
     if args.rotate_access_key:
-        cli.rotate_access_key()
+        cli.rotate_access_key(args.rotate_access_key)
     if args.set_access_key:
         cli.set_access_key()

@@ -93,8 +93,8 @@ class Gui(QMainWindow):
             self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
 
-    def set_access_key(self, key_name, key_id, access_key):
-        self.core.set_access_key(key_name=key_name, key_id=key_id, access_key=access_key)
+    def set_access_key(self, key_name, key_id, key_secret):
+        self.core.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
         self._signal('Success', 'access key was set')
 
     def rotate_access_key(self, key_name: str):

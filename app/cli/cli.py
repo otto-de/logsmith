@@ -60,17 +60,23 @@ class Cli:
         logout_result = self.core.logout()
         self._check_and_signal_error(logout_result)
 
-    def rotate_access_key(self):
-        rotate_result = self.core.rotate_access_key()
+    def rotate_access_key(self, key_name):
+        rotate_result = self.core.rotate_access_key(key_name=key_name, mfa_callback=self.ask_for_mfa_token)
         if not self._check_and_signal_error(rotate_result):
             return
         self._info('key was successfully rotated')
 
     def set_access_key(self):
+        while True:
+            key_name = input('Key Name: ')
+            if not key_name.startswith('access-key'):
+                self._error('key name must start with \'access-key\'')
+            else:
+                break
         key_id = getpass(prompt='Key ID: ')
-        access_key = getpass(prompt='Secret Access Key: ')
-        self.core.set_access_key(key_id=key_id, key_secret=access_key)
-        self._info('key was successfully rotated')
+        key_secret = getpass(prompt='Secret Access Key: ')
+        self.core.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
+        self._info('key was successfully set')
 
     @staticmethod
     def ask_for_mfa_token():

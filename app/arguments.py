@@ -20,7 +20,7 @@ def parse(args):
                         help='Overwrite region to login to')
     parser.add_argument('--set-access-key', action='store_true',
                         help='set access key')
-    parser.add_argument('--rotate-access-key', action='store_true',
+    parser.add_argument('--rotate-access-key',
                         help='rotate access key')
     parser.add_argument('-o', '--oneshot', action='store_true',
                         help='When used in combination with --login, the program will finish after login instead of running an infinite refresh loop')

@@ -199,8 +199,8 @@ class Core:
         files.write_active_group_file(profile_group.name)
 
     @staticmethod
-    def set_access_key(key_name: str, key_id: str, access_key: str):
-        credentials.set_access_key(key_name=key_name, key_id=key_id, key_secret=access_key)
+    def set_access_key(key_name: str, key_id: str, key_secret: str):
+        credentials.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
 
     @staticmethod
     def get_access_key_list():
