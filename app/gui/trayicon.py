@@ -71,19 +71,17 @@ class SystemTrayIcon(QSystemTrayIcon):
         # region overwrite
         for region in regions.region_list:
             region_action = self.region_menu.addAction(region)
-            region_action.triggered.connect(partial(self.set_override_region,
-                                                    region=region))
+            region_action.triggered.connect(partial(self.set_override_region, region=region))
+
+        # access keys
+        self.add_access_key_action = menu.addAction('Set access key')
+        self.add_access_key_action.triggered.connect(self.gui.show_set_key_dialog)
+        self.rotate_access_key_action = menu.addAction('Rotate access key')
+        self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
 
         menu.addSeparator()
         self.config_action = menu.addAction('Edit config')
         self.config_action.triggered.connect(self.gui.show_config_dialog)
-
-        key_menu = QMenu('Access Key', menu)
-        menu.addMenu(key_menu)
-        self.add_access_key_action = key_menu.addAction('Set access key')
-        self.add_access_key_action.triggered.connect(self.gui.show_set_key_dialog)
-        self.rotate_access_key_action = key_menu.addAction('Rotate access key')
-        self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
 
         menu.addSeparator()
         self.log_action = menu.addAction("Show logs")

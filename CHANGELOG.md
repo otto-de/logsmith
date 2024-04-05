@@ -19,7 +19,18 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
-## 6.3.0 - 2024-04-04
+## 7.0.0 - 2024-04-05
+
+### Changed
+- Each access-key now retains its own session-token to make switching between access-keys easier.
+- When rotation a key, it will first try to use the session-token of the key to be rotated. If that fails, it will fetch a new session-token automatically.
+- Set and rotate access keys are now directly in the menu instead of in a submenu
+
+### Fixed
+- Fix setting of access keys
+- Rotation of access keys that are not named 'access-key'
+
+## 6.3.0 - 2024-04-04 (yanked)
 
 ### Added
 - Support for Google cloud projects (thanks to @3cham)
