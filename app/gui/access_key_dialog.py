@@ -35,10 +35,10 @@ class SetKeyDialog(QDialog):
         self.key_id_input = QLineEdit(self)
         self.key_id_input.setStyleSheet("color: black; background-color: white;")
 
-        self.access_key_text = QLabel("Key secret:", self)
-        self.access_key_input = QLineEdit(self)
-        self.access_key_input.setStyleSheet("color: black; background-color: white;")
-        self.access_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.key_secret_text = QLabel("Key secret:", self)
+        self.key_secret_input = QLineEdit(self)
+        self.key_secret_input.setStyleSheet("color: black; background-color: white;")
+        self.key_secret_input.setEchoMode(QLineEdit.EchoMode.Password)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -62,8 +62,8 @@ class SetKeyDialog(QDialog):
         vbox.addWidget(self.key_name_input)
         vbox.addWidget(self.key_id_text)
         vbox.addWidget(self.key_id_input)
-        vbox.addWidget(self.access_key_text)
-        vbox.addWidget(self.access_key_input)
+        vbox.addWidget(self.key_secret_text)
+        vbox.addWidget(self.key_secret_input)
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
@@ -96,8 +96,8 @@ class SetKeyDialog(QDialog):
 
         key_id = self.key_id_input.text()
         key_id = key_id.strip()
-        access_key = self.access_key_input.text()
-        access_key = access_key.strip()
+        key_secret = self.key_secret_input.text()
+        key_secret = key_secret.strip()
 
         if not key_name:
             self.set_error_text('missing key name')
@@ -105,14 +105,16 @@ class SetKeyDialog(QDialog):
         if not key_id:
             self.set_error_text('missing key id')
             return
-        if not access_key:
+        if not key_secret:
             self.set_error_text('missing access key')
             return
         if key_name != '' and not key_name.startswith('access-key'):
             self.set_error_text('new key names must start with \'access-key\'')
             return
-        print(f'key_name={key_name}, key_id={key_id}, access_key={access_key}')
-        # self.gui.set_access_key(key_name=key_name, key_id=key_id, access_key=access_key)
+        if key_name != '' and key_name.startswith('session-token'):
+            self.set_error_text('new key names must not start with \'session-token\'')
+            return
+        self.gui.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
         self.hide()
 
     def cancel(self):
@@ -141,8 +143,8 @@ class SetKeyDialog(QDialog):
         self.key_name_input.repaint()
         self.key_id_input.setText('')
         self.key_id_input.repaint()
-        self.access_key_input.setText('')
-        self.access_key_input.repaint()
+        self.key_secret_input.setText('')
+        self.key_secret_input.repaint()
         self.set_error_text('')
 
         self.existing_access_key_list = access_key_list

@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError, ParamValidationError, EndpointConne
 
 from app.core.config import ProfileGroup
 from app.core.result import Result
+from app.util import util
 
 logger = logging.getLogger('logsmith')
 
@@ -100,15 +101,16 @@ def check_access_key(access_key: str) -> Result:
     return result
 
 
-def check_session() -> Result:
+def check_session(access_key: str) -> Result:
     result = Result()
     credentials_file = _load_credentials_file()
-    if not credentials_file.has_section('session-token'):
+    session_token_profile_name = util.generate_session_name(access_key)
+    if not credentials_file.has_section(session_token_profile_name):
         logger.warning('no session token found')
         return result
 
     try:
-        client = _get_client('session-token', 'sts', timeout=2, retries=2)
+        client = _get_client(session_token_profile_name, 'sts', timeout=2, retries=2)
         client.get_caller_identity()
     except ClientError:
         # this is the normal case when the session token is not valid. Proceed then to fetch a new one
@@ -126,8 +128,8 @@ def check_session() -> Result:
 def fetch_session_token(access_key: str, mfa_token: str) -> Result:
     result = Result()
     credentials_file = _load_credentials_file()
-    logger.info('fetch session-token')
-    profile = 'session-token'
+    logger.info(f'fetch session-token for {access_key}')
+    session_token_profile_name = util.generate_session_name(access_key)
 
     try:
         secrets = _get_session_token(access_key=access_key, mfa_token=mfa_token)
@@ -147,9 +149,9 @@ def fetch_session_token(access_key: str, mfa_token: str) -> Result:
         logger.error(error_text, exc_info=True)
         return result
 
-    _add_profile_credentials(credentials_file, profile, secrets)
+    _add_profile_credentials(credentials_file, session_token_profile_name, secrets)
     _write_credentials_file(credentials_file)
-    logger.info('session-token successfully fetched')
+    logger.info(f'{session_token_profile_name} successfully fetched')
     result.set_success()
     return result
 
@@ -162,7 +164,7 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
     try:
         for profile in profile_group.profiles:
             logger.info(f'fetch {profile.profile}')
-            source_profile = profile.source or 'session-token'
+            source_profile = profile.source or util.generate_session_name(profile_group.get_access_key())
             secrets = _assume_role(source_profile, user_name, profile.account, profile.role)
             _add_profile_credentials(credentials_file, profile.profile, secrets)
             if profile.default:
@@ -183,10 +185,10 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
 
 def _remove_unused_profiles(credentials_file, profile_group: ProfileGroup):
     used_profiles = profile_group.list_profile_names()
-    used_profiles.append('session-token')
-
     for profile in credentials_file.sections():
-        if profile not in used_profiles and not profile.startswith('access-key'):
+        if profile not in used_profiles and \
+                not profile.startswith('access-key') and \
+                not profile.startswith('session-token'):
             credentials_file.remove_section(profile)
     return credentials_file
 
@@ -215,7 +217,6 @@ def write_profile_config(profile_group: ProfileGroup, region: str):
 
 def _remove_unused_configs(config_file: configparser, profile_group: ProfileGroup):
     used_profiles = profile_group.list_profile_names()
-    used_profiles.append('access-key')
 
     for config_name in config_file.sections():
         profile = config_name.replace('profile ', '')
@@ -242,9 +243,9 @@ def get_access_key_list() -> list:
     return access_key_list
 
 
-def get_access_key_id():
+def get_access_key_id(key_name: str) -> str:
     credentials_file = _load_credentials_file()
-    return credentials_file.get('access-key', 'aws_access_key_id')
+    return credentials_file.get(key_name, 'aws_access_key_id')
 
 
 def _add_profile_credentials(credentials_file: configparser, profile: str, secrets: dict) -> None:

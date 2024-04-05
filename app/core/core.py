@@ -29,7 +29,7 @@ class Core:
         if not access_key_result.was_success:
             return access_key_result
 
-        session_result = credentials.check_session()
+        session_result = credentials.check_session(access_key=access_key)
         if session_result.was_error:
             return session_result
         if not session_result.was_success:
@@ -142,19 +142,23 @@ class Core:
             return access_key_result
 
         logger.info('fetch session')
-        renew_session_result = self._renew_session(access_key=key_name, mfa_callback=mfa_callback)
-        if not renew_session_result.was_success:
-            return renew_session_result
+        session_result = credentials.check_session(access_key=key_name)
+        if session_result.was_error:
+            return session_result
+        if not session_result.was_success:
+            renew_session_result = self._renew_session(access_key=key_name, mfa_callback=mfa_callback)
+            if not renew_session_result.was_success:
+                return renew_session_result
 
         logger.info('create key')
         user = credentials.get_user_name(key_name)
-        create_access_key_result = iam.create_access_key(user)
+        create_access_key_result = iam.create_access_key(user, key_name)
         if not create_access_key_result.was_success:
             return create_access_key_result
 
         logger.info('delete key')
-        previous_access_key_id = credentials.get_access_key_id()
-        delete_access_key_result = iam.delete_iam_access_key(user, previous_access_key_id)
+        previous_access_key_id = credentials.get_access_key_id(key_name)
+        delete_access_key_result = iam.delete_iam_access_key(user, key_name, previous_access_key_id)
         if not delete_access_key_result.was_success:
             return delete_access_key_result
 

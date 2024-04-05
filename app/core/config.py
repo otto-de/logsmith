@@ -18,7 +18,7 @@ class Config:
     def load_from_disk(self):
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
-        access_key = config.get('default_access_key', None)
+        access_key = config.get('default_access_key', _default_access_key)
 
         accounts = files.load_accounts()
         self.set_accounts(accounts, access_key)
@@ -87,7 +87,7 @@ class ProfileGroup:
         self.default_access_key = default_access_key
         self.access_key: str = group.get('access_key', None)
         self.profiles: List[Profile] = []
-        self.type: str = group.get("type", "aws")  # only aws (default) & gcp as values are allowed
+        self.type: str = group.get('type', 'aws')  # only aws (default) & gcp as values are allowed
 
         for profile in group.get('profiles', []):
             self.profiles.append(Profile(self, profile))
@@ -132,7 +132,7 @@ class ProfileGroup:
             'region': self.region,
             'profiles': [profile.to_dict() for profile in self.profiles],
         }
-        if self.access_key != self.default_access_key:
+        if self.access_key and self.access_key != self.default_access_key:
             result_dict['access_key'] = self.access_key
         if self.type != "aws":
             result_dict["type"] = self.type

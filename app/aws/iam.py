@@ -3,13 +3,14 @@ import logging
 import boto3
 
 from app.core.result import Result
+from app.util import util
 
 logger = logging.getLogger('logsmith')
 
 
-def create_access_key(user_name) -> Result:
+def create_access_key(user_name, key_name) -> Result:
     result = Result()
-    session = boto3.Session(profile_name='session-token')
+    session = boto3.Session(profile_name=util.generate_session_name(key_name))
     client = session.client('iam')
 
     try:
@@ -34,9 +35,9 @@ def create_access_key(user_name) -> Result:
     return result
 
 
-def delete_iam_access_key(user_name, key_id):
+def delete_iam_access_key(user_name, key_name, key_id):
     result = Result()
-    session = boto3.Session(profile_name='session-token')
+    session = boto3.Session(profile_name=util.generate_session_name(key_name))
     client = session.client('iam')
 
     try:

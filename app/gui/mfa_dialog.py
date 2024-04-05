@@ -46,7 +46,9 @@ class MfaDialog(QDialog):
         self.hide()
 
     def get_value(self):
-        return self.input_field.text()
+        value = self.input_field.text()
+        value = value.strip()
+        return value
 
     def closeEvent(self, event):
         self.pressed_cancel = True

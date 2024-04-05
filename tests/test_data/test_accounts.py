@@ -22,6 +22,7 @@ def get_test_accounts() -> dict:
             'color': '#388E3C',
             'team': 'awesome-team',
             'region': 'us-east-1',
+            'access_key': 'access-key-123',
             'profiles': [
                 {
                     'profile': 'developer',
@@ -51,6 +52,28 @@ def get_test_group():
         'color': '#388E3C',
         'team': 'awesome-team',
         'region': 'us-east-1',
+        'profiles': [
+            {
+                'profile': 'developer',
+                'account': '123456789012',
+                'role': 'developer',
+            },
+            {
+                'profile': 'readonly',
+                'account': '012345678901',
+                'role': 'readonly',
+                'default': 'true',
+            }
+        ]
+    }
+
+
+def get_test_group_with_specific_access_key():
+    return {
+        'color': '#388E3C',
+        'team': 'awesome-team',
+        'region': 'us-east-1',
+        'access_key': 'specific-access-key',
         'profiles': [
             {
                 'profile': 'developer',
@@ -122,4 +145,13 @@ def get_test_profile_no_default():
         'profile': 'readonly',
         'account': '123456789012',
         'role': 'readonly-role',
+    }
+
+
+def get_test_profile_with_source():
+    return {
+        'profile': 'readonly',
+        'account': '123456789012',
+        'role': 'readonly-role',
+        'source': 'some-source'
     }
