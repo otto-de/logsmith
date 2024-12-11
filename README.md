@@ -1,3 +1,5 @@
+![OSS Lifecycle](https://img.shields.io/osslifecycle?file_url=https%3A%2F%2Fraw.githubusercontent.com%2Fotto-de%2Flogsmith%2Fmain%2FOSSMETADATA)
+
 # logsmith
 Logsmith is a desktop trayicon to:
 - assume your favorite aws roles, and
