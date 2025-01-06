@@ -19,6 +19,7 @@ from app.gui.key_rotation_dialog import RotateKeyDialog
 from app.gui.log_dialog import LogDialog
 from app.gui.mfa_dialog import MfaDialog
 from app.gui.repeater import Repeater
+from app.gui.service_profile_dialog import ServiceProfileDialog
 from app.gui.trayicon import SystemTrayIcon
 
 logger = logging.getLogger('logsmith')
@@ -39,6 +40,7 @@ class Gui(QMainWindow):
         self.config_dialog = ConfigDialog(self)
         self.set_key_dialog = SetKeyDialog(self)
         self.rotate_key_dialog = RotateKeyDialog(self)
+        self.service_profile_dialog = ServiceProfileDialog(self)
         self.tray_icon.show()
 
     def login(self, profile_group: ProfileGroup):
@@ -116,6 +118,12 @@ class Gui(QMainWindow):
 
     def show_access_key_rotation_dialog(self):
         self.rotate_key_dialog.show_dialog(access_key_list=self.core.get_access_key_list())
+
+    def show_service_role_dialog(self):
+        if not self.core.active_profile_group:
+            self.service_profile_dialog.show_dialog(profile_list=[])
+        else:
+            self.service_profile_dialog.show_dialog(profile_list=self.core.active_profile_group.list_profile_names())
 
     def show_logs(self):
         logs_as_text = files.load_logs()

@@ -80,6 +80,14 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
 
         menu.addSeparator()
+        # service profile
+        self.rotate_access_key_action = menu.addAction('Set service profile')
+        self.rotate_access_key_action.triggered.connect(self.gui.show_service_role_dialog)
+
+        self.last_login = menu.addAction(f'no service profile')
+        self.last_login.setDisabled(True)
+
+        menu.addSeparator()
         self.config_action = menu.addAction('Edit config')
         self.config_action.triggered.connect(self.gui.show_config_dialog)
 
