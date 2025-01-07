@@ -44,6 +44,9 @@ class ServiceProfileDialog(QDialog):
 
         self.fetch_button = QPushButton("Fetch Roles")
         self.fetch_button.clicked.connect(self.fetch_roles)
+        self.unset_button = QPushButton("unset service role")
+        self.unset_button.setStyleSheet("color: red;")
+        self.unset_button.clicked.connect(self.unset_service_role)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -69,6 +72,7 @@ class ServiceProfileDialog(QDialog):
         vbox.addWidget(self.filter_roles_input)
 
         vbox.addWidget(self.fetch_button)
+        vbox.addWidget(self.unset_button)
 
         vbox.addLayout(hbox)
 
@@ -93,18 +97,29 @@ class ServiceProfileDialog(QDialog):
         else:
             self.set_error_text('Please select a profile')
 
-    def on_fetch_roles_success(self, roles):
-        self.gui.core.config.set_assumable_roles(self.selected_profile, roles)
-        self.available_role_selection.addItems(roles)
+    def on_fetch_roles_success(self, role_list):
+        self.available_role_selection.addItems(role_list)
         self.fetch_button.setText('Fetch Roles')
+        self.gui.set_assumable_roles(profile=self.selected_profile, role_list=role_list)
 
     def on_fetch_roles_error(self, error_message):
         self.set_error_text(error_message)
         self.fetch_button.setText('Fetch Roles')
 
+    def unset_service_role(self):
+        self.gui.set_service_role(profile=self.selected_profile, role=None)
+
     def ok(self):
-        pass
-        self.hide()
+        role_selection = self.available_role_selection.currentItem()
+        if not role_selection:
+            self.set_error_text('Please select a role')
+        else:
+            role_name = role_selection.text()
+            if role_name:
+                self.gui.set_service_role(profile=self.selected_profile, role=role_name)
+                self.hide()
+            else:
+                self.set_error_text('Please select a role')
 
     def cancel(self):
         self.hide()

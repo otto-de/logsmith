@@ -9,6 +9,7 @@ from ruamel.yaml.parser import ParserError, ScannerError
 logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
 accounts_file_name = 'accounts.yaml'
+assumable_roles_file_name = 'assumable_roles.yaml'
 log_file_name = 'app.log'
 active_group_file_name = 'active_group'
 
@@ -32,6 +33,11 @@ def get_config_path() -> str:
 
 def get_accounts_path() -> str:
     return f'{get_app_path()}/{accounts_file_name}'
+
+
+# TODO write test
+def get_assumable_roles_path() -> str:
+    return f'{get_app_path()}/{assumable_roles_file_name}'
 
 
 def get_log_path() -> str:
@@ -63,6 +69,7 @@ def _load_file(path):
 
 
 def _write_file(path, content):
+    print(f'writing to {path} {content}')
     with open(path, 'w') as file:
         file.write(str(content))
 
@@ -80,12 +87,22 @@ def load_accounts():
     return parse_yaml(_load_file(get_accounts_path()))
 
 
+# TODO write test
+def load_assumable_roles():
+    return parse_yaml(_load_file(get_assumable_roles_path()))
+
+
 def save_config_file(config_dict: dict):
     _write_file(get_config_path(), dump_yaml(config_dict))
 
 
 def save_accounts_file(account_dict: dict):
     _write_file(get_accounts_path(), dump_yaml(account_dict))
+
+
+# TODO write test
+def save_assumable_roles_file(assumable_roles: dict):
+    _write_file(get_assumable_roles_path(), dump_yaml(assumable_roles))
 
 
 def load_logs():

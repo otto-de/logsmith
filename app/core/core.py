@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 
 from app.aws import credentials, iam
 from app.core import files
@@ -180,6 +180,22 @@ class Core:
             logger.error(str(error), exc_info=True)
             result.error('could not save config')
             return result
+        result.set_success()
+        return result
+
+    def set_service_role(self, profile: str, role: str) -> Result:
+        result = Result()
+        logger.info('set service role')
+        self.config.set_service_role(group=self.active_profile_group.name, profile=profile, role=role)
+
+        result.set_success()
+        return result
+
+    def set_assumable_roles(self,profile, role_list: List[str]):
+        result = Result()
+        logger.info('set assumbale role')
+        self.config.set_assumable_roles(group=self.active_profile_group.name, profile=profile, role_list=role_list)
+
         result.set_success()
         return result
 

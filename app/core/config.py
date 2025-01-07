@@ -15,6 +15,9 @@ class Config:
         self.mfa_shell_command = None
         self.default_access_key = None
 
+        self.assumable_roles: Dict = {}
+        self.service_role: str = None
+
     def load_from_disk(self):
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
@@ -22,6 +25,11 @@ class Config:
 
         accounts = files.load_accounts()
         self.set_accounts(accounts, access_key)
+
+        # TODO write test
+        assumable_roles = files.load_assumable_roles()
+        print(f'assumable roles: {assumable_roles}')
+        self.assumable_roles = assumable_roles
 
     def save_to_disk(self):
         files.save_accounts_file(self.to_dict())
@@ -49,6 +57,32 @@ class Config:
 
     def set_mfa_shell_command(self, mfa_shell_command: str):
         self.mfa_shell_command = mfa_shell_command
+
+    # TODO write test
+    def set_service_role(self, group: str, profile: str, role: str):
+        self.service_role = role
+        if group not in self.assumable_roles:
+            self.assumable_roles[group] = {
+                'selected_profile': None,
+                'selected_role': None,
+                'available': {}
+            }
+        self.assumable_roles[group]['selected_profile'] = profile
+        self.assumable_roles[group]['selected_role'] = role
+        files.save_assumable_roles_file(self.assumable_roles)
+
+    # TODO write test
+    def set_assumable_roles(self, group: str, profile: str, role_list: List[str]):
+        print(f'set assumable roles for {group}:{profile}: {role_list}')
+        if group not in self.assumable_roles:
+            self.assumable_roles[group] = {
+                'selected_profile': None,
+                'selected_role': None,
+                'available': {}
+            }
+        self.assumable_roles[group]['available'][profile] = role_list
+        print(f'assumable roles: {self.assumable_roles}')
+        files.save_assumable_roles_file(self.assumable_roles)
 
     def validate(self) -> None:
         valid = False

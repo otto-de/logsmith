@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from functools import partial
+from typing import List
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import QMainWindow
@@ -105,6 +106,18 @@ class Gui(QMainWindow):
         if not self._check_and_signal_error(result):
             return
         self._signal('Success', 'key was rotated')
+
+    def set_service_role(self, profile: str, role: str):
+        result = self.core.set_service_role(profile=profile, role=role)
+        if not self._check_and_signal_error(result):
+            return
+        self._signal('Success', 'service role was set')
+
+    def set_assumable_roles(self,profile: str, role_list: List[str]):
+        result = self.core.set_assumable_roles(profile=profile, role_list=role_list)
+        if not self._check_and_signal_error(result):
+            return
+        self._signal('Success', 'available role list was set')
 
     @staticmethod
     def show_mfa_token_fetch_dialog():
