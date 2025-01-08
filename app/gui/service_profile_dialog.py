@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Dict
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
@@ -16,10 +16,14 @@ class ServiceProfileDialog(QDialog):
         super(ServiceProfileDialog, self).__init__(parent)
         self.gui: Gui = parent
         self.setWindowTitle('Select Service Role')
+
+        self.group: str = None
         self.profile_list: List[str] = []
         self.selected_profile: str = None
-        self.available_roles: List[str] = []
-        # This is needed to keep the task alive. Otherwise it crashes the application
+        self.selected_role: str = None
+        self.assumable_roles: Dict = {}
+
+        # This is needed to keep the task alive, otherwise it crashes the application
         self.fetch_roles_task: BackgroundTask = None
 
         self.width = 400
@@ -33,13 +37,19 @@ class ServiceProfileDialog(QDialog):
         # TODO extract styles in own file
         self.help_text.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
 
-        self.source_profile_selection_text = QLabel("Select source profile:", self)
+        self.group_headline = QLabel("Selected group:", self)
+        self.group_text = QLabel(self.group, self)
+        self.group_text.setStyleSheet("padding-left: 5px;")
+
+        self.source_profile_selection_headline = QLabel("Select source profile:", self)
         self.source_profile_selection = QListWidget()
         self.source_profile_selection.clicked.connect(self.select_profile)
 
-        self.available_roles_text = QLabel("Available roles:", self)
+        self.available_roles_headline = QLabel("Available roles:", self)
         self.available_role_selection = QListWidget()
-        self.filter_roles_text = QLabel("Filter Roles:", self)
+        self.available_role_selection.clicked.connect(self.select_role)
+
+        self.filter_roles_headline = QLabel("Filter Roles:", self)
         self.filter_roles_input = QLineEdit(self)
 
         self.fetch_button = QPushButton("Fetch Roles")
@@ -64,11 +74,13 @@ class ServiceProfileDialog(QDialog):
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.help_text)
-        vbox.addWidget(self.source_profile_selection_text)
+        vbox.addWidget(self.group_headline)
+        vbox.addWidget(self.group_text)
+        vbox.addWidget(self.source_profile_selection_headline)
         vbox.addWidget(self.source_profile_selection)
-        vbox.addWidget(self.available_roles_text)
+        vbox.addWidget(self.available_roles_headline)
         vbox.addWidget(self.available_role_selection)
-        vbox.addWidget(self.filter_roles_text)
+        vbox.addWidget(self.filter_roles_headline)
         vbox.addWidget(self.filter_roles_input)
 
         vbox.addWidget(self.fetch_button)
@@ -81,6 +93,16 @@ class ServiceProfileDialog(QDialog):
 
     def select_profile(self):
         self.selected_profile = self.source_profile_selection.currentItem().text()
+
+        self.available_role_selection.clear()
+        if self.group in self.assumable_roles and self.selected_profile in self.assumable_roles[self.group][
+            'available']:
+            self.available_role_selection.addItems(self.assumable_roles[self.group]['available'][self.selected_profile])
+
+        self.set_error_text('')
+
+    def select_role(self):
+        self.selected_role = self.available_role_selection.currentItem().text()
         self.set_error_text('')
 
     def fetch_roles(self):
@@ -107,19 +129,17 @@ class ServiceProfileDialog(QDialog):
         self.fetch_button.setText('Fetch Roles')
 
     def unset_service_role(self):
-        self.gui.set_service_role(profile=self.selected_profile, role=None)
+        if not self.profile_list:
+            self.set_error_text('No source profiles available. Please login first.')
+        else:
+            self.gui.set_service_role(profile=None, role=None)
 
     def ok(self):
-        role_selection = self.available_role_selection.currentItem()
-        if not role_selection:
-            self.set_error_text('Please select a role')
+        if not self.selected_profile or not self.selected_role:
+            self.set_error_text('Please select a profile and role')
         else:
-            role_name = role_selection.text()
-            if role_name:
-                self.gui.set_service_role(profile=self.selected_profile, role=role_name)
-                self.hide()
-            else:
-                self.set_error_text('Please select a role')
+            self.gui.set_service_role(profile=self.selected_profile, role=self.selected_role)
+            self.hide()
 
     def cancel(self):
         self.hide()
@@ -140,11 +160,21 @@ class ServiceProfileDialog(QDialog):
         self.error_text.setText(message)
         self.error_text.repaint()
 
-    def show_dialog(self, profile_list: List[str]):
-        self.profile_list = profile_list
+    def show_dialog(self, group: str, profile_list: List[str], assumable_roles: Dict):
+        self.group = group
         self.profile_list = [profile for profile in profile_list if profile != 'default']
-        self.source_profile_selection.clear()
-        self.source_profile_selection.addItems(self.profile_list)
+        self.assumable_roles = assumable_roles
+
+        self.group_text.setText(self.group)
+
+        if assumable_roles.get(group, {}).get('selected_profile'):
+            self.selected_profile = assumable_roles[group]['selected_profile']
+            self.fill_and_select_profile_list()
+        print('selected_role')
+        print(assumable_roles.get(group, {}).get('selected_role'))
+        if assumable_roles.get(group, {}).get('selected_role'):
+            self.selected_role = assumable_roles[group]['selected_role']
+            self.fill_and_select_role_list()
 
         if not self.profile_list:
             self.set_error_text('No source profiles available. Please login first.')
@@ -154,6 +184,22 @@ class ServiceProfileDialog(QDialog):
         self.show()
         self.raise_()
         self.activateWindow()
+
+    def fill_and_select_profile_list(self):
+        self.source_profile_selection.clear()
+        self.source_profile_selection.addItems(self.profile_list)
+        item_to_select = self.source_profile_selection.findItems(self.selected_profile, Qt.MatchFlag.MatchExactly)
+        if item_to_select:
+            self.source_profile_selection.setCurrentItem(item_to_select[0])
+
+    def fill_and_select_role_list(self):
+        self.available_role_selection.clear()
+        self.available_role_selection.addItems(self.assumable_roles[self.group]['available'][self.selected_profile])
+        item_to_select = self.available_role_selection.findItems(self.selected_role, Qt.MatchFlag.MatchExactly)
+        print('item_to_select')
+        print(item_to_select)
+        if item_to_select:
+            self.available_role_selection.setCurrentItem(item_to_select[0])
 
 
 if __name__ == '__main__':

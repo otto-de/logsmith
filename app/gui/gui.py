@@ -113,7 +113,7 @@ class Gui(QMainWindow):
             return
         self._signal('Success', 'service role was set')
 
-    def set_assumable_roles(self,profile: str, role_list: List[str]):
+    def set_assumable_roles(self, profile: str, role_list: List[str]):
         result = self.core.set_assumable_roles(profile=profile, role_list=role_list)
         if not self._check_and_signal_error(result):
             return
@@ -134,9 +134,11 @@ class Gui(QMainWindow):
 
     def show_service_role_dialog(self):
         if not self.core.active_profile_group:
-            self.service_profile_dialog.show_dialog(profile_list=[])
+            self.service_profile_dialog.show_dialog(group='', profile_list=[], assumable_roles={})
         else:
-            self.service_profile_dialog.show_dialog(profile_list=self.core.active_profile_group.list_profile_names())
+            self.service_profile_dialog.show_dialog(group=self.core.active_profile_group.name,
+                                                    profile_list=self.core.active_profile_group.list_profile_names(),
+                                                    assumable_roles=self.core.config.assumable_roles)
 
     def show_logs(self):
         logs_as_text = files.load_logs()

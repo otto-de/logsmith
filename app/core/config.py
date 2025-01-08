@@ -16,7 +16,6 @@ class Config:
         self.default_access_key = None
 
         self.assumable_roles: Dict = {}
-        self.service_role: str = None
 
     def load_from_disk(self):
         config = files.load_config()
@@ -60,7 +59,6 @@ class Config:
 
     # TODO write test
     def set_service_role(self, group: str, profile: str, role: str):
-        self.service_role = role
         if group not in self.assumable_roles:
             self.assumable_roles[group] = {
                 'selected_profile': None,
