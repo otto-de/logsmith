@@ -162,7 +162,7 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
     logger.info('fetch role credentials')
 
     try:
-        for profile in profile_group.profiles:
+        for profile in profile_group.get_profile_list():
             logger.info(f'fetch {profile.profile}')
             source_profile = profile.source or util.generate_session_name(profile_group.get_access_key())
             secrets = _assume_role(source_profile, user_name, profile.account, profile.role)
@@ -198,7 +198,7 @@ def write_profile_config(profile_group: ProfileGroup, region: str):
     config_file = _load_config_file()
 
     try:
-        for profile in profile_group.profiles:
+        for profile in profile_group.get_profile_list():
             logger.info(f'add config for {profile.profile}')
             _add_profile_config(config_file, profile.profile, region)
             if profile.default:

@@ -186,7 +186,7 @@ class Core:
     def set_service_role(self, profile: str, role: str) -> Result:
         result = Result()
         logger.info('set service role')
-        self.config.set_service_role(group=self.active_profile_group.name, profile=profile, role=role)
+        self.config.set_service_role(group_name=self.active_profile_group.name, profile_name=profile, role_name=role)
 
         result.set_success()
         return result
@@ -194,8 +194,8 @@ class Core:
     def set_available_service_roles(self, profile, role_list: List[str]):
         result = Result()
         logger.info('set available service roles')
-        self.config.set_available_service_roles(group=self.active_profile_group.name, profile=profile, role_list=role_list)
-
+        self.config.set_available_service_roles(group=self.active_profile_group.name, profile=profile,
+                                                role_list=role_list)
         result.set_success()
         return result
 

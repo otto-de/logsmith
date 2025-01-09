@@ -192,7 +192,7 @@ class ServiceProfileDialog(QDialog):
             self.active_group_text.setText(self.active_group)
 
             self.source_profile_list = [profile for profile in self.core.active_profile_group.list_profile_names() if
-                                        profile != 'default']
+                                        profile not in ['default', 'service']]
 
             self.selected_source_profile = self.config.get_selected_service_role_source_profile(group=self.active_group)
             self.selected_service_role = self.config.get_selected_service_role(group=self.active_group)
