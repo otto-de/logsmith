@@ -9,7 +9,7 @@ from ruamel.yaml.parser import ParserError, ScannerError
 logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
 accounts_file_name = 'accounts.yaml'
-assumable_roles_file_name = 'assumable_roles.yaml'
+service_roles_file_name = 'service_roles.yaml'
 log_file_name = 'app.log'
 active_group_file_name = 'active_group'
 
@@ -36,8 +36,8 @@ def get_accounts_path() -> str:
 
 
 # TODO write test
-def get_assumable_roles_path() -> str:
-    return f'{get_app_path()}/{assumable_roles_file_name}'
+def get_service_roles_path() -> str:
+    return f'{get_app_path()}/{service_roles_file_name}'
 
 
 def get_log_path() -> str:
@@ -89,7 +89,7 @@ def load_accounts():
 
 # TODO write test
 def load_assumable_roles():
-    return parse_yaml(_load_file(get_assumable_roles_path()))
+    return parse_yaml(_load_file(get_service_roles_path()))
 
 
 def save_config_file(config_dict: dict):
@@ -101,8 +101,8 @@ def save_accounts_file(account_dict: dict):
 
 
 # TODO write test
-def save_assumable_roles_file(assumable_roles: dict):
-    _write_file(get_assumable_roles_path(), dump_yaml(assumable_roles))
+def save_service_roles_file(assumable_roles: dict):
+    _write_file(get_service_roles_path(), dump_yaml(assumable_roles))
 
 
 def load_logs():
