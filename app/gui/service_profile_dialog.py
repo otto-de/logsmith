@@ -205,6 +205,8 @@ class ServiceProfileDialog(QDialog):
         else:
             self.set_error_text('')
 
+        self.filter_roles_input.setFocus()
+
         self.show()
         self.raise_()
         self.activateWindow()
