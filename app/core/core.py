@@ -191,10 +191,10 @@ class Core:
         result.set_success()
         return result
 
-    def set_assumable_roles(self,profile, role_list: List[str]):
+    def set_available_service_roles(self, profile, role_list: List[str]):
         result = Result()
-        logger.info('set assumbale role')
-        self.config.set_assumable_roles(group=self.active_profile_group.name, profile=profile, role_list=role_list)
+        logger.info('set available service roles')
+        self.config.set_available_service_roles(group=self.active_profile_group.name, profile=profile, role_list=role_list)
 
         result.set_success()
         return result

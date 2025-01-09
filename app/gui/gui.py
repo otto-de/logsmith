@@ -114,7 +114,7 @@ class Gui(QMainWindow):
         self._signal('Success', 'service role was set')
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
-        result = self.core.set_assumable_roles(profile=profile, role_list=role_list)
+        result = self.core.set_available_service_roles(profile=profile, role_list=role_list)
         if not self._check_and_signal_error(result):
             return
         self._signal('Success', 'available role list was set')
@@ -133,12 +133,7 @@ class Gui(QMainWindow):
         self.rotate_key_dialog.show_dialog(access_key_list=self.core.get_access_key_list())
 
     def show_service_role_dialog(self):
-        if not self.core.active_profile_group:
-            self.service_profile_dialog.show_dialog(group='', profile_list=[], assumable_roles={})
-        else:
-            self.service_profile_dialog.show_dialog(group=self.core.active_profile_group.name,
-                                                    profile_list=self.core.active_profile_group.list_profile_names(),
-                                                    assumable_roles=self.core.config.assumable_roles)
+        self.service_profile_dialog.show_dialog(core=self.core, config=self.core.config)
 
     def show_logs(self):
         logs_as_text = files.load_logs()

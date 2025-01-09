@@ -15,7 +15,7 @@ class Config:
         self.mfa_shell_command = None
         self.default_access_key = None
 
-        self.assumable_roles: Dict = {}
+        self.service_roles: Dict = {}
 
     def load_from_disk(self):
         config = files.load_config()
@@ -26,9 +26,8 @@ class Config:
         self.set_accounts(accounts, access_key)
 
         # TODO write test
-        assumable_roles = files.load_assumable_roles()
-        print(f'assumable roles: {assumable_roles}')
-        self.assumable_roles = assumable_roles
+        service_roles = files.load_service_roles()
+        self.service_roles = service_roles
 
     def save_to_disk(self):
         files.save_accounts_file(self.to_dict())
@@ -59,28 +58,52 @@ class Config:
 
     # TODO write test
     def set_service_role(self, group: str, profile: str, role: str):
-        if group not in self.assumable_roles:
-            self.assumable_roles[group] = {
+        if group not in self.service_roles:
+            self.service_roles[group] = {
                 'selected_profile': None,
                 'selected_role': None,
-                'available': {}
+                'available': {},
+                'history': []
             }
-        self.assumable_roles[group]['selected_profile'] = profile
-        self.assumable_roles[group]['selected_role'] = role
-        files.save_assumable_roles_file(self.assumable_roles)
+        self.service_roles[group]['selected_profile'] = profile
+        self.service_roles[group]['selected_role'] = role
+        history = self._add_to_history(profile=profile, role=role, history=self.get_history(group))
+        self.service_roles[group]['history'] = history
+        files.save_service_roles(self.service_roles)
 
     # TODO write test
-    def set_assumable_roles(self, group: str, profile: str, role_list: List[str]):
-        print(f'set assumable roles for {group}:{profile}: {role_list}')
-        if group not in self.assumable_roles:
-            self.assumable_roles[group] = {
+    def set_available_service_roles(self, group: str, profile: str, role_list: List[str]):
+        if group not in self.service_roles:
+            self.service_roles[group] = {
                 'selected_profile': None,
                 'selected_role': None,
-                'available': {}
+                'available': {},
+                'history': []
             }
-        self.assumable_roles[group]['available'][profile] = role_list
-        print(f'assumable roles: {self.assumable_roles}')
-        files.save_assumable_roles_file(self.assumable_roles)
+        self.service_roles[group]['available'][profile] = role_list
+        files.save_service_roles(self.service_roles)
+
+    def get_selected_service_role_source_profile(self, group: str):
+        return self.service_roles.get(group, {}).get('selected_profile')
+
+    def get_selected_service_role(self, group: str):
+        return self.service_roles.get(group, {}).get('selected_role')
+
+    def get_available_service_roles(self, group: str, profile: str):
+        return self.service_roles.get(group, {}).get('available', {}).get(profile, [])
+
+    def get_history(self, group: str):
+        return self.service_roles.get(group, {}).get('history', [])
+
+    @staticmethod
+    def _add_to_history(profile: str, role: str, history: List[str]):
+        history_string = f'{profile} : {role}'
+        history.insert(0, history_string)
+        clean_history = []
+        for item in history:
+            if item not in clean_history:
+                clean_history.append(item)
+        return list(clean_history[:10])
 
     def validate(self) -> None:
         valid = False

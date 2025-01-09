@@ -88,7 +88,7 @@ def load_accounts():
 
 
 # TODO write test
-def load_assumable_roles():
+def load_service_roles():
     return parse_yaml(_load_file(get_service_roles_path()))
 
 
@@ -101,8 +101,8 @@ def save_accounts_file(account_dict: dict):
 
 
 # TODO write test
-def save_service_roles_file(assumable_roles: dict):
-    _write_file(get_service_roles_path(), dump_yaml(assumable_roles))
+def save_service_roles(service_roles: dict):
+    _write_file(get_service_roles_path(), dump_yaml(service_roles))
 
 
 def load_logs():
