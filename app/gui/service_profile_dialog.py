@@ -28,6 +28,7 @@ class ServiceProfileDialog(QDialog):
         self.source_profile_list: List[str] = []
         self.selected_source_profile: str = None
         self.selected_service_role: str = None
+        self.role_name_filter: str = None
 
         # This is needed to keep the task alive, otherwise it crashes the application
         self.fetch_roles_task: BackgroundTask = None
@@ -61,6 +62,7 @@ class ServiceProfileDialog(QDialog):
 
         self.filter_roles_headline = QLabel("Filter Roles:", self)
         self.filter_roles_input = QLineEdit(self)
+        self.filter_roles_input.textChanged.connect(self.on_role_name_filter_input_changed)
 
         self.fetch_button = QPushButton("Fetch Roles")
         self.fetch_button.clicked.connect(self.fetch_roles)
@@ -105,10 +107,7 @@ class ServiceProfileDialog(QDialog):
 
     def select_profile(self):
         self.selected_source_profile = self.source_profile_selection.currentItem().text()
-
-        self.available_role_selection.clear()
-        self.available_role_selection.addItems(self.config.get_available_service_roles(group=self.active_group,
-                                                                                       profile=self.selected_source_profile))
+        self.update_available_role_selection()
         self.set_error_text('')
 
     def select_role(self):
@@ -116,14 +115,13 @@ class ServiceProfileDialog(QDialog):
         self.set_error_text('')
 
     def select_from_history(self):
-        self.history_string = self.history_selection.currentItem().text()
-        self.history_string_parts = self.history_string.split(' : ')
-        self.selected_source_profile = self.history_string_parts[0]
-        self.selected_service_role = self.history_string_parts[1]
+        history_string = self.history_selection.currentItem().text()
+        history_string_parts = history_string.split(' : ')
+        self.selected_source_profile = history_string_parts[0]
+        self.selected_service_role = history_string_parts[1]
         self.set_error_text('')
 
     def fetch_roles(self):
-        self.set_error_text('')
         if self.selected_source_profile:
             self.available_role_selection.clear()
             self.fetch_button.setText('fetching roles... Please wait.')
@@ -135,6 +133,7 @@ class ServiceProfileDialog(QDialog):
             self.fetch_roles_task.start()
         else:
             self.set_error_text('Please select a profile')
+        self.set_error_text('')
 
     def on_fetch_roles_success(self, role_list):
         self.available_role_selection.addItems(role_list)
@@ -144,6 +143,10 @@ class ServiceProfileDialog(QDialog):
     def on_fetch_roles_error(self, error_message):
         self.set_error_text(error_message)
         self.fetch_button.setText('Fetch Roles')
+
+    def on_role_name_filter_input_changed(self, text):
+        self.role_name_filter = text.lower().strip()
+        self.update_available_role_selection()
 
     def unset_service_role(self):
         if not self.source_profile_list:
@@ -188,9 +191,14 @@ class ServiceProfileDialog(QDialog):
             self.source_profile_list = [profile for profile in self.core.active_profile_group.list_profile_names() if
                                         profile != 'default']
 
-            self.fill_and_select_source_profile_list()
-            self.fill_and_select_role_list()
-            self.fill_history()
+            self.selected_source_profile = self.config.get_selected_service_role_source_profile(group=self.active_group)
+            self.selected_service_role = self.config.get_selected_service_role(group=self.active_group)
+
+            self.update_source_profile_selection()
+            self.select_in_source_profile_selection(profile=self.selected_source_profile)
+            self.update_available_role_selection()
+            self.select_in_available_role_selection(role=self.selected_service_role)
+            self.update_history_selection()
 
         if not self.source_profile_list:
             self.set_error_text('No source profiles available. Please login first.')
@@ -201,30 +209,36 @@ class ServiceProfileDialog(QDialog):
         self.raise_()
         self.activateWindow()
 
-    def fill_and_select_source_profile_list(self):
+    def update_source_profile_selection(self):
         self.selected_source_profile = self.config.get_selected_service_role_source_profile(group=self.active_group)
         self.source_profile_selection.clear()
         self.source_profile_selection.addItems(self.source_profile_list)
 
-        if self.selected_source_profile:
-            item_to_select = self.source_profile_selection.findItems(self.selected_source_profile,
-                                                                     Qt.MatchFlag.MatchExactly)
+    def select_in_source_profile_selection(self, profile):
+        if profile:
+            item_to_select = self.source_profile_selection.findItems(profile, Qt.MatchFlag.MatchExactly)
             if item_to_select:
                 self.source_profile_selection.setCurrentItem(item_to_select[0])
 
-    def fill_and_select_role_list(self):
-        self.selected_service_role = self.config.get_selected_service_role(group=self.active_group)
+    def update_available_role_selection(self):
         self.available_role_selection.clear()
-        self.available_role_selection.addItems(self.config.get_available_service_roles(group=self.active_group,
-                                                                                       profile=self.selected_source_profile))
+        if not self.role_name_filter:
+            self.available_role_selection.addItems(
+                self.config.get_available_service_roles(group=self.active_group,
+                                                        profile=self.selected_source_profile))
+        else:
+            self.available_role_selection.addItems(
+                [role for role in self.config.get_available_service_roles(group=self.active_group,
+                                                                          profile=self.selected_source_profile) if
+                 self.role_name_filter in role.lower()])
 
-        if self.selected_source_profile:
-            item_to_select = self.available_role_selection.findItems(self.selected_service_role,
-                                                                     Qt.MatchFlag.MatchExactly)
+    def select_in_available_role_selection(self, role):
+        if role:
+            item_to_select = self.available_role_selection.findItems(role, Qt.MatchFlag.MatchExactly)
             if item_to_select:
                 self.available_role_selection.setCurrentItem(item_to_select[0])
 
-    def fill_history(self):
+    def update_history_selection(self):
         self.history_selection.clear()
         self.history_selection.addItems(self.config.get_history(group=self.active_group))
 
