@@ -152,6 +152,9 @@ class ServiceProfileDialog(QDialog):
         if not self.source_profile_list:
             self.set_error_text('No source profiles available. Please login first.')
         else:
+            self.source_profile_selection.clearSelection()
+            self.available_role_selection.clearSelection()
+            self.history_selection.clearSelection()
             self.gui.set_service_role(profile=None, role=None)
 
     def ok(self):
