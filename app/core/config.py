@@ -97,6 +97,8 @@ class Config:
 
     @staticmethod
     def _add_to_history(profile: str, role: str, history: List[str]):
+        if not profile or not role:
+            return history
         history_string = f'{profile} : {role}'
         history.insert(0, history_string)
         clean_history = []
