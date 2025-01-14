@@ -12,7 +12,7 @@ def parse(args):
                         version="{prog}s {version}".format(prog="%(prog)", version=__version__.__version_string__))
     parser.add_argument('--list', action='store_true',
                         help='lists profile groups')
-    parser.add_argument('--login',
+    parser.add_argument('--login', metavar='GROUP',
                         help='Login with group')
     parser.add_argument('--logout', action='store_true',
                         help='Remove profiles')
@@ -20,8 +20,12 @@ def parse(args):
                         help='Overwrite region to login to')
     parser.add_argument('--set-access-key', action='store_true',
                         help='set access key')
-    parser.add_argument('--rotate-access-key',
-                        help='rotate access key')
+    parser.add_argument('--rotate-access-key', metavar='KEY_NAME',
+                        help='rotate given access key')
+    parser.add_argument('--list-service-roles',
+                        help='list assumable roles for the given profile')
+    parser.add_argument('--set-service-roles', nargs=3, metavar=('GROUP', 'PROFILE', 'ROLE'),
+                        help='set service role for the given profile')
     parser.add_argument('-o', '--oneshot', action='store_true',
                         help='When used in combination with --login, the program will finish after login instead of running an infinite refresh loop')
     return parser.parse_args(args)
@@ -39,5 +43,9 @@ def use_cli(args):
     if args.rotate_access_key:
         return True
     if args.set_access_key:
+        return True
+    if args.list_service_roles:
+        return True
+    if args.set_service_roles:
         return True
     return False

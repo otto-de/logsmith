@@ -3,9 +3,10 @@ import sys
 import time
 from getpass import getpass
 
-from aws.regions import region_list
-from core.core import Core
-from core.result import Result
+from app.aws import iam
+from app.aws.regions import region_list
+from app.core.core import Core
+from app.core.result import Result
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 work_dir = os.getcwd()
@@ -78,6 +79,19 @@ class Cli:
         self.core.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
         self._info('key was successfully set')
 
+    def set_service_role(self, group, profile, role):
+        self.core.config.save_selected_service_role(group_name=group, profile_name=profile, role_name=role)
+        self._info('service role was successfully set')
+
+    def list_service_roles(self, profile):
+        result = iam.list_assumable_roles(source_profile=profile)
+        if not self._check_and_signal_error(result):
+            return
+
+        self._info(f'assumable roles for profile: {profile}')
+        for role in result.payload:
+            print(role)
+
     @staticmethod
     def ask_for_mfa_token():
         return input(f'mfa token: ')
@@ -96,11 +110,13 @@ class Cli:
     def _error(s):
         print(f'{CR}{s}{CC}')
 
-    @staticmethod
-    def _warning(s):
-        print(f'{CY}{s}{CC}')
 
-    @staticmethod
-    def _print_regions():
-        for region in region_list:
-            print(region)
+@staticmethod
+def _warning(s):
+    print(f'{CY}{s}{CC}')
+
+
+@staticmethod
+def _print_regions():
+    for region in region_list:
+        print(region)
