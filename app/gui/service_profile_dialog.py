@@ -66,9 +66,9 @@ class ServiceProfileDialog(QDialog):
 
         self.fetch_button = QPushButton("Fetch Roles")
         self.fetch_button.clicked.connect(self.fetch_roles)
-        self.unset_button = QPushButton("unset service role")
-        self.unset_button.setStyleSheet("color: red;")
-        self.unset_button.clicked.connect(self.unset_service_role)
+        self.reset_button = QPushButton("reset selection")
+        self.reset_button.setStyleSheet("color: red;")
+        self.reset_button.clicked.connect(self.reset)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -98,7 +98,7 @@ class ServiceProfileDialog(QDialog):
         vbox.addWidget(self.history_selection)
 
         vbox.addWidget(self.fetch_button)
-        vbox.addWidget(self.unset_button)
+        vbox.addWidget(self.reset_button)
 
         vbox.addLayout(hbox)
 
@@ -150,21 +150,22 @@ class ServiceProfileDialog(QDialog):
         self.role_name_filter = text.lower().strip()
         self.update_available_role_selection()
 
-    def unset_service_role(self):
-        if not self.source_profile_list:
-            self.set_error_text('No source profiles available. Please login first.')
+    def reset(self):
+        if not self.active_group:
+            self.set_error_text('Cannot reset service profile. Please login first.')
         else:
             self.source_profile_selection.clearSelection()
             self.available_role_selection.clearSelection()
             self.history_selection.clearSelection()
-            self.gui.set_service_role(profile=None, role=None)
+            self.selected_source_profile = None
+            self.selected_service_role = None
 
     def ok(self):
-        if not self.selected_source_profile or not self.selected_service_role:
-            self.set_error_text('Please select a profile and role')
-        else:
+        if self.selected_source_profile and self.selected_service_role:
             self.gui.set_service_role(profile=self.selected_source_profile, role=self.selected_service_role)
-            self.hide()
+        else:
+            self.gui.set_service_role(profile=None, role=None)
+        self.hide()
 
     def cancel(self):
         self.hide()
