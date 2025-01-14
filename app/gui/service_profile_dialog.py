@@ -122,7 +122,11 @@ class ServiceProfileDialog(QDialog):
         self.set_error_text('')
 
     def fetch_roles(self):
-        if self.selected_source_profile:
+        if not self.active_group:
+            self.set_error_text('No source profiles available. Please login first.')
+        elif not self.selected_source_profile:
+            self.set_error_text('Please select a profile')
+        else:
             self.available_role_selection.clear()
             self.fetch_button.setText('fetching roles... Please wait.')
             self.fetch_roles_task = BackgroundTask(
@@ -131,9 +135,7 @@ class ServiceProfileDialog(QDialog):
                 on_error=self.on_fetch_roles_error,
                 kwargs={'source_profile': self.selected_source_profile})
             self.fetch_roles_task.start()
-        else:
-            self.set_error_text('Please select a profile')
-        self.set_error_text('')
+            self.set_error_text('')
 
     def on_fetch_roles_success(self, role_list):
         self.available_role_selection.addItems(role_list)
