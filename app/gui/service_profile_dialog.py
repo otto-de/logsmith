@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
@@ -31,7 +31,7 @@ class ServiceProfileDialog(QDialog):
         self.role_name_filter: str = None
 
         # This is needed to keep the task alive, otherwise it crashes the application
-        self.fetch_roles_task: BackgroundTask = None
+        self.fetch_roles_task: Optional[BackgroundTask] = None
 
         self.width = 400
         self.height = 150

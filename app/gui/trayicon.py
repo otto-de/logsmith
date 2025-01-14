@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 from app.aws import regions
 from app.core.profile_group import ProfileGroup
+from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_FULL, ICON_STYLE_GCP, ICON_STYLE_BUSY
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -30,7 +31,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.previous_action = None
 
         QSystemTrayIcon.__init__(self, self.assets.standard, self.gui)
-        self.setIcon(self.assets.get_icon(style='full'))
+        self.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE))
         self.populate_context_menu(profile_list)
 
     def populate_context_menu(self, profile_list: List[ProfileGroup]):
@@ -42,13 +43,13 @@ class SystemTrayIcon(QSystemTrayIcon):
                 action = menu.addAction(profile_group.name)
                 action.triggered.connect(partial(self.gui.login,
                                                  profile_group=profile_group))
-                action.setIcon(self.assets.get_icon(style='full', color_code=profile_group.color))
+                action.setIcon(self.assets.get_icon(style=ICON_STYLE_FULL, color_code=profile_group.color))
                 self.actions.append(action)
 
         # log out
         action = menu.addAction('logout')
         action.triggered.connect(self.gui.logout)
-        action.setIcon(self.assets.get_icon(style='outline', color_code='#FFFFFF'))
+        action.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE, color_code='#FFFFFF'))
         self.actions.append(action)
 
         # gcp profiles
@@ -58,7 +59,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                 action = menu.addAction("[GCP] " + profile_group.name)
                 action.triggered.connect(partial(self.gui.login_gcp,
                                                  profile_group=profile_group))
-                action.setIcon(self.assets.get_icon(style='gcp', color_code=profile_group.color))
+                action.setIcon(self.assets.get_icon(style=ICON_STYLE_GCP, color_code=profile_group.color))
                 self.actions.append(action)
 
         menu.addSeparator()

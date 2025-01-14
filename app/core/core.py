@@ -177,6 +177,7 @@ class Core:
             new_config.save_config()
             new_config.save_accounts()
             self.config.initialize()
+            self.logout()
         except Exception as error:
             logger.error(str(error), exc_info=True)
             result.error('could not save config or accounts')
