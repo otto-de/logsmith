@@ -47,6 +47,9 @@ class Config:
     def set_mfa_shell_command(self, mfa_shell_command: str):
         self.mfa_shell_command = mfa_shell_command
 
+    def set_default_access_key(self, default_access_key: str):
+        self.default_access_key = default_access_key
+
     def save_config(self):
         files.save_config_file({
             'mfa_shell_command': self.mfa_shell_command,

@@ -84,9 +84,11 @@ class ConfigDialog(QDialog):
             return
 
         config = Config()
-        config.initialize_profile_groups(accounts=raw_config_dict, service_roles={}, default_access_key=default_access_key)
+        config.initialize_profile_groups(accounts=raw_config_dict, service_roles={},
+                                         default_access_key=default_access_key)
         if config.valid:
             config.set_mfa_shell_command(self.mfa_command_input.text())
+            config.set_default_access_key(default_access_key)
             self.gui.edit_config(config)
             self.hide()
         else:
@@ -134,8 +136,10 @@ class ConfigDialog(QDialog):
     def show_dialog(self, config: Config):
         self.text_box.setPlainText(files.dump_yaml(config.to_dict()))
         self.update_error_text(config)
+
         self.mfa_command_input.setText(config.mfa_shell_command)
         self.default_access_key_input.setText(config.default_access_key)
+
         self.show()
         self.raise_()
         self.activateWindow()
