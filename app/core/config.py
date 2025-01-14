@@ -1,6 +1,7 @@
 from typing import List, Dict
 
 from app.core import files
+from app.core.profile_group import ProfileGroup
 
 _default_access_key = 'access-key'
 
@@ -8,6 +9,8 @@ _default_access_key = 'access-key'
 class Config:
     def __init__(self):
         self.profile_groups: Dict[str, ProfileGroup] = {}
+        self.service_roles: Dict = {}
+
         self.access_keys: List[str] = []  # TODO is this still needed?
         self.valid = False
         self.error = False
@@ -15,31 +18,18 @@ class Config:
         self.mfa_shell_command = None
         self.default_access_key = None
 
-        self.service_roles: Dict = {}
-
-    # TODO: rename! this initializes the config
-    def load_from_disk(self):
+    def initialize(self):
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
         access_key = config.get('default_access_key', _default_access_key)
 
         # TODO write test
-        service_roles = files.load_service_roles()
-        self.service_roles = service_roles
+        self.service_roles = files.load_service_roles()
 
         accounts = files.load_accounts()
-        self.set_accounts(accounts, access_key)
+        self.initialize_profile_groups(accounts=accounts, service_roles=self.service_roles, default_access_key=access_key)
 
-    # TODO: rename! saves the general app configuration
-    def save_to_disk(self):
-        files.save_accounts_file(self.to_dict())
-        files.save_config_file({
-            'mfa_shell_command': self.mfa_shell_command,
-            'default_access_key': self.default_access_key,
-        })
-
-    # TODO: rename! this initializes the profile groups
-    def set_accounts(self, accounts: dict, default_access_key: str):
+    def initialize_profile_groups(self, accounts: dict, service_roles: dict, default_access_key: str):
         # TODO: why do i need this? the default access key will be set on config load
         if not default_access_key:
             self.default_access_key = _default_access_key
@@ -51,12 +41,14 @@ class Config:
             profile_group = ProfileGroup(name=group_name,
                                          group=group_data,
                                          default_access_key=self.default_access_key)
-            if group_name in self.service_roles:
-                if (self.service_roles[group_name].get('selected_profile') and
-                        self.service_roles[group_name].get('selected_role')):
+
+            if group_name in service_roles:
+                selected_service_source_profile = service_roles[group_name].get('selected_profile', None)
+                selected_service_role = service_roles[group_name].get('selected_role', None)
+                if selected_service_source_profile and selected_service_role:
                     profile_group.set_service_role_profile(
-                        source_profile_name=self.service_roles[group_name].get('selected_profile'),
-                        role_name=self.service_roles[group_name].get('selected_role'))
+                        source_profile_name=selected_service_source_profile,
+                        role_name=selected_service_role)
 
             self.profile_groups[group_name] = profile_group
             if profile_group.access_key:
@@ -67,8 +59,17 @@ class Config:
     def set_mfa_shell_command(self, mfa_shell_command: str):
         self.mfa_shell_command = mfa_shell_command
 
+    def save_config(self):
+        files.save_config_file({
+            'mfa_shell_command': self.mfa_shell_command,
+            'default_access_key': self.default_access_key,
+        })
+
+    def save_accounts(self):
+        files.save_accounts_file(self.to_dict())
+
     # TODO write test
-    def set_service_role(self, group_name: str, profile_name: str, role_name: str):
+    def save_selected_service_role(self, group_name: str, profile_name: str, role_name: str):
         if group_name not in self.service_roles:
             self.service_roles[group_name] = {
                 'selected_profile': None,
@@ -82,10 +83,8 @@ class Config:
         self.service_roles[group_name]['history'] = history
         files.save_service_roles(self.service_roles)
 
-        self.profile_groups[group_name].set_service_role_profile(source_profile_name=profile_name, role_name=role_name)
-
     # TODO write test
-    def set_available_service_roles(self, group: str, profile: str, role_list: List[str]):
+    def save_available_service_roles(self, group: str, profile: str, role_list: List[str]):
         if group not in self.service_roles:
             self.service_roles[group] = {
                 'selected_profile': None,
@@ -145,120 +144,4 @@ class Config:
         d = {}
         for name, group in self.profile_groups.items():
             d[name] = group.to_dict()
-        return d
-
-
-class ProfileGroup:
-    def __init__(self, name, group: dict, default_access_key: str):
-        self.name: str = name
-        self.team: str = group.get('team', None)
-        self.region: str = group.get('region', None)
-        self.color: str = group.get('color', None)
-        self.default_access_key = default_access_key
-        self.access_key: str = group.get('access_key', None)
-        self.profiles: List[Profile] = []
-        self.type: str = group.get('type', 'aws')  # only aws (default) & gcp as values are allowed
-        self.service_profile: Profile = None
-
-        for profile in group.get('profiles', []):
-            self.profiles.append(Profile(self, profile))
-
-    def validate(self) -> (bool, str):
-        if not self.team:
-            return False, f'{self.name} has no team'
-        if not self.region:
-            return False, f'{self.name} has no region'
-        if not self.color:
-            return False, f'{self.name} has no color'
-        if self.access_key and not self.access_key.startswith('access-key'):
-            return False, f'access-key {self.access_key} must have the prefix \"access-key\"'
-        if self.type == "aws" and len(self.profiles) == 0:
-            return False, f'aws "{self.name}" has no profiles'
-        for profile in self.profiles:
-            valid, error = profile.validate()
-            if not valid:
-                return valid, error
-        return True, ''
-
-    def list_profile_names(self) -> List[str]:
-        profile_list = []
-        for profile in self.profiles:
-            profile_list.append(profile.profile)
-            if profile.default:
-                profile_list.append('default')
-            if self.service_profile:
-                profile_list.append('service')
-        return profile_list
-
-    # def get_profile_list(self) -> List[Profile]:
-    def get_profile_list(self):
-        profile_list = self.profiles.copy()
-        profile_list.append(self.service_profile)
-        return profile_list
-
-    # def get_profile(self, profile_name) -> Profile:
-    def get_profile(self, profile_name):
-        return next((profile for profile in self.profiles if profile.profile == profile_name), None)
-
-    # def get_default_profile(self) -> Profile:
-    def get_default_profile(self):
-        return next((profile for profile in self.profiles if profile.default), None)
-
-    def get_access_key(self) -> str:
-        if self.access_key:
-            return self.access_key
-        return self.default_access_key
-
-    def set_service_role_profile(self, source_profile_name, role_name):
-        source_profile = self.get_profile(profile_name=source_profile_name)
-        self.service_profile = Profile(self, {
-            'profile': 'service',
-            'account': source_profile.account,
-            'role': role_name,
-            'default': False,
-            'source': source_profile_name
-        })
-
-    def to_dict(self):
-        result_dict = {
-            'color': self.color,
-            'team': self.team,
-            'region': self.region,
-            'profiles': [profile.to_dict() for profile in self.profiles],
-        }
-        if self.access_key and self.access_key != self.default_access_key:
-            result_dict['access_key'] = self.access_key
-        if self.type != "aws":
-            result_dict["type"] = self.type
-        return result_dict
-
-
-class Profile:
-    def __init__(self, group, profile: dict):
-        self.group = group
-        self.profile = profile.get('profile', None)
-        self.account = profile.get('account', None)
-        self.role = profile.get('role', None)
-        self.default = profile.get('default', 'false') in ['True', 'true', True]
-        self.source = profile.get('source', None)
-
-    def validate(self) -> (bool, str):
-        if not self.profile:
-            return False, f'a profile in {self.group.name} has no profile'
-        if not self.account:
-            return False, f'a profile in {self.group.name} has no account'
-        if not self.role:
-            return False, f'a profile in {self.group.name} has no role'
-        return True, ''
-
-    def to_dict(self):
-        d = {
-            'profile': self.profile,
-            'account': self.account,
-            'role': self.role,
-        }
-        if self.source:
-            d['source'] = self.source
-        if self.default:
-            d['default'] = True
         return d

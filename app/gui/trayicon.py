@@ -4,7 +4,7 @@ from typing import List, TYPE_CHECKING
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 from app.aws import regions
-from core.config import ProfileGroup
+from app.core.profile_group import ProfileGroup
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -60,7 +60,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
         # active region
-        self.active_region = menu.addAction('not logged in')
+        self.active_region = menu.addAction('no region set')
         self.active_region.setDisabled(True)
         # region menu
         self.region_menu = QMenu(self.default_region_text, menu)
@@ -91,11 +91,9 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.config_action = menu.addAction('Edit config')
         self.config_action.triggered.connect(self.gui.show_config_dialog)
 
-        menu.addSeparator()
         self.log_action = menu.addAction("Show logs")
         self.log_action.triggered.connect(self.gui.show_logs)
 
-        menu.addSeparator()
         self.last_login = menu.addAction(f'last login never')
         self.last_login.setDisabled(True)
 

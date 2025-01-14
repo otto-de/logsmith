@@ -84,7 +84,7 @@ class ConfigDialog(QDialog):
             return
 
         config = Config()
-        config.set_accounts(raw_config_dict, default_access_key)
+        config.initialize_profile_groups(accounts=raw_config_dict, service_roles={}, default_access_key=default_access_key)
         if config.valid:
             config.set_mfa_shell_command(self.mfa_command_input.text())
             self.gui.edit_config(config)

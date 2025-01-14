@@ -6,6 +6,7 @@ from app.core.core import Core
 from app.core.result import Result
 from tests.test_data.test_accounts import get_test_accounts
 from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
+from tests.test_data.test_service_roles import get_test_service_roles
 
 if 'unittest.util' in __import__('sys').modules:
     # Show full diff in self.assertEqual.
@@ -17,11 +18,11 @@ class TestCore(TestCase):
     def setUpClass(cls):
         cls.maxDiff = None
 
-    @mock.patch('app.core.core.Config.load_from_disk')
+    @mock.patch('app.core.core.Config.initialize')
     def setUp(self, mock_config):
         self.core = Core()
         self.config = Config()
-        self.config.set_accounts(get_test_accounts(), 'some-access-key')
+        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'some-access-key')
         self.core.config = self.config
 
         self.success_result = get_success_result()

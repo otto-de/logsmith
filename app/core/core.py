@@ -14,7 +14,7 @@ logger = logging.getLogger('logsmith')
 class Core:
     def __init__(self):
         self.config: Config = Config()
-        self.config.load_from_disk()
+        self.config.initialize()
         self.active_profile_group: ProfileGroup = None
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
         self.region_override: str = None
@@ -174,8 +174,9 @@ class Core:
     def edit_config(self, config: Config) -> Result:
         result = Result()
         try:
-            self.config = config
-            self.config.save_to_disk()
+            config.save_config()
+            config.save_accounts()
+            self.config.initialize()
         except Exception as error:
             logger.error(str(error), exc_info=True)
             result.error('could not save config')
@@ -183,10 +184,12 @@ class Core:
         result.set_success()
         return result
 
-    def set_service_role(self, profile: str, role: str) -> Result:
+    def set_service_role(self, profile_name: str, role_name: str) -> Result:
         result = Result()
         logger.info('set service role')
-        self.config.set_service_role(group_name=self.active_profile_group.name, profile_name=profile, role_name=role)
+        self.config.save_selected_service_role(group_name=self.active_profile_group.name, profile_name=profile_name,
+                                               role_name=role_name)
+        self.active_profile_group.set_service_role_profile(source_profile_name=profile_name, role_name=role_name)
 
         result.set_success()
         return result
@@ -194,8 +197,8 @@ class Core:
     def set_available_service_roles(self, profile, role_list: List[str]):
         result = Result()
         logger.info('set available service roles')
-        self.config.set_available_service_roles(group=self.active_profile_group.name, profile=profile,
-                                                role_list=role_list)
+        self.config.save_available_service_roles(group=self.active_profile_group.name, profile=profile,
+                                                 role_list=role_list)
         result.set_success()
         return result
 

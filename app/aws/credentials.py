@@ -8,7 +8,7 @@ import botocore
 from botocore.exceptions import ClientError, ParamValidationError, EndpointConnectionError, \
     NoCredentialsError, ReadTimeoutError
 
-from app.core.config import ProfileGroup
+from app.core.profile_group import ProfileGroup
 from app.core.result import Result
 from app.util import util
 

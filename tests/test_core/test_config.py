@@ -3,6 +3,7 @@ from unittest.mock import call, Mock
 
 from app.core.config import Config
 from tests.test_data.test_accounts import get_test_accounts
+from tests.test_data.test_service_roles import get_test_service_roles
 
 
 class TestConfig(TestCase):
@@ -11,28 +12,27 @@ class TestConfig(TestCase):
 
     @mock.patch('app.core.config.files.load_config')
     @mock.patch('app.core.config.files.load_accounts')
-    def test_load_from_disk__empty_config(self, mock_accounts, mock_config):
+    def test_initialize__empty_config(self, mock_accounts, mock_config):
         mock_accounts.return_value = {}
         mock_config.return_value = {}
-        self.config.load_from_disk()
+        self.config.initialize()
         self.assertEqual(None, self.config.mfa_shell_command)
 
     @mock.patch('app.core.config.files.load_config')
     @mock.patch('app.core.config.files.load_accounts')
-    def test_load_from_disk(self, mock_load_accounts, mock_load_config):
+    def test_initialize(self, mock_load_accounts, mock_load_config):
         mock_load_accounts.return_value = get_test_accounts()
         mock_load_config.return_value = {
             'mfa_shell_command': 'some command',
         }
-        self.config.load_from_disk()
+        self.config.initialize()
         self.assertEqual('some command', self.config.mfa_shell_command)
 
-    @mock.patch('app.core.config.files.save_config_file')
     @mock.patch('app.core.config.files.save_accounts_file')
-    def test_save_to_disk(self, mock_save_accounts_file, mock_save_config_file):
-        self.config.set_accounts(get_test_accounts(), 'default-access-key')
-        self.config.save_to_disk()
-        expected_accounts = [call(
+    def test_save_accounts(self, mock_save_accounts_file):
+        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
+        self.config.save_accounts()
+        expected = [call(
             {
                 'development': {
                     'color': '#388E3C',
@@ -81,16 +81,22 @@ class TestConfig(TestCase):
             }
         )]
 
-        expected_config = [call({
+        self.assertEqual(expected, mock_save_accounts_file.mock_calls)
+
+    @mock.patch('app.core.config.files.save_config_file')
+    def test_save_config(self, mock_save_config_file):
+        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
+        self.config.save_config()
+
+        expected = [call({
             'mfa_shell_command': None,
             'default_access_key': 'default-access-key'
         })]
 
-        self.assertEqual(expected_accounts, mock_save_accounts_file.mock_calls)
-        self.assertEqual(expected_config, mock_save_config_file.mock_calls)
+        self.assertEqual(expected, mock_save_config_file.mock_calls)
 
-    def test_set_accounts(self):
-        self.config.set_accounts(get_test_accounts(), 'default-access-key')
+    def test_initialize_profile_groups(self):
+        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
 
         groups = ['development', 'live', 'gcp-project-dev']
         self.assertEqual(groups, list(self.config.profile_groups.keys()))
@@ -121,7 +127,7 @@ class TestConfig(TestCase):
         self.assertEqual('access-key-123', live_group.get_access_key())
 
     def test_validate(self):
-        self.config.set_accounts(get_test_accounts(), 'default-access-key')
+        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
         self.config.validate()
         self.assertEqual('', self.config.error)
         self.assertEqual(True, self.config.valid)

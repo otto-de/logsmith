@@ -108,7 +108,7 @@ class Gui(QMainWindow):
         self._signal('Success', 'key was rotated')
 
     def set_service_role(self, profile: str, role: str):
-        result = self.core.set_service_role(profile=profile, role=role)
+        result = self.core.set_service_role(profile_name=profile, role_name=role)
         if not self._check_and_signal_error(result):
             return
         result = self.core.login(profile_group=self.core.active_profile_group,

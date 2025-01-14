@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from app.core.config import ProfileGroup
+from app.core.profile_group import ProfileGroup
 from tests.test_data.test_accounts import get_test_group, get_test_group_no_default, \
     get_test_group_with_specific_access_key
 
@@ -152,3 +152,48 @@ class TestProfileGroup(TestCase):
         }
 
         self.assertEqual(expected, result)
+
+    def test_set_service_role_profile(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
+
+        result = profile_group.service_profile.to_dict()
+        expected = {'account': '123456789012',
+                    'profile': 'service',
+                    'role': 'pipeline',
+                    'source': 'developer'}
+        self.assertEqual(expected, result)
+
+    def test_set_service_role_profile__source_profile_does_not_exist(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group.set_service_role_profile(source_profile_name='non-existent', role_name='pipeline')
+
+        self.assertEqual(None, profile_group.service_profile)
+
+    def test_get_profile_list__without_service_role(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+
+        result = profile_group.get_profile_list()
+        expected = [profile_group.profiles[0], profile_group.profiles[1]]
+
+        self.assertEqual(expected, result)
+
+    def test_get_profile_list__with_service_role(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
+
+        result = profile_group.get_profile_list()
+        expected = [profile_group.profiles[0], profile_group.profiles[1], profile_group.service_profile]
+
+        self.assertEqual(expected, result)
+
+    def test_get_profile(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+
+        result = profile_group.get_profile('developer')
+
+        self.assertEqual('developer', result.profile)
+
+    def test_get_profile__non_existent_profile(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        self.assertEqual(None, profile_group.get_profile('dog'))

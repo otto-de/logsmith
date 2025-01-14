@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from app.core.config import Profile
+from app.core.profile import Profile
 from tests.test_data.test_accounts import get_test_profile, get_test_profile_no_default, get_test_profile_with_source
 
 

@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError, EndpointConnectionError, ParamValid
     NoCredentialsError, ReadTimeoutError
 
 from app.aws import credentials
-from app.core.config import ProfileGroup
+from app.core.profile_group import ProfileGroup
 from tests.test_data import test_accounts
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
