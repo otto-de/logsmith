@@ -23,6 +23,8 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.region_menu = None
         self.add_access_key_action = None
         self.rotate_access_key_action = None
+        self.service_role_action = None
+        self.service_role_info = None
 
         self.actions = []
         self.previous_action = None
@@ -73,19 +75,19 @@ class SystemTrayIcon(QSystemTrayIcon):
             region_action = self.region_menu.addAction(region)
             region_action.triggered.connect(partial(self.set_override_region, region=region))
 
+        menu.addSeparator()
+        # service profile
+        self.service_role_info = menu.addAction(f'no service profile')
+        self.service_role_info.setDisabled(True)
+        self.service_role_action = menu.addAction('Set service profile')
+        self.service_role_action.triggered.connect(self.gui.show_service_role_dialog)
+
+        menu.addSeparator()
         # access keys
         self.add_access_key_action = menu.addAction('Set access key')
         self.add_access_key_action.triggered.connect(self.gui.show_set_key_dialog)
         self.rotate_access_key_action = menu.addAction('Rotate access key')
         self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
-
-        menu.addSeparator()
-        # service profile
-        self.rotate_access_key_action = menu.addAction('Set service profile')
-        self.rotate_access_key_action.triggered.connect(self.gui.show_service_role_dialog)
-
-        self.last_login = menu.addAction(f'no service profile')
-        self.last_login.setDisabled(True)
 
         menu.addSeparator()
         self.config_action = menu.addAction('Edit config')
@@ -94,7 +96,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.log_action = menu.addAction("Show logs")
         self.log_action.triggered.connect(self.gui.show_logs)
 
-        self.last_login = menu.addAction(f'last login never')
+        self.last_login = menu.addAction(f'last login: never')
         self.last_login.setDisabled(True)
 
         menu.addSeparator()
@@ -118,6 +120,15 @@ class SystemTrayIcon(QSystemTrayIcon):
     def set_override_region(self, region: str):
         self.gui.set_region(region)
         self.region_menu.setTitle(region)
+
+    def set_service_role(self, profile_name: str, role_name: str):
+        if profile_name and role_name:
+            text = f'{profile_name} : {role_name}'
+            if len(text) > 50:
+                text = text[:50] + '...'
+            self.service_role_info.setText(text)
+        else:
+            self.service_role_info.setText('no service profile')
 
     def update_region_text(self, region: str):
         if region:

@@ -50,6 +50,9 @@ class Gui(QMainWindow):
 
         result = self.core.login(profile_group=profile_group,
                                  mfa_callback=self.show_mfa_token_fetch_dialog)
+        if profile_group.service_profile:
+            self.tray_icon.set_service_role(profile_name=profile_group.service_profile.source,
+                                            role_name=profile_group.service_profile.role)
         if not self._check_and_signal_error(result):
             self._to_error_state()
             return
@@ -116,6 +119,7 @@ class Gui(QMainWindow):
         if not self._check_and_signal_error(result):
             self._to_error_state()
             return
+        self.tray_icon.set_service_role(profile_name=profile, role_name=role)
         self._signal('Success', 'service role was set')
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
