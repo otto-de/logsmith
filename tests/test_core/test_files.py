@@ -30,6 +30,10 @@ class Test(TestCase):
         self.assertEqual('home/.logsmith/accounts.yaml', files.get_accounts_path())
 
     @mock.patch('app.core.files.Path.home', return_value='home')
+    def test_get_service_roles_path(self, _):
+        self.assertEqual('home/.logsmith/service_roles.yaml', files.get_service_roles_path())
+
+    @mock.patch('app.core.files.Path.home', return_value='home')
     def test_get_log_path(self, _):
         self.assertEqual('home/.logsmith/app.log', files.get_log_path())
 
@@ -80,7 +84,7 @@ class Test(TestCase):
     def test_load_config(self, mock_home):
         mock_home.return_value = self.test_home
         file = files.load_config()
-        expected = {'test': True}
+        expected = {'test': 'config'}
         self.assertEqual(expected, file)
 
     @mock.patch('app.core.files.Path.home')
@@ -94,13 +98,27 @@ class Test(TestCase):
     def test_load_accounts(self, mock_home):
         mock_home.return_value = self.test_home
         file = files.load_accounts()
-        expected = {'test': True}
+        expected = {'test': 'accounts'}
         self.assertEqual(expected, file)
 
     @mock.patch('app.core.files.Path.home')
     def test_load_accounts__files_does_not_exist(self, mock_home):
         mock_home.return_value = 'wrong_home'
         file = files.load_accounts()
+        expected = {}
+        self.assertEqual(expected, file)
+
+    @mock.patch('app.core.files.Path.home')
+    def test_load_service_roles(self, mock_home):
+        mock_home.return_value = self.test_home
+        file = files.load_service_roles()
+        expected = {'test': 'service_roles'}
+        self.assertEqual(expected, file)
+
+    @mock.patch('app.core.files.Path.home')
+    def test_load_service_roles__files_does_not_exist(self, mock_home):
+        mock_home.return_value = 'wrong_home'
+        file = files.load_service_roles()
         expected = {}
         self.assertEqual(expected, file)
 
@@ -119,5 +137,14 @@ class Test(TestCase):
         files.save_accounts_file({'test': True})
         expected = [
             call('home/.logsmith/accounts.yaml', 'test: true\n')
+        ]
+        self.assertEqual(expected, mock_write.mock_calls)
+
+    @mock.patch('app.core.files._write_file')
+    @mock.patch('app.core.files.Path.home', return_value='home')
+    def test_save_service_roles_file(self, mock_home, mock_write):
+        files.save_service_roles_file({'test': True})
+        expected = [
+            call('home/.logsmith/service_roles.yaml', 'test: true\n')
         ]
         self.assertEqual(expected, mock_write.mock_calls)

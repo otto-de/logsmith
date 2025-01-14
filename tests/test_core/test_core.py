@@ -5,6 +5,7 @@ from app.core.config import Config
 from app.core.core import Core
 from app.core.result import Result
 from tests.test_data.test_accounts import get_test_accounts
+from tests.test_data.test_config import get_test_config
 from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
 from tests.test_data.test_service_roles import get_test_service_roles
 
@@ -18,11 +19,17 @@ class TestCore(TestCase):
     def setUpClass(cls):
         cls.maxDiff = None
 
-    @mock.patch('app.core.core.Config.initialize')
-    def setUp(self, mock_config):
+    @mock.patch('app.core.config.files.load_service_roles')
+    @mock.patch('app.core.config.files.load_config')
+    @mock.patch('app.core.config.files.load_accounts')
+    def setUp(self, mock_load_accounts, mock_load_config, mock_service_roles):
+        mock_load_accounts.return_value = get_test_accounts()
+        mock_load_config.return_value = get_test_config()
+        mock_service_roles.return_value = get_test_service_roles()
+
         self.core = Core()
         self.config = Config()
-        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'some-access-key')
+        self.config.initialize()
         self.core.config = self.config
 
         self.success_result = get_success_result()
@@ -312,5 +319,41 @@ class TestCore(TestCase):
         self.assertEqual(expected, mock_credentials.mock_calls)
         self.assertEqual('eu-north-1', self.core.region_override)
 
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+    def test__set_service_role(self):
+        self.core.active_profile_group = self.config.get_group('development')
+        save_selected_service_role_mock = Mock()
+        self.core.config.save_selected_service_role = save_selected_service_role_mock
+
+        result = self.core.set_service_role(profile_name='developer', role_name='some-role')
+
+        expected_save = [call(group_name='development', profile_name='developer', role_name='some-role')]
+
+        self.assertEqual(expected_save, save_selected_service_role_mock.mock_calls)
+        self.assertEqual(self.core.active_profile_group.service_profile.to_dict(),
+                         {'profile': 'service',
+                          'account': '123495678901',
+                          'role': 'some-role',
+                          'source': 'developer'})
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+    def test__set_service_role__non_existent_profile(self):
+        self.core.active_profile_group = self.config.get_group('development')
+        save_selected_service_role_mock = Mock()
+        self.core.config.save_selected_service_role = save_selected_service_role_mock
+
+        result = self.core.set_service_role(profile_name='developer', role_name='some-role')
+
+        expected_save = [call(group_name='development', profile_name='developer', role_name='some-role')]
+
+        self.assertEqual(expected_save, save_selected_service_role_mock.mock_calls)
+        self.assertEqual(self.core.active_profile_group.service_profile.to_dict(),
+                         {'profile': 'service',
+                          'account': '123495678901',
+                          'role': 'some-role',
+                          'source': 'developer'})
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)

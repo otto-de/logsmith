@@ -1,8 +1,9 @@
 from unittest import TestCase, mock
 from unittest.mock import call, Mock
 
-from app.core.config import Config
+from app.core.config import Config, _default_access_key
 from tests.test_data.test_accounts import get_test_accounts
+from tests.test_data.test_config import get_test_config
 from tests.test_data.test_service_roles import get_test_service_roles
 
 
@@ -10,23 +11,60 @@ class TestConfig(TestCase):
     def setUp(self):
         self.config = Config()
 
+    @mock.patch('app.core.config.files.load_service_roles')
     @mock.patch('app.core.config.files.load_config')
     @mock.patch('app.core.config.files.load_accounts')
-    def test_initialize__empty_config(self, mock_accounts, mock_config):
+    @mock.patch('app.core.config.Config.initialize_profile_groups')
+    def test_initialize__empty_files(self, mock_initialize_profile_groups, mock_accounts, mock_config,
+                                     mock_service_roles):
         mock_accounts.return_value = {}
         mock_config.return_value = {}
+        mock_service_roles.return_value = {}
         self.config.initialize()
-        self.assertEqual(None, self.config.mfa_shell_command)
 
+        expected_calls = [call(accounts={}, service_roles={}, default_access_key=_default_access_key)]
+
+        self.assertEqual(None, self.config.mfa_shell_command)
+        self.assertEqual({}, self.config.profile_groups)
+        self.assertEqual({}, self.config.service_roles)
+        self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
+
+    @mock.patch('app.core.config.files.load_service_roles')
     @mock.patch('app.core.config.files.load_config')
     @mock.patch('app.core.config.files.load_accounts')
-    def test_initialize(self, mock_load_accounts, mock_load_config):
+    @mock.patch('app.core.config.Config.initialize_profile_groups')
+    def test_initialize__with_default_access_key(self, mock_initialize_profile_groups, mock_load_accounts,
+                                                 mock_load_config, mock_service_roles):
         mock_load_accounts.return_value = get_test_accounts()
         mock_load_config.return_value = {
             'mfa_shell_command': 'some command',
         }
+        mock_service_roles.return_value = {}
         self.config.initialize()
+
+        expected_calls = [call(accounts=get_test_accounts(), service_roles={}, default_access_key='access-key')]
+
+        self.assertEqual('access-key', self.config.default_access_key)
         self.assertEqual('some command', self.config.mfa_shell_command)
+        self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
+
+    @mock.patch('app.core.config.files.load_service_roles')
+    @mock.patch('app.core.config.files.load_config')
+    @mock.patch('app.core.config.files.load_accounts')
+    @mock.patch('app.core.config.Config.initialize_profile_groups')
+    def test_initialize(self, mock_initialize_profile_groups, mock_load_accounts, mock_load_config, mock_service_roles):
+        mock_load_accounts.return_value = get_test_accounts()
+        mock_load_config.return_value = get_test_config()
+        mock_service_roles.return_value = get_test_service_roles()
+        self.config.initialize()
+
+        expected_calls = [
+            call(accounts=get_test_accounts(), service_roles=get_test_service_roles(),
+                 default_access_key='some-access-key')]
+
+        self.assertEqual('some-access-key', self.config.default_access_key)
+        self.assertEqual('some-command', self.config.mfa_shell_command)
+        self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
 
     @mock.patch('app.core.config.files.save_accounts_file')
     def test_save_accounts(self, mock_save_accounts_file):
@@ -85,15 +123,76 @@ class TestConfig(TestCase):
 
     @mock.patch('app.core.config.files.save_config_file')
     def test_save_config(self, mock_save_config_file):
-        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
+        self.config.mfa_shell_command = 'some command'
+        self.config.default_access_key = 'some access key'
         self.config.save_config()
 
-        expected = [call({
-            'mfa_shell_command': None,
-            'default_access_key': 'default-access-key'
-        })]
+        expected = [call({'mfa_shell_command': 'some command', 'default_access_key': 'some access key'})]
 
         self.assertEqual(expected, mock_save_config_file.mock_calls)
+
+    @mock.patch('app.core.config.files.save_service_roles_file')
+    def test_save_selected_service_role__empty_data(self, mock_save_service_roles_file):
+        self.config.save_selected_service_role(group_name='development', profile_name='developer', role_name='pipeline')
+        expected = [call({
+            'development': {
+                'selected_profile': 'developer',
+                'selected_role': 'pipeline',
+                'available': {},
+                'history': ['developer : pipeline']},
+        })]
+        self.assertEqual(expected, mock_save_service_roles_file.mock_calls)
+
+    @mock.patch('app.core.config.files.save_service_roles_file')
+    def test_save_selected_service_role__update_loaded_data(self, mock_save_service_roles_file):
+        self.config.service_roles = get_test_service_roles()
+        self.config.save_selected_service_role(group_name='development', profile_name='developer', role_name='pipeline')
+        expected = [call({
+            'development': {
+                'selected_profile': 'developer',
+                'selected_role': 'pipeline',
+                'available': {'profile-1': ['role-1-1', 'role-1-2'],
+                              'profile-2': ['role-2-1']},
+                'history': ['developer : pipeline', 'profile-2 : role-2', 'profile-1 : role-3']},
+            'live': {
+                'selected_profile': None,
+                'selected_role': None,
+                'available': {},
+                'history': []}})]
+        self.assertEqual(expected, mock_save_service_roles_file.mock_calls)
+
+    @mock.patch('app.core.config.files.save_service_roles_file')
+    def test_save_available_service_roles__empty_data(self, mock_save_service_roles_file):
+        self.config.save_available_service_roles(group_name='development', profile_name='developer',
+                                                 role_list=['pipeline'])
+        expected = [call({
+            'development': {
+                'selected_profile': None,
+                'selected_role': None,
+                'available': {'developer': ['pipeline']},
+                'history': []},
+        })]
+        self.assertEqual(expected, mock_save_service_roles_file.mock_calls)
+
+    @mock.patch('app.core.config.files.save_service_roles_file')
+    def test_save_available_service_roles__update_loaded_data(self, mock_save_service_roles_file):
+        self.config.service_roles = get_test_service_roles()
+        self.config.save_available_service_roles(group_name='development', profile_name='developer',
+                                                 role_list=['pipeline'])
+        expected = [call({
+            'development': {
+                'selected_profile': 'developer',
+                'selected_role': 'pipeline',
+                'available': {'profile-1': ['role-1-1', 'role-1-2'],
+                              'profile-2': ['role-2-1'],
+                              'developer': ['pipeline']},
+                'history': ['profile-2 : role-2', 'profile-1 : role-3']},
+            'live': {
+                'selected_profile': None,
+                'selected_role': None,
+                'available': {},
+                'history': []}})]
+        self.assertEqual(expected, mock_save_service_roles_file.mock_calls)
 
     def test_initialize_profile_groups(self):
         self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
@@ -109,22 +208,39 @@ class TestConfig(TestCase):
         self.assertEqual('aws', development_group.type)
         self.assertEqual('default-access-key', development_group.get_access_key())
 
-        profile = development_group.profiles[0]
-        self.assertEqual(development_group, profile.group)
-        self.assertEqual('developer', profile.profile)
-        self.assertEqual('123495678901', profile.account)
-        self.assertEqual('developer', profile.role)
-        self.assertEqual(True, profile.default)
+        development_profile1 = development_group.profiles[0]
+        self.assertEqual(development_group, development_profile1.group)
+        self.assertEqual('developer', development_profile1.profile)
+        self.assertEqual('123495678901', development_profile1.account)
+        self.assertEqual('developer', development_profile1.role)
+        self.assertEqual(True, development_profile1.default)
+        self.assertEqual(None, development_profile1.source)
 
-        profile = development_group.profiles[1]
-        self.assertEqual(development_group, profile.group)
-        self.assertEqual('readonly', profile.profile)
-        self.assertEqual('012349567890', profile.account)
-        self.assertEqual('readonly', profile.role)
-        self.assertEqual(False, profile.default)
+        development_profile2 = development_group.profiles[1]
+        self.assertEqual(development_group, development_profile2.group)
+        self.assertEqual('readonly', development_profile2.profile)
+        self.assertEqual('012349567890', development_profile2.account)
+        self.assertEqual('readonly', development_profile2.role)
+        self.assertEqual(False, development_profile2.default)
+        self.assertEqual(None, development_profile2.source)
+
+        development_service_role = development_group.service_profile
+        self.assertEqual(development_group, development_service_role.group)
+        self.assertEqual('service', development_service_role.profile)
+        self.assertEqual('123495678901', development_service_role.account)
+        self.assertEqual('pipeline', development_service_role.role)
+        self.assertEqual(False, development_service_role.default)
+        self.assertEqual('developer', development_service_role.source)
 
         live_group = self.config.get_group('live')
         self.assertEqual('access-key-123', live_group.get_access_key())
+        self.assertEqual(None, live_group.service_profile)
+
+    def test_add_to_history(self):
+        history = ['profile-1 : role-1', 'profile-2 : role-2']
+        result = self.config._add_to_history('profile-3', 'role-3', history)
+        expected = ['profile-3 : role-3', 'profile-1 : role-1', 'profile-2 : role-2']
+        self.assertEqual(expected, result)
 
     def test_validate(self):
         self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')

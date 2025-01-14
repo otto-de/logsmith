@@ -1,6 +1,9 @@
+import logging
 from typing import List, Optional
 
 from app.core.profile import Profile
+
+logger = logging.getLogger('logsmith')
 
 
 class ProfileGroup:
@@ -65,7 +68,10 @@ class ProfileGroup:
 
     def set_service_role_profile(self, source_profile_name, role_name):
         source_profile = self.get_profile(profile_name=source_profile_name)
-        if source_profile:
+        if not source_profile:
+            logger.warning(f'source profile {source_profile_name} not found. Unset service_profile.')
+            self.service_profile = None
+        else:
             self.service_profile = Profile(self, {
                 'profile': 'service',
                 'account': source_profile.account,

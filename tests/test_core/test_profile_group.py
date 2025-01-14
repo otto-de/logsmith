@@ -170,6 +170,21 @@ class TestProfileGroup(TestCase):
 
         self.assertEqual(None, profile_group.service_profile)
 
+    def test_set_service_role_profile__source_profile_does_not_exist_resets_prior_service_role(self):
+        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
+
+        result = profile_group.service_profile.to_dict()
+        expected = {'account': '123456789012',
+                    'profile': 'service',
+                    'role': 'pipeline',
+                    'source': 'developer'}
+        self.assertEqual(expected, result)
+
+        profile_group.set_service_role_profile(source_profile_name='non-existent', role_name='pipeline')
+
+        self.assertEqual(None, profile_group.service_profile)
+
     def test_get_profile_list__without_service_role(self):
         profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
 

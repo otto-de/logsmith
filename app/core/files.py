@@ -35,7 +35,6 @@ def get_accounts_path() -> str:
     return f'{get_app_path()}/{accounts_file_name}'
 
 
-# TODO write test
 def get_service_roles_path() -> str:
     return f'{get_app_path()}/{service_roles_file_name}'
 
@@ -87,7 +86,6 @@ def load_accounts():
     return parse_yaml(_load_file(get_accounts_path()))
 
 
-# TODO write test
 def load_service_roles():
     return parse_yaml(_load_file(get_service_roles_path()))
 
@@ -100,8 +98,7 @@ def save_accounts_file(account_dict: dict):
     _write_file(get_accounts_path(), dump_yaml(account_dict))
 
 
-# TODO write test
-def save_service_roles(service_roles: dict):
+def save_service_roles_file(service_roles: dict):
     _write_file(get_service_roles_path(), dump_yaml(service_roles))
 
 

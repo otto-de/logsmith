@@ -171,15 +171,15 @@ class Core:
         result.set_success()
         return result
 
-    def edit_config(self, config: Config) -> Result:
+    def edit_config(self, new_config: Config) -> Result:
         result = Result()
         try:
-            config.save_config()
-            config.save_accounts()
+            new_config.save_config()
+            new_config.save_accounts()
             self.config.initialize()
         except Exception as error:
             logger.error(str(error), exc_info=True)
-            result.error('could not save config')
+            result.error('could not save config or accounts')
             return result
         result.set_success()
         return result
@@ -197,7 +197,7 @@ class Core:
     def set_available_service_roles(self, profile, role_list: List[str]):
         result = Result()
         logger.info('set available service roles')
-        self.config.save_available_service_roles(group=self.active_profile_group.name, profile=profile,
+        self.config.save_available_service_roles(group_name=self.active_profile_group.name, profile_name=profile,
                                                  role_list=role_list)
         result.set_success()
         return result

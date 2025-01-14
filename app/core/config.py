@@ -11,7 +11,6 @@ class Config:
         self.profile_groups: Dict[str, ProfileGroup] = {}
         self.service_roles: Dict = {}
 
-        self.access_keys: List[str] = []  # TODO is this still needed?
         self.valid = False
         self.error = False
 
@@ -21,26 +20,20 @@ class Config:
     def initialize(self):
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
-        access_key = config.get('default_access_key', _default_access_key)
+        self.default_access_key = config.get('default_access_key', _default_access_key)
 
-        # TODO write test
         self.service_roles = files.load_service_roles()
 
         accounts = files.load_accounts()
-        self.initialize_profile_groups(accounts=accounts, service_roles=self.service_roles, default_access_key=access_key)
+        self.initialize_profile_groups(accounts=accounts, service_roles=self.service_roles,
+                                       default_access_key=self.default_access_key)
 
     def initialize_profile_groups(self, accounts: dict, service_roles: dict, default_access_key: str):
-        # TODO: why do i need this? the default access key will be set on config load
-        if not default_access_key:
-            self.default_access_key = _default_access_key
-        else:
-            self.default_access_key = default_access_key
-        self.access_keys.append(self.default_access_key)
-
         for group_name, group_data in accounts.items():
             profile_group = ProfileGroup(name=group_name,
                                          group=group_data,
-                                         default_access_key=self.default_access_key)
+                                         default_access_key=default_access_key)
+            self.profile_groups[group_name] = profile_group
 
             if group_name in service_roles:
                 selected_service_source_profile = service_roles[group_name].get('selected_profile', None)
@@ -49,11 +42,6 @@ class Config:
                     profile_group.set_service_role_profile(
                         source_profile_name=selected_service_source_profile,
                         role_name=selected_service_role)
-
-            self.profile_groups[group_name] = profile_group
-            if profile_group.access_key:
-                self.access_keys.append(profile_group.access_key)
-
         self.validate()
 
     def set_mfa_shell_command(self, mfa_shell_command: str):
@@ -68,7 +56,6 @@ class Config:
     def save_accounts(self):
         files.save_accounts_file(self.to_dict())
 
-    # TODO write test
     def save_selected_service_role(self, group_name: str, profile_name: str, role_name: str):
         if group_name not in self.service_roles:
             self.service_roles[group_name] = {
@@ -81,19 +68,18 @@ class Config:
         self.service_roles[group_name]['selected_role'] = role_name
         history = self._add_to_history(profile=profile_name, role=role_name, history=self.get_history(group_name))
         self.service_roles[group_name]['history'] = history
-        files.save_service_roles(self.service_roles)
+        files.save_service_roles_file(self.service_roles)
 
-    # TODO write test
-    def save_available_service_roles(self, group: str, profile: str, role_list: List[str]):
-        if group not in self.service_roles:
-            self.service_roles[group] = {
+    def save_available_service_roles(self, group_name: str, profile_name: str, role_list: List[str]):
+        if group_name not in self.service_roles:
+            self.service_roles[group_name] = {
                 'selected_profile': None,
                 'selected_role': None,
                 'available': {},
                 'history': []
             }
-        self.service_roles[group]['available'][profile] = role_list
-        files.save_service_roles(self.service_roles)
+        self.service_roles[group_name]['available'][profile_name] = role_list
+        files.save_service_roles_file(self.service_roles)
 
     def get_selected_service_role_source_profile(self, group: str):
         return self.service_roles.get(group, {}).get('selected_profile')
