@@ -53,6 +53,7 @@ class Gui(QMainWindow):
         if profile_group.service_profile:
             self.tray_icon.set_service_role(profile_name=profile_group.service_profile.source,
                                             role_name=profile_group.service_profile.role)
+        self.tray_icon.update_region_text(self.core.get_region())
         if not self._check_and_signal_error(result):
             self._to_error_state()
             return

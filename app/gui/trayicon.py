@@ -18,7 +18,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.log_action = None
         self.config_action = None
         self.last_login = None
-        self.active_region = None
+        self.active_region_text = None
         self.default_region_text = 'default region'
         self.region_menu = None
         self.add_access_key_action = None
@@ -51,6 +51,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         action.setIcon(self.assets.get_icon(style='outline', color_code='#FFFFFF'))
         self.actions.append(action)
 
+        # gcp profiles
         menu.addSeparator()
         for profile_group in profile_list:
             if profile_group.type == "gcp":
@@ -61,11 +62,12 @@ class SystemTrayIcon(QSystemTrayIcon):
                 self.actions.append(action)
 
         menu.addSeparator()
+        # region
         # active region
-        self.active_region = menu.addAction('no region set')
-        self.active_region.setDisabled(True)
+        self.active_region_text = menu.addAction('no region set')
+        self.active_region_text.setDisabled(True)
         # region menu
-        self.region_menu = QMenu(self.default_region_text, menu)
+        self.region_menu = QMenu('Overwrite region', menu)
         menu.addMenu(self.region_menu)
         # default region action
         default_region_action = self.region_menu.addAction(self.default_region_text)
@@ -115,11 +117,9 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def set_region_to_default(self):
         self.gui.set_region(None)
-        self.region_menu.setTitle('default region')
 
     def set_override_region(self, region: str):
         self.gui.set_region(region)
-        self.region_menu.setTitle(region)
 
     def set_service_role(self, profile_name: str, role_name: str):
         if profile_name and role_name:
@@ -132,9 +132,9 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def update_region_text(self, region: str):
         if region:
-            self.active_region.setText(region)
+            self.active_region_text.setText(region)
         else:
-            self.active_region.setText(self.default_region_text)
+            self.active_region_text.setText(self.default_region_text)
 
     def show_message(self, title, message):
         self.showMessage(
