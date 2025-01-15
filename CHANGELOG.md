@@ -32,6 +32,7 @@ Release dates will be in YYYY-MM-DD format.
 ### Fixed
 - On login the current region text will now be properly updated.
 - The region overwrite menu will not change text on selection.
+- When not logged in, the tray icon will now properly display the outline variant of the icon.
 
 ## 7.0.0 - 2024-04-05
 
