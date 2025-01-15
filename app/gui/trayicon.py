@@ -1,11 +1,12 @@
 from functools import partial
 from typing import List, TYPE_CHECKING
 
+from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 from app.aws import regions
 from app.core.profile_group import ProfileGroup
-from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_FULL, ICON_STYLE_GCP
+from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_GCP, ICON_STYLE_FULL
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -41,16 +42,17 @@ class SystemTrayIcon(QSystemTrayIcon):
         for profile_group in profile_list:
             if profile_group.type == "aws":
                 action = menu.addAction(profile_group.name)
-                action.triggered.connect(partial(self.gui.login,
-                                                 profile_group=profile_group))
+                action.setIconVisibleInMenu(True)
+                action.triggered.connect(partial(self.gui.login, profile_group=profile_group))
                 action.setIcon(self.assets.get_icon(style=ICON_STYLE_FULL, color_code=profile_group.color))
                 self.actions.append(action)
 
         # log out
-        action = menu.addAction('logout')
-        action.triggered.connect(self.gui.logout)
-        action.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE, color_code='#FFFFFF'))
-        self.actions.append(action)
+        logut_action = menu.addAction('logout')
+        logut_action.setIconVisibleInMenu(True)
+        logut_action.triggered.connect(self.gui.logout)
+        logut_action.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE, color_code='#FFFFFF'))
+        self.actions.append(logut_action)
 
         # gcp profiles
         menu.addSeparator()

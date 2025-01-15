@@ -33,7 +33,8 @@ Release dates will be in YYYY-MM-DD format.
 - On login the current region text will now be updated.
 - The region overwrite menu will not change text on selection.
 - When not logged in, the tray icon will now display the outline variant of the icon.
-- fix issue where config is not properly replaced on config edits. 
+- fix issue where config is not properly replaced on config edits.
+- fix display of colord icons for profile groups.
 
 ## 7.0.0 - 2024-04-05
 
