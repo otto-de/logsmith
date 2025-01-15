@@ -17,6 +17,11 @@ Changes will be grouped by the following categories (and their respective versio
 
 Release dates will be in YYYY-MM-DD format.
 
+## 8.0.1 - 2025-01-15
+
+### Fixed
+- Fix an issue where the copy menu were never reset and would accumulate more entries with each login.
+
 ## 8.0.0 - 2025-01-15
 
 ### Changed

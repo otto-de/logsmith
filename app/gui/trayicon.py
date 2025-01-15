@@ -125,7 +125,9 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def update_copy_menus(self, active_profile_group: ProfileGroup):
         self.copy_name_menu.setDisabled(False)
+        self.copy_name_menu.clear()
         self.copy_id_menu.setDisabled(False)
+        self.copy_id_menu.clear()
 
         for profile in active_profile_group.get_profile_list():
             copy_name_action = self.copy_name_menu.addAction(profile.profile)
@@ -134,10 +136,10 @@ class SystemTrayIcon(QSystemTrayIcon):
             copy_id_action.triggered.connect(partial(self.copy_to_clipboard, text=str(profile.account)))
 
     def reset_copy_menus(self):
-        self.copy_name_menu.clear()
         self.copy_name_menu.setDisabled(True)
-        self.copy_id_menu.clear()
+        self.copy_name_menu.clear()
         self.copy_id_menu.setDisabled(True)
+        self.copy_id_menu.clear()
 
     def disable_actions(self, state: bool):
         for action in self.actions:
