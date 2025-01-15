@@ -12,6 +12,7 @@ assets = [
     ('./app/assets/app_icon.png', './assets'),
     ('./app/assets/cloud.svg', './assets'),
     ('./app/assets/cloud-outline.svg', './assets'),
+    ('./app/assets/cloud-busy.svg', './assets'),
     ('./app/assets/bug.svg', './assets'),
 ]
 
