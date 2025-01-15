@@ -1,3 +1,6 @@
+from app.core.profile_group import ProfileGroup
+
+
 def get_test_accounts() -> dict:
     return {
         'development': {
@@ -23,6 +26,7 @@ def get_test_accounts() -> dict:
             'team': 'awesome-team',
             'region': 'us-east-1',
             'access_key': 'access-key-123',
+            'script': './some-script.sh',
             'profiles': [
                 {
                     'profile': 'developer',
@@ -52,6 +56,7 @@ def get_test_group():
         'color': '#388E3C',
         'team': 'awesome-team',
         'region': 'us-east-1',
+        'script': './some-script.sh',
         'profiles': [
             {
                 'profile': 'developer',
@@ -155,3 +160,7 @@ def get_test_profile_with_source():
         'role': 'readonly-role',
         'source': 'some-source'
     }
+
+
+def get_test_profile_group() -> ProfileGroup:
+    return ProfileGroup('test', get_test_group(), 'some-access-key')

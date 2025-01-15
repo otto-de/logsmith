@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from app.core.profile_group import ProfileGroup
 from tests.test_data.test_accounts import get_test_group, get_test_group_no_default, \
-    get_test_group_with_specific_access_key
+    get_test_group_with_specific_access_key, get_test_profile_group
 
 
 class TestProfileGroup(TestCase):
@@ -16,6 +16,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual('us-east-1', self.profile_group.region)
         self.assertEqual('#388E3C', self.profile_group.color)
         self.assertEqual('default', self.profile_group.default_access_key)
+        self.assertEqual('./some-script.sh', self.profile_group.script)
         self.assertEqual(None, self.profile_group.access_key)
         self.assertEqual('aws', self.profile_group.type)
         self.assertEqual(2, len(self.profile_group.profiles))
@@ -96,7 +97,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(None, result)
 
     def test_get_access_key(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         result = profile_group.get_access_key()
         self.assertEqual('some-access-key', result)
 
@@ -106,7 +107,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual('specific-access-key', result)
 
     def test_to_dict(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         mock_profile1 = Mock()
         mock_profile1.to_dict.return_value = 'profile 1'
         mock_profile2 = Mock()
@@ -125,6 +126,7 @@ class TestProfileGroup(TestCase):
             'profiles': ['profile 1', 'profile 2', 'profile 3'],
             'region': 'us-east-1',
             'team': 'awesome-team',
+            'script': './some-script.sh',
         }
         self.assertEqual(expected, result)
 
@@ -148,13 +150,14 @@ class TestProfileGroup(TestCase):
             'profiles': ['profile 1', 'profile 2', 'profile 3'],
             'region': 'us-east-1',
             'team': 'awesome-team',
+            'script': None,
             'access_key': 'specific-access-key',
         }
 
         self.assertEqual(expected, result)
 
     def test_set_service_role_profile(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
 
         result = profile_group.service_profile.to_dict()
@@ -165,13 +168,13 @@ class TestProfileGroup(TestCase):
         self.assertEqual(expected, result)
 
     def test_set_service_role_profile__source_profile_does_not_exist(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         profile_group.set_service_role_profile(source_profile_name='non-existent', role_name='pipeline')
 
         self.assertEqual(None, profile_group.service_profile)
 
     def test_set_service_role_profile__source_profile_does_not_exist_resets_prior_service_role(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
 
         result = profile_group.service_profile.to_dict()
@@ -186,7 +189,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(None, profile_group.service_profile)
 
     def test_get_profile_list__without_service_role(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
 
         result = profile_group.get_profile_list()
         expected = [profile_group.profiles[0], profile_group.profiles[1]]
@@ -194,7 +197,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(expected, result)
 
     def test_get_profile_list__with_service_role(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
 
         result = profile_group.get_profile_list()
@@ -203,12 +206,12 @@ class TestProfileGroup(TestCase):
         self.assertEqual(expected, result)
 
     def test_get_profile(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
 
         result = profile_group.get_profile('developer')
 
         self.assertEqual('developer', result.profile)
 
     def test_get_profile__non_existent_profile(self):
-        profile_group = ProfileGroup('test', get_test_group(), 'some-access-key')
+        profile_group = get_test_profile_group()
         self.assertEqual(None, profile_group.get_profile('dog'))

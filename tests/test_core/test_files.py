@@ -11,6 +11,7 @@ class Test(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.test_file = f'{script_dir}/../test_resources/test_file'
+        cls.non_existing_test_file = f'{script_dir}/../test_resources/test_file_does_not_exist'
         cls.test_home = f'{script_dir}/../test_resources'
 
     @mock.patch('app.core.files.Path.home', return_value='home')
@@ -148,3 +149,21 @@ class Test(TestCase):
             call('home/.logsmith/service_roles.yaml', 'test: true\n')
         ]
         self.assertEqual(expected, mock_write.mock_calls)
+
+    def test_file_exists(self):
+        self.assertTrue(files.file_exists(self.test_file))
+
+    def test_file_exists__files_does_not_exist(self):
+        self.assertFalse(files.file_exists(self.non_existing_test_file))
+
+    @mock.patch('app.core.files.os.path.exists', return_value=True)
+    def test_file_exists__script_path_without_arguments(self, mock_os_path_exists):
+        files.file_exists(self.test_file)
+        expected = [call(self.test_file)]
+        self.assertEqual(expected, mock_os_path_exists.mock_calls)
+
+    @mock.patch('app.core.files.os.path.exists', return_value=True)
+    def test_file_exists__script_path_with_arguments(self, mock_os_path_exists):
+        files.file_exists(f'{self.test_file} argument1 argument2')
+        expected = [call(self.test_file)]
+        self.assertEqual(expected, mock_os_path_exists.mock_calls)

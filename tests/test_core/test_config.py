@@ -76,6 +76,7 @@ class TestConfig(TestCase):
                     'color': '#388E3C',
                     'team': 'awesome-team',
                     'region': 'us-east-1',
+                    'script': None,
                     'profiles': [
                         {
                             'profile': 'developer',
@@ -95,6 +96,7 @@ class TestConfig(TestCase):
                     'team': 'awesome-team',
                     'region': 'us-east-1',
                     'access_key': 'access-key-123',
+                    'script': './some-script.sh',
                     'profiles': [
                         {
                             'profile': 'developer',
@@ -114,6 +116,7 @@ class TestConfig(TestCase):
                     'team': 'another-team',
                     'region': 'europe-west1',
                     'type': 'gcp',
+                    'script': None,
                     'profiles': [],  # this will be automatically added
                 }
             }

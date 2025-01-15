@@ -6,6 +6,7 @@ from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
 from app.gcp import login, config
+from app.shell import shell
 from app.yubico import mfa
 
 logger = logging.getLogger('logsmith')
@@ -48,6 +49,11 @@ class Core:
 
         logger.info('login success')
         self._handle_support_files(profile_group)
+
+        run_script_result = self.run_script(profile_group)
+        if not run_script_result.was_success:
+            return run_script_result
+
         result.set_success()
         return result
 
@@ -88,8 +94,12 @@ class Core:
 
         logger.info('login success')
         self._handle_support_files(profile_group)
-        result.set_success()
 
+        run_script_result = self.run_script(profile_group)
+        if not run_script_result.was_success:
+            return run_script_result
+
+        result.set_success()
         return result
 
     def logout(self):
@@ -200,6 +210,26 @@ class Core:
         logger.info('set available service roles')
         self.config.save_available_service_roles(group_name=self.active_profile_group.name, profile_name=profile,
                                                  role_list=role_list)
+        result.set_success()
+        return result
+
+    def run_script(self, profile_group: ProfileGroup):
+        result = Result()
+        if not profile_group or not profile_group.script:
+            result.set_success()
+            return result
+
+        logger.info('run script')
+        if not files.file_exists(profile_group.script):
+            result.error(f'{profile_group.script} not found')
+            return result
+
+        shell_output = shell.run(profile_group.script)
+        if not shell_output:
+            result.error('script failed')
+            return result
+
+        logger.info(f'script output:\n{shell_output}')
         result.set_success()
         return result
 

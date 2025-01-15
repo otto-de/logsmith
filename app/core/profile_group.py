@@ -16,6 +16,7 @@ class ProfileGroup:
         self.access_key: str = group.get('access_key', None)
         self.profiles: List[Profile] = []
         self.type: str = group.get('type', 'aws')  # only aws (default) & gcp as values are allowed
+        self.script: str = group.get('script', None)  # only aws (default) & gcp as values are allowed
 
         self.service_profile: Optional[Profile] = None
 
@@ -85,6 +86,7 @@ class ProfileGroup:
             'color': self.color,
             'team': self.team,
             'region': self.region,
+            'script': self.script,
             'profiles': [profile.to_dict() for profile in self.profiles],
         }
         if self.access_key and self.access_key != self.default_access_key:

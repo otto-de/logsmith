@@ -78,6 +78,13 @@ def remove_file(path):
         os.remove(path)
 
 
+def file_exists(file_path):
+    file_path = file_path.strip()
+    if ' ' in file_path:
+        file_path = file_path.split(' ')[0]
+    return os.path.exists(file_path)
+
+
 def load_config():
     return parse_yaml(_load_file(get_config_path()))
 

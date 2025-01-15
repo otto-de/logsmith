@@ -3,8 +3,9 @@ from unittest.mock import call, Mock
 
 from app.core.config import Config
 from app.core.core import Core
+from app.core.profile_group import ProfileGroup
 from app.core.result import Result
-from tests.test_data.test_accounts import get_test_accounts
+from tests.test_data.test_accounts import get_test_accounts, get_test_group, get_test_profile_group
 from tests.test_data.test_config import get_test_config
 from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
 from tests.test_data.test_service_roles import get_test_service_roles
@@ -49,6 +50,8 @@ class TestCore(TestCase):
     def test_login__session_token_error(self, mock_credentials):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.error_result
+        self.core.run_script = Mock()
+        self.core.run_script.return_value = self.success_result
 
         result = self.core.login(self.config.get_group('development'), None)
 
@@ -63,6 +66,8 @@ class TestCore(TestCase):
         mock_credentials.check_session.return_value = self.fail_result
         self.core._renew_session = Mock()
         self.core._renew_session.return_value = self.error_result
+        self.core.run_script = Mock()
+        self.core.run_script.return_value = self.success_result
 
         result = self.core.login(self.config.get_group('development'), None)
 
@@ -74,16 +79,20 @@ class TestCore(TestCase):
         self.assertEqual(expected, self.core._renew_session.mock_calls)
         self.assertEqual(self.error_result, result)
 
+        self.assertEqual([], self.core.run_script.mock_calls)
+
     @mock.patch('app.core.core.files')
     @mock.patch('app.core.core.credentials')
-    def test_login__successful_login(self, mock_credentials, _):
+    def test_login__successful_login(self, mock_credentials, mock_files):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_credentials.check_session.return_value = self.success_result
-        self.core._renew_session = Mock()
-        self.core._renew_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'test-user'
         mock_credentials.fetch_role_credentials.return_value = self.success_result
         mock_credentials.write_profile_config.return_value = self.success_result
+        self.core._renew_session = Mock()
+        self.core._renew_session.return_value = self.success_result
+        self.core.run_script = Mock()
+        self.core.run_script.return_value = self.success_result
         self.core._handle_support_files = Mock()
 
         mock_mfa_callback = Mock()
@@ -102,6 +111,9 @@ class TestCore(TestCase):
 
         self.assertEqual(profile_group, self.core.active_profile_group)
         self.assertEqual(None, self.core.region_override)
+
+        expected_run_script = [call(profile_group)]
+        self.assertEqual(expected_run_script, self.core.run_script.mock_calls)
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -357,3 +369,36 @@ class TestCore(TestCase):
                           'source': 'developer'})
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
+
+    def test__run_script__no_active_profile_group(self):
+        result = self.core.run_script(None)
+        self.assertEqual(True, result.was_success)
+
+    @mock.patch('app.core.core.files.file_exists', return_value=True)
+    @mock.patch('app.core.core.shell.run')
+    def test__run_script__script_successful(self, mock_shell_run, mock_files_exists):
+        mock_shell_run.return_value = 'shell output'
+        result = self.core.run_script(get_test_profile_group())
+
+        self.assertEqual(True, result.was_success)
+        self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
+        self.assertEqual([call('./some-script.sh')], mock_shell_run.mock_calls)
+
+    @mock.patch('app.core.core.files.file_exists', return_value=False)
+    @mock.patch('app.core.core.shell.run')
+    def test__run_script__script_not_found(self, mock_shell_run, mock_files_exists):
+        result = self.core.run_script(get_test_profile_group())
+
+        self.assertEqual(True, result.was_error)
+        self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
+        self.assertEqual([], mock_shell_run.mock_calls)
+
+    @mock.patch('app.core.core.files.file_exists', return_value=True)
+    @mock.patch('app.core.core.shell.run')
+    def test__run_script__script_failed(self, mock_shell_run, mock_files_exists):
+        mock_shell_run.return_value = None
+        result = self.core.run_script(get_test_profile_group())
+
+        self.assertEqual(True, result.was_error)
+        self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
+        self.assertEqual([call('./some-script.sh')], mock_shell_run.mock_calls)
