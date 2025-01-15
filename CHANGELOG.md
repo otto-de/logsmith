@@ -24,6 +24,7 @@ Release dates will be in YYYY-MM-DD format.
 - All tasks will now be performed as background tasks to avoid blocking the gui.
 - Add "busy" taskbar icon to indicate that the application is performing an action.
 - Add the option to copy account ids and profile names to the clipboard.
+- Add the option to specify a script path for each profile group that will be executed after login
 
 ## 7.0.0 - 2024-04-05
 

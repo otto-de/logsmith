@@ -19,11 +19,12 @@ Logsmith is a desktop trayicon to:
 - switch regions
 - keeps you logged in
 - removes unused profiles  
-- icon will change color. You see which profiles you are using
+- custom icon color for each profile group
 - set and rotate access key
-- fetches mfa token for you
-- lets you quickly assume service roles
-- lets you quickly copy account ids and profile names
+- fetches mfa token
+- comfortably assume service roles
+- copy account ids and profile names
+- run ascript after login
 - has a graphical user interface and a cli
 
 ## Config
@@ -32,7 +33,8 @@ The config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look l
 productive:                   
   team: team1                 
   region: eu-central-1         
-  color: '#388E3C'            
+  color: '#388E3C'          
+  script: 'some-script.sh'
   profiles:
     - profile: nonlive            
       account: '123456789123'   
@@ -93,6 +95,15 @@ productive:
 In this example, logsmith will first assume the role 'developer-role', write the credentials in profile 'developer' and the uses the said profile to assume the role 'service-role'.
 
 Please keep in mind that the roles will be assumed in the given order.
+
+### Script
+If a script is provided, it will be executed after the login process was successful.
+
+You may also provide static arguments to the script path in your configuration.
+```yaml
+productive:
+  script: "some-script.sh argument1 argument2"
+```
 
 ## AWS Access key
 Please use the dialog option provided by logsmith to set your access key or save it in `.aws/credentials` 
