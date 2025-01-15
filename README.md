@@ -137,13 +137,15 @@ some_directory [master] (production) %
 ## Cli
 If you provide one of the following parameter logsmith will automatically start in cli mode:
 ```bash
-  --list                lists profile groups
-  --login LOGIN         Login with group
-  --logout              Remove profiles
-  --region REGION       Overwrite region to login to
-  --set-access-key      set access key
-  --rotate-access-key   rotate access key
-  -o --oneshot          exit after login
+  --list                                  lists profile groups
+  --login GROUP                           Login with group
+  --logout                                Remove profiles
+  --region REGION                         Overwrite region to login to
+  --set-access-key                        set access key
+  --rotate-access-key KEY_NAME            rotate access key
+  --list-service-roles PROFILE            list assumable roles for the given profile
+  --set-service-roles GROUP PROFILE ROLE  set service role for the given profile
+  -o --oneshot                    exit after login
 ```
 
 Example to login with cli mode:

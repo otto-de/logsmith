@@ -22,7 +22,7 @@ def parse(args):
                         help='set access key')
     parser.add_argument('--rotate-access-key', metavar='KEY_NAME',
                         help='rotate given access key')
-    parser.add_argument('--list-service-roles',
+    parser.add_argument('--list-service-roles', metavar='PROFILE',
                         help='list assumable roles for the given profile')
     parser.add_argument('--set-service-roles', nargs=3, metavar=('GROUP', 'PROFILE', 'ROLE'),
                         help='set service role for the given profile')
