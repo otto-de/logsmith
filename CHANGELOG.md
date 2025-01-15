@@ -17,7 +17,7 @@ Changes will be grouped by the following categories (and their respective versio
 
 Release dates will be in YYYY-MM-DD format.
 
-## Unreleased
+## 8.0.0 - 2025-01-15
 
 ### Changed
 - All tasks will now be performed as background tasks to avoid blocking the gui.
