@@ -13,7 +13,7 @@ Logsmith is a desktop trayicon to:
 ```
  
 ## What does logsmith do?
-![](./example.png)
+![](./docs/example.png)
 
 - switch profiles 
 - switch regions
@@ -22,6 +22,7 @@ Logsmith is a desktop trayicon to:
 - icon will change color. You see which profiles you are using
 - set and rotate access key
 - fetches mfa token for you
+- lets you quickly assume service roles
 - has a graphical user interface and a cli
 
 ## Config
@@ -124,7 +125,18 @@ On the logsmith config dialog, you can specify the appropriate command to fetch 
 Please also keep in mind that you might have to provide the whole path/command.
 
 Example:
-`/usr/local/bin/ykman oath code  | awk 'NF>1{print $NF}'` .
+`/usr/local/bin/ykman oath accounts code  | awk 'NF>1{print $NF}'` .
+
+## Service Profile
+The Service Profile feature allows you to list and select roles that can be assumed with a given profile, allowing users to easily filter and select a role without needing to manually write role names. 
+
+Once a role is selected for a profile group, it is assumed in a standardized "service" profile. This can be used in your application to start them with the intended role, testing and debugging access rights without the need to deploy the application.
+
+Because the role is always assumed in the "service" profile, it can be used across various applications with a standardised configuration.
+
+The feature also remembers the last assumed role and automatically assumes it when the profile group is selected. Additionally, a history of recently used roles is included, making it quick to jump between roles as needed.
+
+![](./docs/service_profile.png)
 
 ## Group file
 Logsmith will write the active profile group to `${HOME}/.logsmith/active_group`. This could be used to include the current profile group in your shell prompt.
@@ -145,7 +157,7 @@ If you provide one of the following parameter logsmith will automatically start 
   --rotate-access-key KEY_NAME            rotate access key
   --list-service-roles PROFILE            list assumable roles for the given profile
   --set-service-roles GROUP PROFILE ROLE  set service role for the given profile
-  -o --oneshot                    exit after login
+  -o --oneshot                            exit after login
 ```
 
 Example to login with cli mode:

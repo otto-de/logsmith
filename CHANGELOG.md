@@ -19,6 +19,11 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Added
+- Add feature to assume roles in a "service" profile.
+- All tasks will now be performed as background tasks to avoid blocking the gui.
+- Add "busy" taskbar icon to indicate that the application is performing an action.
+
 ## 7.0.0 - 2024-04-05
 
 ### Changed
