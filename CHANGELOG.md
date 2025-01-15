@@ -30,9 +30,10 @@ Release dates will be in YYYY-MM-DD format.
 - Add the option to specify a script path for each profile group that will be executed after login
 
 ### Fixed
-- On login the current region text will now be properly updated.
+- On login the current region text will now be updated.
 - The region overwrite menu will not change text on selection.
-- When not logged in, the tray icon will now properly display the outline variant of the icon.
+- When not logged in, the tray icon will now display the outline variant of the icon.
+- fix issue where config is not properly replaced on config edits. 
 
 ## 7.0.0 - 2024-04-05
 

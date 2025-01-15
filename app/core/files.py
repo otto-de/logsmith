@@ -68,7 +68,6 @@ def _load_file(path):
 
 
 def _write_file(path, content):
-    print(f'writing to {path} {content}')
     with open(path, 'w') as file:
         file.write(str(content))
 

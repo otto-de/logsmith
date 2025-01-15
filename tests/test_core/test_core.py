@@ -3,9 +3,9 @@ from unittest.mock import call, Mock
 
 from app.core.config import Config
 from app.core.core import Core
-from app.core.profile_group import ProfileGroup
 from app.core.result import Result
-from tests.test_data.test_accounts import get_test_accounts, get_test_group, get_test_profile_group
+from tests.test_data.test_accounts import get_test_profile_group, \
+    get_test_accounts
 from tests.test_data.test_config import get_test_config
 from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
 from tests.test_data.test_service_roles import get_test_service_roles

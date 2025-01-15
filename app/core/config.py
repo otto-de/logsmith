@@ -1,3 +1,4 @@
+from mimetypes import inited
 from typing import List, Dict
 
 from app.core import files
@@ -29,6 +30,7 @@ class Config:
                                        default_access_key=self.default_access_key)
 
     def initialize_profile_groups(self, accounts: dict, service_roles: dict, default_access_key: str):
+        self.profile_groups = {}
         for group_name, group_data in accounts.items():
             profile_group = ProfileGroup(name=group_name,
                                          group=group_data,

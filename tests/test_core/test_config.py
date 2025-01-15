@@ -2,7 +2,7 @@ from unittest import TestCase, mock
 from unittest.mock import call, Mock
 
 from app.core.config import Config, _default_access_key
-from tests.test_data.test_accounts import get_test_accounts
+from tests.test_data.test_accounts import get_test_accounts, get_test_accounts__minimal
 from tests.test_data.test_config import get_test_config
 from tests.test_data.test_service_roles import get_test_service_roles
 
@@ -99,14 +99,14 @@ class TestConfig(TestCase):
                     'script': './some-script.sh',
                     'profiles': [
                         {
-                            'profile': 'developer',
-                            'account': '123456789012',
-                            'role': 'developer',
+                            'profile': 'admin',
+                            'account': '9876543210',
+                            'role': 'admin',
                             'default': True
                         },
                         {
                             'profile': 'readonly',
-                            'account': '012345678901',
+                            'account': '0000000000',
                             'role': 'readonly'
                         }
                     ]
@@ -200,8 +200,7 @@ class TestConfig(TestCase):
     def test_initialize_profile_groups(self):
         self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
 
-        groups = ['development', 'live', 'gcp-project-dev']
-        self.assertEqual(groups, list(self.config.profile_groups.keys()))
+        self.assertEqual(['development', 'live', 'gcp-project-dev'], list(self.config.profile_groups.keys()))
 
         development_group = self.config.get_group('development')
         self.assertEqual('development', development_group.name)
@@ -238,6 +237,48 @@ class TestConfig(TestCase):
         live_group = self.config.get_group('live')
         self.assertEqual('access-key-123', live_group.get_access_key())
         self.assertEqual(None, live_group.service_profile)
+
+        live_profile1 = live_group.profiles[0]
+        self.assertEqual(live_group, live_profile1.group)
+        self.assertEqual('admin', live_profile1.profile)
+        self.assertEqual('9876543210', live_profile1.account)
+        self.assertEqual('admin', live_profile1.role)
+        self.assertEqual(True, live_profile1.default)
+        self.assertEqual(None, live_profile1.source)
+
+        live_profile2 = live_group.profiles[1]
+        self.assertEqual(live_group, live_profile2.group)
+        self.assertEqual('readonly', live_profile2.profile)
+        self.assertEqual('0000000000', live_profile2.account)
+        self.assertEqual('readonly', live_profile2.role)
+        self.assertEqual(False, live_profile2.default)
+        self.assertEqual(None, live_profile2.source)
+
+    def test_initialize_profile_groups__replace_old_values_on_config_reload(self):
+        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(),
+                                              'default-access-key')
+        self.config.initialize_profile_groups(get_test_accounts__minimal(), get_test_service_roles(),
+                                              'default-access-key')
+
+        self.assertEqual(['development'], list(self.config.profile_groups.keys()))
+
+        development_group = self.config.get_group('development')
+        self.assertEqual('development', development_group.name)
+        self.assertEqual('awesome-team', development_group.team)
+        self.assertEqual('us-east-1', development_group.region)
+        self.assertEqual('#388E3C', development_group.color)
+        self.assertEqual('aws', development_group.type)
+        self.assertEqual('default-access-key', development_group.get_access_key())
+
+        development_profile1 = development_group.profiles[0]
+        self.assertEqual(development_group, development_profile1.group)
+        self.assertEqual('developer', development_profile1.profile)
+        self.assertEqual('123495678901', development_profile1.account)
+        self.assertEqual('developer', development_profile1.role)
+        self.assertEqual(True, development_profile1.default)
+        self.assertEqual(None, development_profile1.source)
+
+        self.assertEqual(1, len(development_group.profiles))
 
     def test_add_to_history(self):
         history = ['profile-1 : role-1', 'profile-2 : role-2']
