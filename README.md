@@ -30,16 +30,16 @@ Logsmith is a desktop trayicon to:
 ## Config
 The config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
 ```yaml
-productive:                   
-  team: team1                 
-  region: eu-central-1         
-  color: '#388E3C'          
-  script: 'some-script.sh'
+productive:                     # profile group name (will be displayed)
+  team: team1                   # your team name, used in support files
+  region: eu-central-1          # your default region
+  color: '#388E3C'              # color code used to color the tray icon
+  script: 'some-script.sh'      # script to run after login (optional)
   profiles:
-    - profile: nonlive            
-      account: '123456789123'   
-      role: developer         
-      default: true            
+    - profile: nonlive          # local profile name
+      account: '123456789123'   # account id
+      role: developer           # role name that will be assumed  
+      default: true             # flag if this profile should be the default profile 
     - profile: live
       account: '123456789123'
       role: developer
@@ -80,17 +80,17 @@ This is useful when your want to assume specific service roles, but can not do s
 
 ```yaml
 productive:                   
-  team: team1                 
-  region: eu-central-1         
-  color: '#388E3C'            
+  team: team1                   
+  region: eu-central-1           
+  color: '#388E3C'              
   profiles:
-    - profile: developer            
+    - profile: developer        
       account: '123456789123'   
-      role: developer-role         
+      role: developer-role       
     - profile: service
       account: '123456789123'
       role: service-role
-      source: developer
+      source: developer         # source profile that will be used to assume 'service-role'
 ```
 In this example, logsmith will first assume the role 'developer-role', write the credentials in profile 'developer' and the uses the said profile to assume the role 'service-role'.
 
@@ -100,6 +100,8 @@ Please keep in mind that the roles will be assumed in the given order.
 If a script is provided, it will be executed after the login process was successful.
 
 You may also provide static arguments to the script path in your configuration.
+
+Example:
 ```yaml
 productive:
   script: "some-script.sh argument1 argument2"

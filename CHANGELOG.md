@@ -19,12 +19,19 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
-### Added
-- Add feature to assume roles in a "service" profile.
+### Changed
 - All tasks will now be performed as background tasks to avoid blocking the gui.
+- region overwrite menu was renamed to "Overwrite region".
+
+### Added
 - Add "busy" taskbar icon to indicate that the application is performing an action.
+- Add feature to assume roles in a "service" profile.
 - Add the option to copy account ids and profile names to the clipboard.
 - Add the option to specify a script path for each profile group that will be executed after login
+
+### Fixed
+- On login the current region text will now be properly updated.
+- The region overwrite menu will not change text on selection.
 
 ## 7.0.0 - 2024-04-05
 
