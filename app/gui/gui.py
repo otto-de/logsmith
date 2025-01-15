@@ -66,6 +66,7 @@ class Gui(QMainWindow):
             self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
+        self.tray_icon.update_copy_menus(self.core.active_profile_group)
 
         logger.info('start repeater')
         prepare_login = partial(self.login, profile_group=self.core.active_profile_group)
@@ -102,6 +103,7 @@ class Gui(QMainWindow):
     def _on_logout_success(self):
         self._to_reset_state()
         self.tray_icon.update_region_text('not logged in')
+        self.tray_icon.reset_copy_menus()
 
     def set_region(self, region: str) -> None:
         self.task = BackgroundTask(

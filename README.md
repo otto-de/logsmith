@@ -23,6 +23,7 @@ Logsmith is a desktop trayicon to:
 - set and rotate access key
 - fetches mfa token for you
 - lets you quickly assume service roles
+- lets you quickly copy account ids and profile names
 - has a graphical user interface and a cli
 
 ## Config

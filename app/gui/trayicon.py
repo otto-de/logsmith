@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 from app.aws import regions
 from app.core.profile_group import ProfileGroup
-from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_FULL, ICON_STYLE_GCP, ICON_STYLE_BUSY
+from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_FULL, ICON_STYLE_GCP
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -64,16 +64,16 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
         # region
-        # active region
+        ## active region
         self.active_region_text = menu.addAction('no region set')
         self.active_region_text.setDisabled(True)
-        # region menu
+        ## region menu
         self.region_menu = QMenu('Overwrite region', menu)
         menu.addMenu(self.region_menu)
-        # default region action
+        ## default region action
         default_region_action = self.region_menu.addAction(self.default_region_text)
         default_region_action.triggered.connect(self.set_region_to_default)
-        # region overwrite
+        ## region overwrite
         for region in regions.region_list:
             region_action = self.region_menu.addAction(region)
             region_action.triggered.connect(partial(self.set_override_region, region=region))
@@ -93,6 +93,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
 
         menu.addSeparator()
+        # configuration
         self.config_action = menu.addAction('Edit config')
         self.config_action.triggered.connect(self.gui.show_config_dialog)
 
@@ -103,11 +104,38 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.last_login.setDisabled(True)
 
         menu.addSeparator()
+        # copy
+        self.copy_name_menu = QMenu('Copy Profile Name', menu)
+        self.copy_name_menu.setDisabled(True)
+        menu.addMenu(self.copy_name_menu)
+
+        self.copy_id_menu = QMenu('Copy Account Id', menu)
+        self.copy_id_menu.setDisabled(True)
+        menu.addMenu(self.copy_id_menu)
+
+        menu.addSeparator()
+        # exit
         exit_action = menu.addAction("Exit")
         exit_action.triggered.connect(self.gui.stop_and_exit)
 
         self.setContextMenu(menu)
         menu.repaint()
+
+    def update_copy_menus(self, active_profile_group: ProfileGroup):
+        self.copy_name_menu.setDisabled(False)
+        self.copy_id_menu.setDisabled(False)
+
+        for profile in active_profile_group.get_profile_list():
+            copy_name_action = self.copy_name_menu.addAction(profile.profile)
+            copy_name_action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
+            copy_id_action = self.copy_id_menu.addAction(f'{profile.profile} ({profile.account})')
+            copy_id_action.triggered.connect(partial(self.copy_to_clipboard, text=str(profile.account)))
+
+    def reset_copy_menus(self):
+        self.copy_name_menu.clear()
+        self.copy_name_menu.setDisabled(True)
+        self.copy_id_menu.clear()
+        self.copy_id_menu.setDisabled(True)
 
     def disable_actions(self, state: bool):
         for action in self.actions:
@@ -121,6 +149,10 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def set_override_region(self, region: str):
         self.gui.set_region(region)
+
+    def copy_to_clipboard(self, text):
+        clipboard = self.gui.app.clipboard()
+        clipboard.setText(text)
 
     def set_service_role(self, profile_name: str, role_name: str):
         if profile_name and role_name:

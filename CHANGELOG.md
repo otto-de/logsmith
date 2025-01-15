@@ -23,6 +23,7 @@ Release dates will be in YYYY-MM-DD format.
 - Add feature to assume roles in a "service" profile.
 - All tasks will now be performed as background tasks to avoid blocking the gui.
 - Add "busy" taskbar icon to indicate that the application is performing an action.
+- Add the option to copy account ids and profile names to the clipboard.
 
 ## 7.0.0 - 2024-04-05
 
