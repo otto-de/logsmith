@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from functools import partial
+from os import mkdir
 from typing import List, Optional
 
 from PyQt6.QtCore import QCoreApplication
@@ -51,12 +52,18 @@ class Gui(QMainWindow):
         self.tray_icon.show()
 
     def login(self, profile_group: ProfileGroup):
+        if not self.core.config.mfa_shell_command:
+            mfa_token = self.show_mfa_token_fetch_dialog()
+            if not mfa_token:
+                return
+        else:
+            mfa_token = None
         self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.login,
             on_success=self._on_login_success,
             on_error=self._on_error,
-            kwargs={'profile_group': profile_group, 'mfa_callback': self.show_mfa_token_fetch_dialog}
+            kwargs={'profile_group': profile_group, 'mfa_token': mfa_token}
         )
         self.task.start()
 
@@ -192,6 +199,9 @@ class Gui(QMainWindow):
         logger.error(error_message)
         self._signal_error(error_message)
         self._to_error_state()
+
+    def _fetch_mfa_token(self):
+        return self.show_mfa_token_fetch_dialog()
 
     @staticmethod
     def show_mfa_token_fetch_dialog():

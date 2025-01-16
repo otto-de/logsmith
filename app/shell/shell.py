@@ -6,8 +6,8 @@ logger = logging.getLogger('logsmith')
 
 def run(command, timeout=5):
     proc = None
+    bash_command = ['bash', '-c', command]
     try:
-        bash_command = ['bash', '-c', command]
         proc = subprocess.run(bash_command,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE,
@@ -29,4 +29,7 @@ def run(command, timeout=5):
             logger.warning(proc.stderr)
         else:
             logger.warning('could not fetch output')
+    except Exception as error:
+        logger.error(f'command {command} failed with unknown error')
+        logger.error(str(error), exc_info=True)
         return None

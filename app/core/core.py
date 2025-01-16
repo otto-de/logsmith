@@ -20,7 +20,7 @@ class Core:
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
         self.region_override: str = None
 
-    def login(self, profile_group: ProfileGroup, mfa_callback: Callable) -> Result:
+    def login(self, profile_group: ProfileGroup, mfa_token: str) -> Result:
         result = Result()
         logger.info(f'start login {profile_group.name}')
         self.active_profile_group = profile_group
@@ -34,7 +34,7 @@ class Core:
         if session_result.was_error:
             return session_result
         if not session_result.was_success:
-            renew_session_result = self._renew_session(access_key=access_key, mfa_callback=mfa_callback)
+            renew_session_result = self._renew_session(access_key=access_key, mfa_token=mfa_token)
             if not renew_session_result.was_success:
                 return renew_session_result
 
@@ -156,7 +156,7 @@ class Core:
         if session_result.was_error:
             return session_result
         if not session_result.was_success:
-            renew_session_result = self._renew_session(access_key=key_name, mfa_callback=mfa_callback)
+            renew_session_result = self._renew_session(access_key=key_name, mfa_token=mfa_callback)
             if not renew_session_result.was_success:
                 return renew_session_result
 
@@ -233,18 +233,21 @@ class Core:
         result.set_success()
         return result
 
-    def _renew_session(self, access_key: str, mfa_callback: Callable) -> Result:
+    def _renew_session(self, access_key: str, mfa_token: Optional[str]) -> Result:
         logger.info('renew session')
-        logger.info('get mfa from console')
-        token = mfa.fetch_mfa_token_from_shell(self.config.mfa_shell_command)
-        if not token:
-            logger.info('get mfa from user')
-            token = mfa_callback()
-            if not token:
-                result = Result()
-                result.error('invalid mfa token')
-                return result
-        session_result = credentials.fetch_session_token(access_key=access_key, mfa_token=token)
+        result = Result()
+        if not mfa_token and self.config.mfa_shell_command:
+            logger.info('execute mfa shell command')
+            mfa_token = mfa.fetch_mfa_token_from_shell(self.config.mfa_shell_command)
+        elif not mfa_token and not self.config.mfa_shell_command:
+            result.error(f'mfa token not found and no shell command configured')
+            return result
+
+        if not mfa_token:
+            result = Result()
+            result.error('error fetching mfa token')
+            return result
+        session_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
         return session_result
 
     @staticmethod
