@@ -78,11 +78,11 @@ def has_access_key(access_key: str) -> Result:
 
 
 def check_access_key(access_key: str) -> Result:
-    logger.info('check access key')
     access_key_result = has_access_key(access_key=access_key)
     if not access_key_result.was_success:
         return access_key_result
 
+    logger.info('check access key')
     result = Result()
     try:
         client = _get_client(access_key, 'sts', timeout=2, retries=2)

@@ -260,10 +260,7 @@ class TestCore(TestCase):
         mock_mfa_shell.fetch_mfa_token_from_shell.return_value = '12345'
         mock_credentials.fetch_session_token.return_value = self.success_result
 
-        mock_mfa_callback = Mock()
-        result = self.core._renew_session('access-key', mock_mfa_callback)
-
-        self.assertEqual(0, mock_mfa_callback.call_count)
+        result = self.core._renew_session(access_key='access-key', mfa_token=None)
 
         expected = [call.fetch_session_token(access_key='access-key', mfa_token='12345')]
         self.assertEqual(expected, mock_credentials.mock_calls)

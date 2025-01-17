@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Callable, List
+from typing import Optional, List
 
 from app.aws import credentials, iam
 from app.core import files
@@ -7,7 +7,6 @@ from app.core.config import Config, ProfileGroup
 from app.core.result import Result
 from app.gcp import login, config
 from app.shell import shell
-from app.yubico import mfa
 
 logger = logging.getLogger('logsmith')
 
@@ -22,7 +21,7 @@ class Core:
 
     def login(self, profile_group: ProfileGroup, mfa_token: str) -> Result:
         result = Result()
-        logger.info(f'start login {profile_group.name}')
+        logger.info(f'start login {profile_group.name} with token {mfa_token}')
         self.active_profile_group = profile_group
         access_key = profile_group.get_access_key()
 
@@ -30,13 +29,13 @@ class Core:
         if not access_key_result.was_success:
             return access_key_result
 
-        session_result = credentials.check_session(access_key=access_key)
-        if session_result.was_error:
-            return session_result
-        if not session_result.was_success:
-            renew_session_result = self._renew_session(access_key=access_key, mfa_token=mfa_token)
-            if not renew_session_result.was_success:
-                return renew_session_result
+        session_check_result = credentials.check_session(access_key=access_key)
+        if not session_check_result.was_success and not mfa_token:
+            return session_check_result
+        if not session_check_result.was_success and mfa_token:
+            session_fetch_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
+            if not session_fetch_result.was_success:
+                return session_fetch_result
 
         user_name = credentials.get_user_name(access_key=access_key)
         role_result = credentials.fetch_role_credentials(user_name, profile_group)
@@ -139,41 +138,39 @@ class Core:
     def get_active_profile_color(self):
         return self.active_profile_group.color
 
-    def rotate_access_key(self, key_name: str, mfa_callback: Callable) -> Result:
+    def rotate_access_key(self, access_key: str, mfa_token: str) -> Result:
         result = Result()
-        logger.info('initiate key rotation')
+        logger.info(f'initiate key rotation for {access_key} with token {mfa_token}')
 
-        logger.info('logout')
+        logger.info('logout before key rotation')
         self.logout()
 
-        logger.info('check access key')
-        access_key_result = credentials.check_access_key(access_key=key_name)
+        access_key_result = credentials.check_access_key(access_key=access_key)
         if not access_key_result.was_success:
             return access_key_result
 
-        logger.info('fetch session')
-        session_result = credentials.check_session(access_key=key_name)
-        if session_result.was_error:
-            return session_result
-        if not session_result.was_success:
-            renew_session_result = self._renew_session(access_key=key_name, mfa_token=mfa_callback)
-            if not renew_session_result.was_success:
-                return renew_session_result
+        session_check_result = credentials.check_session(access_key=access_key)
+        if not session_check_result.was_success and not mfa_token:
+            return session_check_result
+        if not session_check_result.was_success and mfa_token:
+            session_fetch_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
+            if not session_fetch_result.was_success:
+                return session_fetch_result
 
         logger.info('create key')
-        user = credentials.get_user_name(key_name)
-        create_access_key_result = iam.create_access_key(user, key_name)
+        user = credentials.get_user_name(access_key)
+        create_access_key_result = iam.create_access_key(user, access_key)
         if not create_access_key_result.was_success:
             return create_access_key_result
 
         logger.info('delete key')
-        previous_access_key_id = credentials.get_access_key_id(key_name)
-        delete_access_key_result = iam.delete_iam_access_key(user, key_name, previous_access_key_id)
+        previous_access_key_id = credentials.get_access_key_id(access_key)
+        delete_access_key_result = iam.delete_iam_access_key(user, access_key, previous_access_key_id)
         if not delete_access_key_result.was_success:
             return delete_access_key_result
 
         logger.info('save key')
-        credentials.set_access_key(key_name=key_name,
+        credentials.set_access_key(key_name=access_key,
                                    key_id=create_access_key_result.payload['AccessKeyId'],
                                    key_secret=create_access_key_result.payload['SecretAccessKey'])
 
@@ -232,23 +229,6 @@ class Core:
         logger.info(f'script output:\n{shell_output}')
         result.set_success()
         return result
-
-    def _renew_session(self, access_key: str, mfa_token: Optional[str]) -> Result:
-        logger.info('renew session')
-        result = Result()
-        if not mfa_token and self.config.mfa_shell_command:
-            logger.info('execute mfa shell command')
-            mfa_token = mfa.fetch_mfa_token_from_shell(self.config.mfa_shell_command)
-        elif not mfa_token and not self.config.mfa_shell_command:
-            result.error(f'mfa token not found and no shell command configured')
-            return result
-
-        if not mfa_token:
-            result = Result()
-            result.error('error fetching mfa token')
-            return result
-        session_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
-        return session_result
 
     @staticmethod
     def _handle_support_files(profile_group: ProfileGroup):

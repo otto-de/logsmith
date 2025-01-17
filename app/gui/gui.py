@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 from functools import partial
-from os import mkdir
 from typing import List, Optional
 
 from PyQt6.QtCore import QCoreApplication
@@ -25,6 +24,7 @@ from app.gui.mfa_dialog import MfaDialog
 from app.gui.repeater import Repeater
 from app.gui.service_profile_dialog import ServiceProfileDialog
 from app.gui.trayicon import SystemTrayIcon
+from app.yubico import mfa
 
 logger = logging.getLogger('logsmith')
 
@@ -51,19 +51,21 @@ class Gui(QMainWindow):
 
         self.tray_icon.show()
 
-    def login(self, profile_group: ProfileGroup):
-        if not self.core.config.mfa_shell_command:
-            mfa_token = self.show_mfa_token_fetch_dialog()
-            if not mfa_token:
-                return
-        else:
-            mfa_token = None
+    def login(self, profile_group: ProfileGroup, mfa_token: Optional[str] = None):
+        # check access key
+        # check session
+        # if not: ask for mfa token
+        # if not: get mfa from shell
+        # proceed with login
+
         self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.login,
+            func_kwargs={'profile_group': profile_group, 'mfa_token': mfa_token},
             on_success=self._on_login_success,
-            on_error=self._on_error,
-            kwargs={'profile_group': profile_group, 'mfa_token': mfa_token}
+            on_failure=partial(self._on_login_failure, profile_group=profile_group),
+            # on_failure=self._on_login_failure,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -81,13 +83,27 @@ class Gui(QMainWindow):
                                   delay_seconds=300)
         self._to_login_state()
 
+    def _on_login_failure(self, profile_group: ProfileGroup):
+        logger.info(f'login failure')
+
+        mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
+        if not mfa_token:
+            mfa_token = self.show_mfa_token_fetch_dialog()
+            if not mfa_token:
+                logger.warning('no mfa token provided')
+                self._to_error_state()
+                return
+
+        self.login(profile_group=profile_group, mfa_token=mfa_token)
+
     def login_gcp(self, profile_group: ProfileGroup):
         self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.login_gcp,
+            func_kwargs={'profile_group': profile_group},
             on_success=self._on_login_gcp_success,
-            on_error=self._on_error,
-            kwargs={'profile_group': profile_group}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -101,9 +117,10 @@ class Gui(QMainWindow):
     def logout(self):
         self.task = BackgroundTask(
             func=self.core.logout,
+            func_kwargs={},
             on_success=self._on_logout_success,
-            on_error=self._on_error,
-            kwargs={}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -115,9 +132,10 @@ class Gui(QMainWindow):
     def set_region(self, region: str) -> None:
         self.task = BackgroundTask(
             func=self.core.set_region,
+            func_kwargs={'region': region},
             on_success=self._on_set_region_success,
-            on_error=self._on_error,
-            kwargs={'region': region}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -131,9 +149,10 @@ class Gui(QMainWindow):
         self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.edit_config,
+            func_kwargs={'new_config': config},
             on_success=self._on_edit_config_success,
-            on_error=self._on_error,
-            kwargs={'new_config': config}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -144,9 +163,10 @@ class Gui(QMainWindow):
     def set_access_key(self, key_name, key_id, key_secret):
         self.task = BackgroundTask(
             func=self.core.edit_config,
+            func_kwargs={'key_name': key_name, 'key_id': key_id, 'key_secret': key_secret},
             on_success=self._on_set_access_key_success,
-            on_error=self._on_error,
-            kwargs={'key_name': key_name, 'key_id': key_id, 'key_secret': key_secret}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -158,9 +178,10 @@ class Gui(QMainWindow):
         logger.info('initiate key rotation')
         self.task = BackgroundTask(
             func=self.core.rotate_access_key,
+            func_kwargs={'key_name': key_name, 'mfa_callback': self.show_mfa_token_fetch_dialog},
             on_success=self._on_rotate_access_key_success,
-            on_error=self._on_error,
-            kwargs={'key_name': key_name, 'mfa_callback': self.show_mfa_token_fetch_dialog}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -172,9 +193,10 @@ class Gui(QMainWindow):
         self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.set_service_role,
+            func_kwargs={'profile_name': profile, 'role_name': role},
             on_success=self._on_set_service_role_success,
-            on_error=self._on_error,
-            kwargs={'profile_name': profile, 'role_name': role}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -185,9 +207,10 @@ class Gui(QMainWindow):
     def set_assumable_roles(self, profile: str, role_list: List[str]):
         self.task = BackgroundTask(
             func=self.core.set_available_service_roles,
+            func_kwargs={'profile': profile, 'role_list': role_list},
             on_success=self._on_set_assumable_roles_success,
-            on_error=self._on_error,
-            kwargs={'profile': profile, 'role_list': role_list}
+            on_failure=self._on_error,
+            on_error=self._on_error
         )
         self.task.start()
 
@@ -199,9 +222,6 @@ class Gui(QMainWindow):
         logger.error(error_message)
         self._signal_error(error_message)
         self._to_error_state()
-
-    def _fetch_mfa_token(self):
-        return self.show_mfa_token_fetch_dialog()
 
     @staticmethod
     def show_mfa_token_fetch_dialog():

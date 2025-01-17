@@ -133,7 +133,7 @@ class ServiceProfileDialog(QDialog):
                 func=iam.list_assumable_roles,
                 on_success=self.on_fetch_roles_success,
                 on_error=self.on_fetch_roles_error,
-                kwargs={'source_profile': self.selected_source_profile})
+                func_kwargs={'source_profile': self.selected_source_profile})
             self.fetch_roles_task.start()
             self.set_error_text('')
 
