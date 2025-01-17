@@ -19,7 +19,7 @@ class Core:
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
         self.region_override: str = None
 
-    def login(self, profile_group: ProfileGroup, mfa_token: str) -> Result:
+    def login(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
         result = Result()
         logger.info(f'start login {profile_group.name} with token {mfa_token}')
         self.active_profile_group = profile_group
@@ -29,13 +29,9 @@ class Core:
         if not access_key_result.was_success:
             return access_key_result
 
-        session_check_result = credentials.check_session(access_key=access_key)
-        if not session_check_result.was_success and not mfa_token:
-            return session_check_result
-        if not session_check_result.was_success and mfa_token:
-            session_fetch_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
-            if not session_fetch_result.was_success:
-                return session_fetch_result
+        session_result = self._ensure_session(access_key=access_key, mfa_token=mfa_token)
+        if not session_result.was_success:
+            return session_result
 
         user_name = credentials.get_user_name(access_key=access_key)
         role_result = credentials.fetch_role_credentials(user_name, profile_group)
@@ -104,6 +100,7 @@ class Core:
     def logout(self):
         result = Result()
         logger.info(f'start logout')
+        self.active_profile_group = None
 
         role_result = credentials.fetch_role_credentials(user_name='none', profile_group=self.empty_profile_group)
         if not role_result.was_success:
@@ -117,7 +114,7 @@ class Core:
         result.set_success()
         return result
 
-    def set_region(self, region: str) -> Result:
+    def set_region(self, region: Optional[str]) -> Result:
         self.region_override = region
         if not self.active_profile_group:
             result = Result()
@@ -138,7 +135,7 @@ class Core:
     def get_active_profile_color(self):
         return self.active_profile_group.color
 
-    def rotate_access_key(self, access_key: str, mfa_token: str) -> Result:
+    def rotate_access_key(self, access_key: str, mfa_token: Optional[str]) -> Result:
         result = Result()
         logger.info(f'initiate key rotation for {access_key} with token {mfa_token}')
 
@@ -149,13 +146,9 @@ class Core:
         if not access_key_result.was_success:
             return access_key_result
 
-        session_check_result = credentials.check_session(access_key=access_key)
-        if not session_check_result.was_success and not mfa_token:
-            return session_check_result
-        if not session_check_result.was_success and mfa_token:
-            session_fetch_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
-            if not session_fetch_result.was_success:
-                return session_fetch_result
+        session_result = self._ensure_session(access_key=access_key, mfa_token=mfa_token)
+        if not session_result.was_success:
+            return session_result
 
         logger.info('create key')
         user = credentials.get_user_name(access_key)
@@ -195,9 +188,11 @@ class Core:
     def set_service_role(self, profile_name: str, role_name: str) -> Result:
         result = Result()
         logger.info('set service role')
-        self.config.save_selected_service_role(group_name=self.active_profile_group.name, profile_name=profile_name,
+        self.config.save_selected_service_role(group_name=self.active_profile_group.name,
+                                               profile_name=profile_name,
                                                role_name=role_name)
-        self.active_profile_group.set_service_role_profile(source_profile_name=profile_name, role_name=role_name)
+        self.active_profile_group.set_service_role_profile(source_profile_name=profile_name,
+                                                           role_name=role_name)
 
         result.set_success()
         return result
@@ -205,12 +200,14 @@ class Core:
     def set_available_service_roles(self, profile, role_list: List[str]):
         result = Result()
         logger.info('set available service roles')
-        self.config.save_available_service_roles(group_name=self.active_profile_group.name, profile_name=profile,
+        self.config.save_available_service_roles(group_name=self.active_profile_group.name,
+                                                 profile_name=profile,
                                                  role_list=role_list)
         result.set_success()
         return result
 
-    def run_script(self, profile_group: ProfileGroup):
+    @staticmethod
+    def run_script(profile_group: ProfileGroup):
         result = Result()
         if not profile_group or not profile_group.script:
             result.set_success()
@@ -227,6 +224,21 @@ class Core:
             return result
 
         logger.info(f'script output:\n{shell_output}')
+        result.set_success()
+        return result
+
+    @staticmethod
+    def _ensure_session(access_key: str, mfa_token: Optional[str]) -> Result:
+        result = Result()
+
+        session_check_result = credentials.check_session(access_key=access_key)
+        if not session_check_result.was_success and not mfa_token:
+            return session_check_result
+        if not session_check_result.was_success and mfa_token:
+            session_fetch_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
+            if not session_fetch_result.was_success:
+                return session_fetch_result
+
         result.set_success()
         return result
 

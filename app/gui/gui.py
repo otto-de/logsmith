@@ -52,19 +52,12 @@ class Gui(QMainWindow):
         self.tray_icon.show()
 
     def login(self, profile_group: ProfileGroup, mfa_token: Optional[str] = None):
-        # check access key
-        # check session
-        # if not: ask for mfa token
-        # if not: get mfa from shell
-        # proceed with login
-
         self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.login,
             func_kwargs={'profile_group': profile_group, 'mfa_token': mfa_token},
             on_success=self._on_login_success,
             on_failure=partial(self._on_login_failure, profile_group=profile_group),
-            # on_failure=self._on_login_failure,
             on_error=self._on_error
         )
         self.task.start()
@@ -84,7 +77,7 @@ class Gui(QMainWindow):
         self._to_login_state()
 
     def _on_login_failure(self, profile_group: ProfileGroup):
-        logger.info(f'login failure')
+        logger.info('login failure')
 
         mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
         if not mfa_token:
@@ -115,6 +108,7 @@ class Gui(QMainWindow):
         self._to_login_state()
 
     def logout(self):
+        self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.logout,
             func_kwargs={},
@@ -130,6 +124,7 @@ class Gui(QMainWindow):
         self.tray_icon.reset_copy_menus()
 
     def set_region(self, region: str) -> None:
+        self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.set_region,
             func_kwargs={'region': region},
@@ -144,6 +139,7 @@ class Gui(QMainWindow):
         if not region:
             region = 'not logged in'
         self.tray_icon.update_region_text(region)
+        self._to_login_state()
 
     def edit_config(self, config: Config):
         self._to_busy_state()
@@ -161,6 +157,7 @@ class Gui(QMainWindow):
         self._to_reset_state()
 
     def set_access_key(self, key_name, key_id, key_secret):
+        self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.edit_config,
             func_kwargs={'key_name': key_name, 'key_id': key_id, 'key_secret': key_secret},
@@ -173,14 +170,16 @@ class Gui(QMainWindow):
     def _on_set_access_key_success(self):
         logger.info('access key set')
         self._signal('Success', 'access key set')
+        self._to_login_state()
 
-    def rotate_access_key(self, key_name: str):
+    def rotate_access_key(self, key_name: str, mfa_token: Optional[str] = None):
+        self._to_busy_state()
         logger.info('initiate key rotation')
         self.task = BackgroundTask(
             func=self.core.rotate_access_key,
-            func_kwargs={'key_name': key_name, 'mfa_callback': self.show_mfa_token_fetch_dialog},
+            func_kwargs={'access_key': key_name, 'mfa_token': mfa_token},
             on_success=self._on_rotate_access_key_success,
-            on_failure=self._on_error,
+            on_failure=partial(self._on_rotate_access_key_failure, key_name=key_name),
             on_error=self._on_error
         )
         self.task.start()
@@ -188,6 +187,20 @@ class Gui(QMainWindow):
     def _on_rotate_access_key_success(self):
         logger.info('key was rotated')
         self._signal('Success', 'key was rotated')
+        self._to_login_state()
+
+    def _on_rotate_access_key_failure(self, key_name: str):
+        logger.info('rotation failure')
+
+        mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
+        if not mfa_token:
+            mfa_token = self.show_mfa_token_fetch_dialog()
+            if not mfa_token:
+                logger.warning('no mfa token provided')
+                self._to_error_state()
+                return
+
+        self.rotate_access_key(key_name=key_name, mfa_token=mfa_token)
 
     def set_service_role(self, profile: str, role: str):
         self._to_busy_state()
@@ -244,10 +257,13 @@ class Gui(QMainWindow):
         self.log_dialog.show_dialog(logs_as_text)
 
     def _to_login_state(self):
-        style = ICON_STYLE_FULL if self.core.active_profile_group.type == "aws" else ICON_STYLE_GCP
-        self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=self.core.get_active_profile_color()))
-        self.tray_icon.disable_actions(False)
-        self.tray_icon.update_last_login(self.get_timestamp())
+        if self.core.active_profile_group:
+            style = ICON_STYLE_FULL if self.core.active_profile_group.type == "aws" else ICON_STYLE_GCP
+            self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=self.core.get_active_profile_color()))
+            self.tray_icon.disable_actions(False)
+            self.tray_icon.update_last_login(self.get_timestamp())
+        else:
+            self._to_reset_state()
 
     def _to_busy_state(self):
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_BUSY))

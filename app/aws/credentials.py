@@ -101,14 +101,26 @@ def check_access_key(access_key: str) -> Result:
     return result
 
 
-def check_session(access_key: str) -> Result:
+def has_session(session_profile_name: str) -> Result:
+    logger.info(f'has session {session_profile_name}')
     result = Result()
     credentials_file = _load_credentials_file()
-    session_token_profile_name = util.generate_session_name(access_key)
-    if not credentials_file.has_section(session_token_profile_name):
-        logger.warning('no session token found')
-        return result
 
+    if credentials_file.has_section(session_profile_name):
+        result.set_success()
+    else:
+        logger.warning('no session found')
+    return result
+
+
+def check_session(access_key: str) -> Result:
+    session_token_profile_name = util.generate_session_name(access_key)
+    session_result = has_session(session_profile_name=session_token_profile_name)
+    if not session_result.was_success:
+        return session_result
+
+    logger.info(f'check session {session_token_profile_name}')
+    result = Result()
     try:
         client = _get_client(session_token_profile_name, 'sts', timeout=2, retries=2)
         client.get_caller_identity()
@@ -121,6 +133,7 @@ def check_session(access_key: str) -> Result:
         logger.error(error_text, exc_info=True)
         return result
 
+    logger.info('check session - valid')
     result.set_success()
     return result
 
@@ -265,6 +278,7 @@ def _add_profile_config(option_file: configparser, profile: str, region: str) ->
 
 
 def get_user_name(access_key) -> str:
+    logger.info('fetch user name')
     client = _get_client(access_key, 'sts')
     identity = client.get_caller_identity()
     return _extract_user_from_identity(identity)
