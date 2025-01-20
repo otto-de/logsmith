@@ -27,19 +27,74 @@ Logsmith is a desktop trayicon to:
 - run ascript after login
 - has a graphical user interface and a cli
 
-## Config
-The config will be stored in `${HOME}/.logsmith/accounts.yaml` and should look like this:
+access-key name! it must be 
+
+## Getting started
+![](./docs/warning.svg)
+**Warning**: logsmith will write in your `.aws/credentials` and `./aws/config` files and part of its feature set is to remove unused profiles.
+This includes potential **access-keys** (which are profiles as well). If you have data in there that must not be lost, please back up the data beforehand.
+
+Logsmith identifies access-keys if their profile name starts with `access-key` (e.g. `access-key` or `access-key-foo`) and will not remove them.
+
+### Run from source
+If you want to run logsmith from source, please use the following steps:
+
+#### 1. Clone this repository
+```bash
+git clone https://github.com/otto-de/logsmith.git
+cd logsmith
+```
+
+#### 2. Install the dependencies
+```bash
+./setup.sh
+```
+This will create a venv.
+
+#### 3. Run application
+```bash
+./run.sh
+```
+After startup, a small cloud should appear in the start bar (this application has no main window).
+
+#### 4. Add access-key (aws) 
+Click on the cloud and select "Set access key".
+
+A dialog will appear where you can add your access key data. Please be advised that an access-key must start with the prefix `access-key`. The default name is simply `access-key`.
+
+#### 5. Add configuration
+To add your configuration for the accounts and profiles (aka profile groups) you want to login in, click on the cloud and select "Edit Config".
+
+A dialog will appear where you can add your configuration in a text form. This config must be YAML conform, please see in the [Configuration](#Configuration) section down below for more instructions.
+
+If you have used another name for your **access-key**, you may set it in the profile group, or you may set a default access-key name in the config dialog.
+
+#### 6. Select a profile group
+To start the login process, click on the cloud and select the profile group you want to login in, on success the cloud will change its color to the color you have set in the configuration. The login process will be repeated every 5 minutes to keep you logged in.
+
+If an error occurs, the cloud icon will turn into a red bug. To see the error, click on the cloud and select "Show logs".
+
+Be advised that in some cases a dialog may be opened in the background and will not appear in the taskbar.
+
+## Configuration
+The configuration is a YAML file that contains any number of profile groups. Each profile group can contain any number of profiles which will be assumed when the profile group is selected.
+
+![](./docs/warning.svg) **Warning**: If you have account ids with leading zeros, please make sure to put them in quotes, otherwise they will be interpreted as octal numbers.
+
+Do not use "access-key" (or anything with prefix "access-key") or "service" as profile names. These are reserved for access keys and service profiles.
+
 ```yaml
 productive:                     # profile group name (will be displayed)
-  team: team1                   # your team name, used in support files
-  region: eu-central-1          # your default region
+  team: team1                   # team name (used in support files)
+  region: eu-central-1          # default region
   color: '#388E3C'              # color code used to color the tray icon
   script: 'some-script.sh'      # script to run after login (optional)
+  access_key: 'access-key'      # access-key name that this group should use (optional)
   profiles:
     - profile: nonlive          # local profile name
       account: '123456789123'   # account id
       role: developer           # role name that will be assumed  
-      default: true             # flag if this profile should be the default profile 
+      default: true             # flag if this profile should be the default profile (optional)
     - profile: live
       account: '123456789123'
       role: developer
@@ -61,7 +116,7 @@ gcp-project-prd:
   type: gcp
 ```
 
-If you have account ids with leading zeros, please make sure to put them in quotes.
+This config will be stored in `${HOME}/.logsmith/accounts.yaml`.
 
 ### Google Cloud login
 Click on the project that you want to use, this will trigger the typical login flow for user and application
@@ -177,20 +232,25 @@ If you provide one of the following parameter logsmith will automatically start 
 Example to login with cli mode:
 ```bash
   ./logsmith --login team1
-``` 
+```
 
-## How to package
+## Create a binary
 If you want to build a binary, please use the following steps:
 
+#### 1. Install the dependencies
+This will create a venv.
 ```bash
 ./setup.sh
+```
+
+#### 3. Build the binary
+```bash
 ./package.sh
 ```
 
 The binary will be in `dist`.
 
-### Mac
-For mac, just drop the `dist/logsmith.app` in your application directory.
+For Mac, copy the `dist/logsmith.app` in your application directory.
 
 ## Icons
 ![](./app/assets/app_icon.png)
