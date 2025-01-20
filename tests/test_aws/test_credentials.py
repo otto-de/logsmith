@@ -320,7 +320,7 @@ class TestCredentials(TestCase):
         self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
         self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
 
-    def test_remove_unused_profiles(self):
+    def test__remove_unused_profiles(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = [
             'developer', 'unused-profile',
@@ -379,7 +379,7 @@ class TestCredentials(TestCase):
         self.assertEqual(expected, mock_remove_profile.call_args_list)
         self.assertEqual(expected, mock_remove_profile.call_args_list)
 
-    def test___remove_unused_configs(self):
+    def test__remove_unused_configs(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = ['profile developer',
                                                     'profile unused-profile',
@@ -398,12 +398,15 @@ class TestCredentials(TestCase):
 
     @mock.patch('app.aws.credentials._write_credentials_file')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test__set_access_key(self, mock_load_credentials_file, _):
+    def test_set_access_key(self, mock_load_credentials_file, _):
         mock_config_parser = Mock()
         mock_config_parser.has_section.return_value = False
         mock_load_credentials_file.return_value = mock_config_parser
 
-        credentials.set_access_key('key-name', 'key-id', 'access-key')
+        result = credentials.set_access_key('key-name', 'key-id', 'access-key')
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
         self.assertEqual([call('key-name')],
                          mock_config_parser.has_section.call_args_list)
         self.assertEqual([call('key-name')],
@@ -412,7 +415,7 @@ class TestCredentials(TestCase):
                           call('key-name', 'aws_secret_access_key', 'access-key')],
                          mock_config_parser.set.call_args_list)
 
-    def test___add_profile_credentials(self):
+    def test__add_profile_credentials(self):
         mock_config_parser = Mock()
         mock_config_parser.has_section.return_value = False
 
@@ -426,7 +429,7 @@ class TestCredentials(TestCase):
                           call('test-profile', 'aws_session_token', 'test-session-token')],
                          mock_config_parser.set.call_args_list)
 
-    def test___add_profile_config(self):
+    def test__add_profile_config(self):
         mock_config_parser = Mock()
         mock_config_parser.has_section.return_value = False
 

@@ -158,8 +158,9 @@ class Gui(QMainWindow):
 
     def set_access_key(self, key_name, key_id, key_secret):
         self._to_busy_state()
+        logger.info('initiate set key')
         self.task = BackgroundTask(
-            func=self.core.edit_config,
+            func=self.core.set_access_key,
             func_kwargs={'key_name': key_name, 'key_id': key_id, 'key_secret': key_secret},
             on_success=self._on_set_access_key_success,
             on_failure=self._on_error,

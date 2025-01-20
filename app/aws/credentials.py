@@ -206,7 +206,7 @@ def _remove_unused_profiles(credentials_file, profile_group: ProfileGroup):
     return credentials_file
 
 
-def write_profile_config(profile_group: ProfileGroup, region: str):
+def write_profile_config(profile_group: ProfileGroup, region: str) -> Result:
     result = Result()
     config_file = _load_config_file()
 
@@ -238,13 +238,18 @@ def _remove_unused_configs(config_file: configparser, profile_group: ProfileGrou
     return config_file
 
 
-def set_access_key(key_name: str, key_id: str, key_secret: str) -> None:
+def set_access_key(key_name: str, key_id: str, key_secret: str) -> Result:
+    result = Result()
+
     credentials_file = _load_credentials_file()
     if not credentials_file.has_section(key_name):
         credentials_file.add_section(key_name)
     credentials_file.set(key_name, 'aws_access_key_id', key_id)
     credentials_file.set(key_name, 'aws_secret_access_key', key_secret)
     _write_credentials_file(credentials_file)
+
+    result.set_success()
+    return result
 
 
 def get_access_key_list() -> list:
