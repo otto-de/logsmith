@@ -22,16 +22,10 @@ class BackgroundTask(QThread):
         try:
             result = self.func(**self.func_kwargs)
             if result.was_error:
-                print('task error')
                 self.error_channel.emit(result.error_message)
             elif not result.was_success:
-                print('task failure')
-                print(self.on_failure)
-                print(result.payload)
-                print(result.error_message)
                 self.failure_channel.emit(result.payload)
             else:
-                print('task success')
                 self.success_channel.emit(result.payload)
         except Exception as e:
             self.error_channel.emit(str(e))
