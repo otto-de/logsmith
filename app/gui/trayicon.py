@@ -1,7 +1,6 @@
 from functools import partial
 from typing import List, TYPE_CHECKING
 
-from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 from app.aws import regions

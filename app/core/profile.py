@@ -16,7 +16,7 @@ class Profile:
             return False, f'a profile in {self.group.name} has no role'
         return True, ''
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         d = {
             'profile': self.profile,
             'account': self.account,

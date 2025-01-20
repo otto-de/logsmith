@@ -97,7 +97,7 @@ class Core:
         result.set_success()
         return result
 
-    def logout(self):
+    def logout(self) -> Result:
         result = Result()
         logger.info(f'start logout')
         self.active_profile_group = None
@@ -129,10 +129,10 @@ class Core:
             return self.active_profile_group.region
         return None
 
-    def get_profile_group_list(self):
+    def get_profile_group_list(self) -> List[ProfileGroup]:
         return self.config.list_groups()
 
-    def get_active_profile_color(self):
+    def get_active_profile_color(self) -> str:
         return self.active_profile_group.color
 
     def rotate_access_key(self, access_key: str, mfa_token: Optional[str]) -> Result:
@@ -197,7 +197,7 @@ class Core:
         result.set_success()
         return result
 
-    def set_available_service_roles(self, profile, role_list: List[str]):
+    def set_available_service_roles(self, profile, role_list: List[str]) -> Result:
         result = Result()
         logger.info('set available service roles')
         self.config.save_available_service_roles(group_name=self.active_profile_group.name,
@@ -207,7 +207,7 @@ class Core:
         return result
 
     @staticmethod
-    def run_script(profile_group: ProfileGroup):
+    def run_script(profile_group: ProfileGroup) -> Result:
         result = Result()
         if not profile_group or not profile_group.script:
             result.set_success()
@@ -252,5 +252,5 @@ class Core:
         return credentials.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
 
     @staticmethod
-    def get_access_key_list():
+    def get_access_key_list() -> list:
         return credentials.get_access_key_list()

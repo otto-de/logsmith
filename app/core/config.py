@@ -1,5 +1,5 @@
 from mimetypes import inited
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from app.core import files
 from app.core.profile_group import ProfileGroup
@@ -18,7 +18,7 @@ class Config:
         self.mfa_shell_command = None
         self.default_access_key = None
 
-    def initialize(self):
+    def initialize(self) -> None:
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
         self.default_access_key = config.get('default_access_key', _default_access_key)
@@ -29,7 +29,7 @@ class Config:
         self.initialize_profile_groups(accounts=accounts, service_roles=self.service_roles,
                                        default_access_key=self.default_access_key)
 
-    def initialize_profile_groups(self, accounts: dict, service_roles: dict, default_access_key: str):
+    def initialize_profile_groups(self, accounts: dict, service_roles: dict, default_access_key: str) -> None:
         self.profile_groups = {}
         for group_name, group_data in accounts.items():
             profile_group = ProfileGroup(name=group_name,
@@ -46,22 +46,22 @@ class Config:
                         role_name=selected_service_role)
         self.validate()
 
-    def set_mfa_shell_command(self, mfa_shell_command: str):
+    def set_mfa_shell_command(self, mfa_shell_command: str) -> None:
         self.mfa_shell_command = mfa_shell_command
 
-    def set_default_access_key(self, default_access_key: str):
+    def set_default_access_key(self, default_access_key: str) -> None:
         self.default_access_key = default_access_key
 
-    def save_config(self):
+    def save_config(self) -> None:
         files.save_config_file({
             'mfa_shell_command': self.mfa_shell_command,
             'default_access_key': self.default_access_key,
         })
 
-    def save_accounts(self):
+    def save_accounts(self) -> None:
         files.save_accounts_file(self.to_dict())
 
-    def save_selected_service_role(self, group_name: str, profile_name: str, role_name: str):
+    def save_selected_service_role(self, group_name: str, profile_name: str, role_name: str) -> None:
         if group_name not in self.service_roles:
             self.service_roles[group_name] = {
                 'selected_profile': None,
@@ -75,7 +75,7 @@ class Config:
         self.service_roles[group_name]['history'] = history
         files.save_service_roles_file(self.service_roles)
 
-    def save_available_service_roles(self, group_name: str, profile_name: str, role_list: List[str]):
+    def save_available_service_roles(self, group_name: str, profile_name: str, role_list: List[str]) -> None:
         if group_name not in self.service_roles:
             self.service_roles[group_name] = {
                 'selected_profile': None,
@@ -86,20 +86,20 @@ class Config:
         self.service_roles[group_name]['available'][profile_name] = role_list
         files.save_service_roles_file(self.service_roles)
 
-    def get_selected_service_role_source_profile(self, group: str):
+    def get_selected_service_role_source_profile(self, group: str) -> Optional[str]:
         return self.service_roles.get(group, {}).get('selected_profile')
 
-    def get_selected_service_role(self, group: str):
+    def get_selected_service_role(self, group: str) -> Optional[str]:
         return self.service_roles.get(group, {}).get('selected_role')
 
-    def get_available_service_roles(self, group: str, profile: str):
+    def get_available_service_roles(self, group: str, profile: str) -> List[str]:
         return self.service_roles.get(group, {}).get('available', {}).get(profile, [])
 
     def get_history(self, group: str):
         return self.service_roles.get(group, {}).get('history', [])
 
     @staticmethod
-    def _add_to_history(profile: str, role: str, history: List[str]):
+    def _add_to_history(profile: str, role: str, history: List[str]) -> List[str]:
         if not profile or not role:
             return history
         history_string = f'{profile} : {role}'
@@ -125,13 +125,13 @@ class Config:
         self.valid = valid
         self.error = error
 
-    def list_groups(self):
+    def list_groups(self) -> List[ProfileGroup]:
         return list(self.profile_groups.values())
 
-    def get_group(self, name):
+    def get_group(self, name) -> Optional[ProfileGroup]:
         return self.profile_groups.get(name, None)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         d = {}
         for name, group in self.profile_groups.items():
             d[name] = group.to_dict()

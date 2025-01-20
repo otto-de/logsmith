@@ -67,7 +67,7 @@ class ProfileGroup:
             return self.access_key
         return self.default_access_key
 
-    def set_service_role_profile(self, source_profile_name, role_name):
+    def set_service_role_profile(self, source_profile_name, role_name) -> None:
         source_profile = self.get_profile(profile_name=source_profile_name)
         if not source_profile:
             logger.warning(f'source profile {source_profile_name} not found. Unset service_profile.')

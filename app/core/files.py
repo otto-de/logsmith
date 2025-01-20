@@ -47,70 +47,70 @@ def get_active_group_file_path() -> str:
     return f'{get_app_path()}/{active_group_file_name}'
 
 
-def parse_yaml(text: str):
+def parse_yaml(text: str) -> dict:
     try:
         return yamli.load(text) or {}
     except (ParserError, ScannerError):
         return {}
 
 
-def dump_yaml(d: dict):
+def dump_yaml(d: dict) -> str:
     buffer = io.BytesIO()
     yamli.dump(d, buffer)
     return buffer.getvalue().decode("utf-8")
 
 
-def _load_file(path):
+def _load_file(path) -> str:
     if os.path.exists(path):
         with open(path, 'r') as file:
             return file.read()
     return ''
 
 
-def _write_file(path, content):
+def _write_file(path, content) -> None:
     with open(path, 'w') as file:
         file.write(str(content))
 
 
-def remove_file(path):
+def remove_file(path) -> None:
     if os.path.exists(path):
         os.remove(path)
 
 
-def file_exists(file_path):
+def file_exists(file_path) -> bool:
     file_path = file_path.strip()
     if ' ' in file_path:
         file_path = file_path.split(' ')[0]
     return os.path.exists(file_path)
 
 
-def load_config():
+def load_config() -> dict:
     return parse_yaml(_load_file(get_config_path()))
 
 
-def load_accounts():
+def load_accounts() -> dict:
     return parse_yaml(_load_file(get_accounts_path()))
 
 
-def load_service_roles():
+def load_service_roles() -> dict:
     return parse_yaml(_load_file(get_service_roles_path()))
 
 
-def save_config_file(config_dict: dict):
+def save_config_file(config_dict: dict) -> None:
     _write_file(get_config_path(), dump_yaml(config_dict))
 
 
-def save_accounts_file(account_dict: dict):
+def save_accounts_file(account_dict: dict) -> None:
     _write_file(get_accounts_path(), dump_yaml(account_dict))
 
 
-def save_service_roles_file(service_roles: dict):
+def save_service_roles_file(service_roles: dict) -> None:
     _write_file(get_service_roles_path(), dump_yaml(service_roles))
 
 
-def load_logs():
+def load_logs() -> str:
     return _load_file(get_log_path()) or 'no logs found'
 
 
-def write_active_group_file(group_name):
+def write_active_group_file(group_name) -> None:
     _write_file(get_active_group_file_path(), group_name)

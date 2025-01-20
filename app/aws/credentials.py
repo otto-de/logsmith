@@ -196,7 +196,7 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
     return result
 
 
-def _remove_unused_profiles(credentials_file, profile_group: ProfileGroup):
+def _remove_unused_profiles(credentials_file, profile_group: ProfileGroup) -> configparser:
     used_profiles = profile_group.list_profile_names()
     for profile in credentials_file.sections():
         if profile not in used_profiles and \
@@ -228,7 +228,7 @@ def write_profile_config(profile_group: ProfileGroup, region: str) -> Result:
     return result
 
 
-def _remove_unused_configs(config_file: configparser, profile_group: ProfileGroup):
+def _remove_unused_configs(config_file: configparser, profile_group: ProfileGroup) -> configparser:
     used_profiles = profile_group.list_profile_names()
 
     for config_name in config_file.sections():

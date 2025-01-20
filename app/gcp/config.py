@@ -16,7 +16,5 @@ def set_default_quota_project(project: str):
 
 
 def set_default_region(region: str):
-
     logger.info(f'set default region to: {region}')
     return shell.run(f"gcloud config set compute/region {region}", timeout=5)
-
