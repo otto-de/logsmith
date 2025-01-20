@@ -17,12 +17,18 @@ Changes will be grouped by the following categories (and their respective versio
 
 Release dates will be in YYYY-MM-DD format.
 
-## 8.0.1 - 2025-01-15
+## 8.0.2 - 2025-01-20
 
 ### Fixed
-- Fix an issue where the copy menu were never reset and would accumulate more entries with each login.
+- Fix an issue where mfa dialog was opened from another thread and caused a crash.
 
-## 8.0.0 - 2025-01-15
+
+## 8.0.1 - 2025-01-15 (yanked)
+
+### Fixed
+- Fix an issue where the copy menu were never reset and would accumulate more entries with each login. 
+
+## 8.0.0 - 2025-01-15 (yanked)
 
 ### Changed
 - All tasks will now be performed as background tasks to avoid blocking the gui.
