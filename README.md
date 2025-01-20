@@ -183,6 +183,11 @@ output = json
 
 The region in your config will be used if you don't specify a region in your aws cli call or set AWS_REGION environment variable.
 
+## Logout
+If you choose the logout option under the profile groups, logsmith will remove all profiles from your `.aws/credentials` and `.aws/config` files.
+
+This can be useful if you want to restrict access to the AWS/GCP before running local tests.
+
 ## Mfa token
 Logsmith can fetch mfa tokens from your yubikey if you have a suitable cli tool installed.
 
