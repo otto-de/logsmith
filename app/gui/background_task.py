@@ -1,4 +1,8 @@
+import logging
+
 from PyQt6.QtCore import QThread, pyqtSignal
+
+logger = logging.getLogger('logsmith')
 
 
 class BackgroundTask(QThread):
@@ -28,4 +32,5 @@ class BackgroundTask(QThread):
             else:
                 self.success_channel.emit(result.payload)
         except Exception as e:
+            logging.error('unexpected error while executing background task', exc_info=True)
             self.error_channel.emit(str(e))
