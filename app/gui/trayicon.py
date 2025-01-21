@@ -58,6 +58,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         for profile_group in profile_list:
             if profile_group.type == "gcp":
                 action = menu.addAction("[GCP] " + profile_group.name)
+                action.setIconVisibleInMenu(True)
                 action.triggered.connect(partial(self.gui.login_gcp,
                                                  profile_group=profile_group))
                 action.setIcon(self.assets.get_icon(style=ICON_STYLE_GCP, color_code=profile_group.color))
