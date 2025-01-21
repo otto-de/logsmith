@@ -134,7 +134,12 @@ class ConfigDialog(QDialog):
         self.info_text.repaint()
 
     def show_dialog(self, config: Config):
-        self.text_box.setPlainText(files.dump_yaml(config.to_dict()))
+        config_dict = config.to_dict()
+        if config_dict:
+            raw_config = files.dump_yaml(config_dict)
+        else:
+            raw_config = ''
+        self.text_box.setPlainText(raw_config)
         self.update_error_text(config)
 
         self.mfa_command_input.setText(config.mfa_shell_command)

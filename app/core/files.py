@@ -50,7 +50,8 @@ def get_active_group_file_path() -> str:
 def parse_yaml(text: str) -> dict:
     try:
         return yamli.load(text) or {}
-    except (ParserError, ScannerError):
+    except Exception as e:
+        logging.warning('error while parsing yaml', exc_info=True)
         return {}
 
 
