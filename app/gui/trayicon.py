@@ -132,7 +132,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         for profile in active_profile_group.get_profile_list():
             copy_name_action = self.copy_name_menu.addAction(profile.profile)
             copy_name_action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
-            copy_id_action = self.copy_id_menu.addAction(f'{profile.profile} ({profile.account})')
+            copy_id_action = self.copy_id_menu.addAction(f'{profile.account} ({profile.profile})')
             copy_id_action.triggered.connect(partial(self.copy_to_clipboard, text=str(profile.account)))
 
     def reset_copy_menus(self):
