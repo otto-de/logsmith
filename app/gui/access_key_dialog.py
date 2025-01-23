@@ -15,17 +15,30 @@ class SetKeyDialog(QDialog):
         self.setWindowTitle('Set Access Key')
         self.existing_access_key_list: List[str] = []
 
-        self.width = 400
+        self.width = 600
         self.height = 150
 
         self.resize(self.width, self.height)
 
+        self.help_text = [
+            "Select the access-key you want to set or create.",
+            "All access-key name must start with the prefix 'access-key'",
+            "The default name is simply 'access-key'.",
+        ]
+        self.help_text_label = QLabel(
+            '\n'.join(self.help_text),
+            self)
+        # TODO extract styles in own file
+        self.help_text_label.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
+
         self.access_key_selection_text = QLabel("Select existing access-key:", self)
         self.access_key_selection = QListWidget()
+        self.access_key_selection.clicked.connect(self.select_access_key)
+
         self.deselect_button = QPushButton("Deselect")
         self.deselect_button.clicked.connect(self.deselect)
 
-        self.key_name_text = QLabel("New Key name:", self)
+        self.key_name_text = QLabel("Key name:", self)
         self.key_name_input = QLineEdit(self)
         self.key_name_input.setStyleSheet("color: black; background-color: white;")
         self.key_name_input.textChanged.connect(self.check_access_key_name)
@@ -55,6 +68,7 @@ class SetKeyDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
+        vbox.addWidget(self.help_text_label)
         vbox.addWidget(self.access_key_selection_text)
         vbox.addWidget(self.access_key_selection)
         vbox.addWidget(self.deselect_button)
@@ -69,6 +83,9 @@ class SetKeyDialog(QDialog):
         self.setLayout(vbox)
         self.installEventFilter(self)
 
+    def select_access_key(self):
+        self.key_name_input.setText(self.access_key_selection.currentItem().text())
+
     def check_access_key_name(self, new_value: str):
         if new_value in self.existing_access_key_list:
             self.set_error_text('access key name already exists and will be overwritten')
@@ -80,6 +97,7 @@ class SetKeyDialog(QDialog):
 
     def deselect(self):
         self.access_key_selection.clearSelection()
+        self.key_name_input.setText('')
 
     def ok(self):
         if self.access_key_selection.selectedItems():
@@ -149,6 +167,9 @@ class SetKeyDialog(QDialog):
 
         self.existing_access_key_list = access_key_list
         self.check_access_key_name(self.key_name_input.text())
+
+        if not access_key_list:
+            self.key_name_input.setText('access-key')
 
         self.show()
         self.raise_()

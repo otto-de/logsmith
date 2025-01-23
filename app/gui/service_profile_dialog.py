@@ -38,11 +38,18 @@ class ServiceProfileDialog(QDialog):
 
         self.resize(self.width, self.height)
 
-        self.help_text = QLabel(
-            "Please be advised that only roles with a trust relationship with your source role can be assumed.\nDepending on how many roles the source role can assume, fetching may take longer.",
+        self.help_text = [
+            "Please be advised that only roles with a trust relationship with your source role can be assumed.",
+            "Depending on how many roles the source role can assume, fetching may take longer.",
+            "",
+            "Your selected service role will be saved and automatically assumed when selecting the profile group.",
+            "Use 'unset service role' to remove the service role",
+        ]
+        self.help_text_label = QLabel(
+            '\n'.join(self.help_text),
             self)
         # TODO extract styles in own file
-        self.help_text.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
+        self.help_text_label.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
 
         self.group_headline = QLabel("Active group:", self)
         self.active_group_text = QLabel(self.active_group, self)
@@ -66,9 +73,9 @@ class ServiceProfileDialog(QDialog):
 
         self.fetch_button = QPushButton("Fetch Roles")
         self.fetch_button.clicked.connect(self.fetch_roles)
-        self.reset_button = QPushButton("reset selection")
-        self.reset_button.setStyleSheet("color: red;")
-        self.reset_button.clicked.connect(self.reset)
+        self.unset_button = QPushButton("unset service role")
+        self.unset_button.setStyleSheet("color: red;")
+        self.unset_button.clicked.connect(self.unset)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -85,7 +92,7 @@ class ServiceProfileDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
-        vbox.addWidget(self.help_text)
+        vbox.addWidget(self.help_text_label)
         vbox.addWidget(self.group_headline)
         vbox.addWidget(self.active_group_text)
         vbox.addWidget(self.source_profile_selection_headline)
@@ -98,7 +105,7 @@ class ServiceProfileDialog(QDialog):
         vbox.addWidget(self.history_selection)
 
         vbox.addWidget(self.fetch_button)
-        vbox.addWidget(self.reset_button)
+        vbox.addWidget(self.unset_button)
 
         vbox.addLayout(hbox)
 
@@ -132,6 +139,7 @@ class ServiceProfileDialog(QDialog):
             self.fetch_roles_task = BackgroundTask(
                 func=iam.list_assumable_roles,
                 on_success=self.on_fetch_roles_success,
+                on_failure=self.on_fetch_roles_error,
                 on_error=self.on_fetch_roles_error,
                 func_kwargs={'source_profile': self.selected_source_profile})
             self.fetch_roles_task.start()
@@ -150,9 +158,9 @@ class ServiceProfileDialog(QDialog):
         self.role_name_filter = text.lower().strip()
         self.update_available_role_selection()
 
-    def reset(self):
+    def unset(self):
         if not self.active_group:
-            self.set_error_text('Cannot reset service profile. Please login first.')
+            self.set_error_text('Cannot unset service profile. Please login first.')
         else:
             self.source_profile_selection.clearSelection()
             self.available_role_selection.clearSelection()

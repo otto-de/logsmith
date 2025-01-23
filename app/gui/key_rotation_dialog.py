@@ -14,16 +14,26 @@ class RotateKeyDialog(QDialog):
         self.gui: Gui = parent
         self.setWindowTitle('Rotate Access Key')
 
-        self.width = 400
-        self.height = 100
+        self.width = 600
+        self.height = 200
 
         self.resize(self.width, self.height)
 
+        self.help_text = [
+            "This will use an the selected access-key to create a new one (in the account where this key is from)",
+            "and will then proceed to delete the old key and update your local credentials file, overwriting it.",
+            "",
+            "Rotating a key this way is only possible if your account has a minimum access key limit of 2,",
+            "they can not be rotated in place. ",
+            ]
+        self.help_text_label = QLabel(
+            '\n'.join(self.help_text),
+            self)
+        # TODO extract styles in own file
+        self.help_text_label.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
+
         self.access_key_selection_text = QLabel("Select existing access-key:", self)
         self.access_key_selection = QListWidget()
-
-        self.text = QLabel("This will create a new key and delete the old one!", self)
-        self.text.setStyleSheet('color: rgb(255, 0, 0);')
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -36,9 +46,9 @@ class RotateKeyDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
+        vbox.addWidget(self.help_text_label)
         vbox.addWidget(self.access_key_selection_text)
         vbox.addWidget(self.access_key_selection)
-        vbox.addWidget(self.text)
         vbox.addLayout(hbox)
 
         self.setLayout(vbox)
