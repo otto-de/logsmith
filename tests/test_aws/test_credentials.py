@@ -379,12 +379,14 @@ class TestCredentials(TestCase):
         self.assertEqual(expected, mock_remove_profile.call_args_list)
         self.assertEqual(expected, mock_remove_profile.call_args_list)
 
-    def test__remove_unused_configs(self):
+    def test__remove_unused_configs_but_keep_global_configs(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = ['profile developer',
                                                     'profile unused-profile',
                                                     'profile access-key',
-                                                    'profile session-token']
+                                                    'profile session-token',
+                                                    'default',
+                                                    's3']
 
         mock_profile_group = Mock()
         mock_profile_group.list_profile_names.return_value = ['developer']

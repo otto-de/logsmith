@@ -232,9 +232,10 @@ def _remove_unused_configs(config_file: configparser, profile_group: ProfileGrou
     used_profiles = profile_group.list_profile_names()
 
     for config_name in config_file.sections():
-        profile = config_name.replace('profile ', '')
-        if profile not in used_profiles:
-            config_file.remove_section(config_name)
+        if 'profile' in config_name:
+            profile = config_name.replace('profile ', '')
+            if profile not in used_profiles:
+                config_file.remove_section(config_name)
     return config_file
 
 
