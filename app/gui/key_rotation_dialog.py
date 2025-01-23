@@ -4,6 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton, QListWidget
 
+from app.gui import styles
+
 if TYPE_CHECKING:
     from gui.gui import Gui
 
@@ -29,8 +31,7 @@ class RotateKeyDialog(QDialog):
         self.help_text_label = QLabel(
             '\n'.join(self.help_text),
             self)
-        # TODO extract styles in own file
-        self.help_text_label.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
+        self.help_text_label.setStyleSheet(styles.help_text_style)
 
         self.access_key_selection_text = QLabel("Select existing access-key:", self)
         self.access_key_selection = QListWidget()

@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayou
 from app.aws import iam
 from app.core.config import Config
 from app.core.core import Core
+from app.gui import styles
 from app.gui.background_task import BackgroundTask
 
 if TYPE_CHECKING:
@@ -48,8 +49,7 @@ class ServiceProfileDialog(QDialog):
         self.help_text_label = QLabel(
             '\n'.join(self.help_text),
             self)
-        # TODO extract styles in own file
-        self.help_text_label.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
+        self.help_text_label.setStyleSheet(styles.help_text_style)
 
         self.group_headline = QLabel("Active group:", self)
         self.active_group_text = QLabel(self.active_group, self)
@@ -83,7 +83,7 @@ class ServiceProfileDialog(QDialog):
         self.cancel_button.clicked.connect(self.cancel)
 
         self.error_text = QLabel('', self)
-        self.error_text.setStyleSheet('color: rgb(255, 0, 0);')
+        self.error_text.setStyleSheet(styles.error_text_style)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.ok_button)

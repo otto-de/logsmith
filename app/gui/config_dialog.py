@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QApplication, QLabel, QPlainTextEdit, QPushButton, \
 from app import __version__
 from app.core import files
 from app.core.config import Config
+from app.gui import styles
 from app.yubico import mfa
 
 if TYPE_CHECKING:
@@ -29,16 +30,16 @@ class ConfigDialog(QDialog):
         font = QtGui.QFont("Courier New")
         font.setPointSize(14)
         self.text_box.setFont(font)
-        self.text_box.setStyleSheet("color: black; background-color: white;")
+        self.text_box.setStyleSheet(styles.input_field_style)
         self.text_box.setTabStopDistance(16)
 
         self.mfa_command_label = QLabel("Shell command to fetch mfa token:", self)
         self.mfa_command_input = QLineEdit(self)
-        self.mfa_command_input.setStyleSheet("color: black; background-color: white;")
+        self.mfa_command_input.setStyleSheet(styles.input_field_style)
 
         self.default_access_key_label = QLabel("Default access key name:", self)
         self.default_access_key_input = QLineEdit(self)
-        self.default_access_key_input.setStyleSheet("color: black; background-color: white;")
+        self.default_access_key_input.setStyleSheet(styles.input_field_style)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -125,12 +126,12 @@ class ConfigDialog(QDialog):
 
     def set_error_text(self, message):
         self.info_text.setText(message)
-        self.info_text.setStyleSheet('color: rgb(255, 0, 0);')
+        self.info_text.setStyleSheet(styles.error_text_style)
         self.info_text.repaint()
 
     def set_success_text(self, message):
         self.info_text.setText(message)
-        self.info_text.setStyleSheet('color: rgb(0, 255, 0);')
+        self.info_text.setStyleSheet(styles.success_text_style)
         self.info_text.repaint()
 
     def show_dialog(self, config: Config):

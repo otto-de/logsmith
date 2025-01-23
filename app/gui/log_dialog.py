@@ -4,6 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QSizePolicy, QScrollArea, QVBoxLayout, \
     QDialog
 
+from app.gui import styles
+
 if TYPE_CHECKING:
     from gui.gui import Gui
 
@@ -20,7 +22,7 @@ class LogDialog(QDialog):
 
         self.text_box = QLabel('no logs', self)
         self.text_box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.text_box.setStyleSheet("color: black; background-color: white;")
+        self.text_box.setStyleSheet(styles.input_field_style)
         self.text_box.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.scroll_area = QScrollArea(self)

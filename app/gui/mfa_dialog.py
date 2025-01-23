@@ -4,6 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton
 
+from app.gui import styles
+
 if TYPE_CHECKING:
     from gui.gui import Gui
 
@@ -18,7 +20,7 @@ class MfaDialog(QDialog):
         self.text = QLabel("Mfa Token:", self)
 
         self.input_field = QLineEdit(self)
-        self.input_field.setStyleSheet("color: black; background-color: white;")
+        self.input_field.setStyleSheet(styles.input_field_style)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)

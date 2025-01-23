@@ -4,6 +4,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QLabel, QLineEdit, QApplication, QHBoxLayout, QVBoxLayout, \
     QPushButton, QListWidget
 
+from app.gui import styles
+
 if TYPE_CHECKING:
     from gui.gui import Gui
 
@@ -28,8 +30,7 @@ class SetKeyDialog(QDialog):
         self.help_text_label = QLabel(
             '\n'.join(self.help_text),
             self)
-        # TODO extract styles in own file
-        self.help_text_label.setStyleSheet('color: lightgrey; font-style: italic; padding: 5px;')
+        self.help_text_label.setStyleSheet(styles.help_text_style)
 
         self.access_key_selection_text = QLabel("Select existing access-key:", self)
         self.access_key_selection = QListWidget()
@@ -40,17 +41,17 @@ class SetKeyDialog(QDialog):
 
         self.key_name_text = QLabel("Key name:", self)
         self.key_name_input = QLineEdit(self)
-        self.key_name_input.setStyleSheet("color: black; background-color: white;")
+        self.key_name_input.setStyleSheet(styles.input_field_style)
         self.key_name_input.textChanged.connect(self.check_access_key_name)
         self.key_name_input.setPlaceholderText('access-key-<name>')
 
         self.key_id_text = QLabel("Key ID:", self)
         self.key_id_input = QLineEdit(self)
-        self.key_id_input.setStyleSheet("color: black; background-color: white;")
+        self.key_id_input.setStyleSheet(styles.input_field_style)
 
         self.key_secret_text = QLabel("Key secret:", self)
         self.key_secret_input = QLineEdit(self)
-        self.key_secret_input.setStyleSheet("color: black; background-color: white;")
+        self.key_secret_input.setStyleSheet(styles.input_field_style)
         self.key_secret_input.setEchoMode(QLineEdit.EchoMode.Password)
 
         self.ok_button = QPushButton("OK")
@@ -59,7 +60,7 @@ class SetKeyDialog(QDialog):
         self.cancel_button.clicked.connect(self.cancel)
 
         self.error_text = QLabel('access key will be overwritten!', self)
-        self.error_text.setStyleSheet('color: rgb(255, 0, 0);')
+        self.error_text.setStyleSheet(styles.error_text_style)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.ok_button)
