@@ -17,11 +17,23 @@ Changes will be grouped by the following categories (and their respective versio
 
 Release dates will be in YYYY-MM-DD format.
 
+## Unreleased
+
+## 8.1.0 - 2025-01-23
+
+### Added
+- If no access key is set, the logsmith will now suggest 'access-key' as default name.
+- Add help texts for various dialogs to make the usage more clear. 
+
+### Fixed
+- Logsmith will no longer remove default configs from ./aws/config.
+- Fixed setting of access-keys.
+- Fixed display of profile group icons.
+
 ## 8.0.2 - 2025-01-20
 
 ### Fixed
 - Fix an issue where mfa dialog was opened from another thread and caused a crash.
-
 
 ## 8.0.1 - 2025-01-15 (yanked)
 
