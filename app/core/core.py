@@ -218,8 +218,9 @@ class Core:
             result.error(f'{profile_group.script} not found')
             return result
 
-        shell_output = shell.run(profile_group.script)
+        shell_output = shell.run(command=profile_group.script, timeout=60)
         if not shell_output:
+            logger.error(f'script output:\n{shell_output}')
             result.error('script failed')
             return result
 

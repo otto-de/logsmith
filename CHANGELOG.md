@@ -19,6 +19,10 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Fixed
+- Increase timeout for scripts that are run with login to 50 seconds, the default of 5 seconds proven to short.
+
+
 ## 8.1.0 - 2025-01-23
 
 ### Added
@@ -30,7 +34,7 @@ Release dates will be in YYYY-MM-DD format.
 - Fixed setting of access-keys.
 - Fixed display of profile group icons.
 
-## 8.0.2 - 2025-01-20
+## 8.0.2 - 2025-01-20 (yanked)
 
 ### Fixed
 - Fix an issue where mfa dialog was opened from another thread and caused a crash.
