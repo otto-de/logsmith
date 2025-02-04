@@ -36,7 +36,6 @@ class ServiceProfileDialog(QDialog):
 
         self.width = 400
         self.height = 150
-
         self.resize(self.width, self.height)
 
         self.help_text = [

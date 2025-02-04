@@ -1,4 +1,3 @@
-from mimetypes import inited
 from typing import List, Dict, Optional
 
 from app.core import files
