@@ -19,17 +19,16 @@ def run(command, timeout=5):
         return proc.stdout.rstrip()
     except subprocess.TimeoutExpired:
         logger.warning(f'command {command} took too long and was aborted')
-        return None
     except FileNotFoundError:
         logger.warning(f'command {command} not found')
-        return None
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as error:
         logger.warning(f'command {command} failed')
+        logger.warning(str(error), exc_info=True)
         if proc:
-            logger.warning(proc.stderr)
+            logger.warning(f'script output: {proc.stderr}')
         else:
             logger.warning('could not fetch output')
     except Exception as error:
         logger.error(f'command {command} failed with unknown error')
         logger.error(str(error), exc_info=True)
-        return None
+    return None
