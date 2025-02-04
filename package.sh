@@ -9,6 +9,7 @@ usage() {
   echo "    -w  build for windows"
   echo "    -g  use system python"
   echo "    -z  zip after build"
+  echo "    -i  do not check for local changes"
   exit 1
 }
 global_mode=false
