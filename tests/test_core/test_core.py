@@ -549,7 +549,7 @@ class TestCore(TestCase):
 
         self.assertEqual(True, result.was_success)
         self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
-        self.assertEqual([call('./some-script.sh')], mock_shell_run.mock_calls)
+        self.assertEqual([call(command='./some-script.sh', timeout=60)], mock_shell_run.mock_calls)
 
     @mock.patch('app.core.core.files.file_exists', return_value=False)
     @mock.patch('app.core.core.shell.run')
@@ -568,7 +568,7 @@ class TestCore(TestCase):
 
         self.assertEqual(True, result.was_error)
         self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
-        self.assertEqual([call('./some-script.sh')], mock_shell_run.mock_calls)
+        self.assertEqual([call(command='./some-script.sh', timeout=60)], mock_shell_run.mock_calls)
 
     def test__replace_home_variable(self):
         self.assertEqual('/home/user/some/path', self.core._replace_home_variable('\"${HOME}\"/some/path'))
