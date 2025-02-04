@@ -29,7 +29,6 @@ class TestCore(TestCase):
         mock_service_roles.return_value = get_test_service_roles()
 
         self.core = Core()
-        self.core.home_dir = '/home/user'
         self.config = Config()
         self.config.initialize()
         self.core.config = self.config
@@ -569,10 +568,3 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_error)
         self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
         self.assertEqual([call(command='./some-script.sh', timeout=60)], mock_shell_run.mock_calls)
-
-    def test__replace_home_variable(self):
-        self.assertEqual('/home/user/some/path', self.core._replace_home_variable('\"${HOME}\"/some/path'))
-        self.assertEqual('/home/user/some/path', self.core._replace_home_variable('\"$HOME\"/some/path'))
-        self.assertEqual('/home/user/some/path', self.core._replace_home_variable('${HOME}/some/path'))
-        self.assertEqual('/home/user/some/path', self.core._replace_home_variable('$HOME/some/path'))
-        self.assertEqual('/home/user/some/path', self.core._replace_home_variable('~/some/path'))

@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Optional, List
 
 from app.aws import credentials, iam
@@ -19,8 +18,6 @@ class Core:
         self.active_profile_group: ProfileGroup = None
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
         self.region_override: str = None
-        self.home_variables = ['\"${HOME}\"', '\"$HOME\"', '${HOME}', '$HOME', '~']
-        self.home_dir = os.path.expanduser("~")
 
     def login(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
         result = Result()
@@ -216,9 +213,9 @@ class Core:
             return result
 
         script_path = profile_group.script
-        script_path = self._replace_home_variable(script_path)
+        script_path = files.replace_home_variable(script_path)
 
-        logger.info(f'run script: ${script_path}')
+        logger.info(f'run script: {script_path}')
         if not files.file_exists(script_path):
             result.error(f'{script_path} not found')
             return result
@@ -260,9 +257,3 @@ class Core:
     @staticmethod
     def get_access_key_list() -> list:
         return credentials.get_access_key_list()
-
-    def _replace_home_variable(self, script_path: str) -> str:
-        for variable_name in self.home_variables:
-            if variable_name in script_path:
-                return script_path.replace(variable_name, self.home_dir)
-        return script_path

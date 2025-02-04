@@ -4,7 +4,6 @@ import os
 from pathlib import Path
 
 from ruamel.yaml import YAML
-from ruamel.yaml.parser import ParserError, ScannerError
 
 logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
@@ -17,6 +16,8 @@ yamli = YAML(typ='safe')
 yamli.default_flow_style = False
 yamli.sort_base_mapping_type_on_output = False
 yamli.indent(sequence=4)
+
+home_variables = ['\"${HOME}\"', '\"$HOME\"', '${HOME}', '$HOME', '~']
 
 
 def get_app_path() -> str:
@@ -115,3 +116,14 @@ def load_logs() -> str:
 
 def write_active_group_file(group_name) -> None:
     _write_file(get_active_group_file_path(), group_name)
+
+
+def get_home_dir():
+    return os.path.expanduser("~")
+
+
+def replace_home_variable(script_path: str) -> str:
+    for variable_name in home_variables:
+        if variable_name in script_path:
+            return script_path.replace(variable_name, get_home_dir())
+    return script_path
