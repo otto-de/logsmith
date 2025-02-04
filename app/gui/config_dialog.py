@@ -58,7 +58,7 @@ class ConfigDialog(QDialog):
         hbox.addStretch(1)
 
         vbox = QVBoxLayout()
-        vbox.setContentsMargins(10, 0, 0, 0)
+        vbox.setContentsMargins(10, 0, 10, 10)
         vbox.addWidget(self.text_box)
 
         vbox.addWidget(self.mfa_command_label)
