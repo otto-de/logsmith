@@ -254,8 +254,7 @@ class Gui(QMainWindow):
         self.service_profile_dialog.show_dialog(core=self.core, config=self.core.config)
 
     def show_logs(self):
-        logs_as_text = files.load_logs()
-        self.log_dialog.show_dialog(logs_as_text)
+        self.log_dialog.show_dialog()
 
     def _to_login_state(self):
         if self.core.active_profile_group:

@@ -69,6 +69,16 @@ def _load_file(path) -> str:
     return ''
 
 
+def _load_file_window(path, position) -> (str, int):
+    if os.path.exists(path):
+        with open(path, 'r') as file:
+            file.seek(position)
+            content = file.read()
+            new_position = file.tell()
+            return content, new_position
+    return '', 0
+
+
 def _write_file(path, content) -> None:
     with open(path, 'w') as file:
         file.write(str(content))
@@ -111,7 +121,11 @@ def save_service_roles_file(service_roles: dict) -> None:
 
 
 def load_logs() -> str:
-    return _load_file(get_log_path()) or 'no logs found'
+    return _load_file(get_log_path()) or ''
+
+
+def load_log_with_position(position: int) -> (str, int):
+    return _load_file_window(get_log_path(), position) or ('', 0)
 
 
 def write_active_group_file(group_name) -> None:
