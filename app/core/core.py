@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional, List
 
 from app.aws import credentials, iam
@@ -18,6 +19,8 @@ class Core:
         self.active_profile_group: ProfileGroup = None
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
         self.region_override: str = None
+        self.home_variables = ['\"${HOME}\"', '\"$HOME\"', '${HOME}', '$HOME', '~']
+        self.home_dir = os.path.expanduser("~")
 
     def login(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
         result = Result()
@@ -206,19 +209,21 @@ class Core:
         result.set_success()
         return result
 
-    @staticmethod
-    def run_script(profile_group: ProfileGroup) -> Result:
+    def run_script(self, profile_group: ProfileGroup) -> Result:
         result = Result()
         if not profile_group or not profile_group.script:
             result.set_success()
             return result
 
-        logger.info('run script')
-        if not files.file_exists(profile_group.script):
-            result.error(f'{profile_group.script} not found')
+        script_path = profile_group.script
+        script_path = self._replace_home_variable(script_path)
+
+        logger.info(f'run script: ${script_path}')
+        if not files.file_exists(script_path):
+            result.error(f'{script_path} not found')
             return result
 
-        shell_output = shell.run(command=profile_group.script, timeout=60)
+        shell_output = shell.run(command=script_path, timeout=60)
         if not shell_output:
             logger.error(f'script output:\n{shell_output}')
             result.error('script failed')
@@ -255,3 +260,9 @@ class Core:
     @staticmethod
     def get_access_key_list() -> list:
         return credentials.get_access_key_list()
+
+    def _replace_home_variable(self, script_path: str) -> str:
+        for variable_name in self.home_variables:
+            if variable_name in script_path:
+                return script_path.replace(variable_name, self.home_dir)
+        return script_path
