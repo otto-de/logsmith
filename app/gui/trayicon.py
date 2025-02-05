@@ -28,7 +28,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.service_role_info = None
 
         self.actions = []
-        self.previous_action = None
+        self.all_actions = []
 
         QSystemTrayIcon.__init__(self, self.assets.standard, self.gui)
         self.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE))
@@ -123,6 +123,10 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.setContextMenu(menu)
         menu.repaint()
 
+        self.all_actions = self.actions + [self.service_role_action, self.region_menu,
+                                           self.add_access_key_action, self.rotate_access_key_action,
+                                           self.copy_name_menu, self.copy_id_menu]
+
     def update_copy_menus(self, active_profile_group: ProfileGroup):
         self.copy_name_menu.setDisabled(False)
         self.copy_name_menu.clear()
@@ -142,7 +146,8 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.copy_id_menu.clear()
 
     def disable_actions(self, state: bool):
-        for action in self.actions:
+        for action in self.all_actions:
+            action.setDisabled(state)
             action.setDisabled(state)
 
     def update_last_login(self, timestamp: str):
