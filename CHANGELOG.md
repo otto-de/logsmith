@@ -19,9 +19,17 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## 8.2.0 - 2025-02-05
+
+### Added
+- Overhaul of the log dialog, now with the option to trail the log file.
+- Script paths can now include home variables liks $HOME or ~.
+
 ### Fixed
 - Increase timeout for scripts that are run with login to 50 seconds, the default of 5 seconds proven to short.
-
+- Fixed margins in config dialog.
+- Fixed error handling for scripts that return non-zero exit codes.
+- While the login process is running, all action are now properly disabled until the login process is complete.
 
 ## 8.1.0 - 2025-01-23
 
