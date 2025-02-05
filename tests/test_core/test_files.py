@@ -11,6 +11,7 @@ class Test(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.test_file = f'{script_dir}/../test_resources/test_file'
+        cls.test_file_positions = f'{script_dir}/../test_resources/test_file_positions'
         cls.non_existing_test_file = f'{script_dir}/../test_resources/test_file_does_not_exist'
         cls.test_home = f'{script_dir}/../test_resources'
 
@@ -175,3 +176,13 @@ class Test(TestCase):
         self.assertEqual('/home/user/some/path', files.replace_home_variable('${HOME}/some/path'))
         self.assertEqual('/home/user/some/path', files.replace_home_variable('$HOME/some/path'))
         self.assertEqual('/home/user/some/path', files.replace_home_variable('~/some/path'))
+
+    def test__load_file_window__beginning(self):
+        text, position = files._load_file_window(self.test_file_positions, 0)
+        self.assertEqual(20, position)
+        self.assertEqual('1\n2\n3\n4\n5\n6\n7\n8\n9\n10', text)
+
+    def test__load_file_window__middle(self):
+        text, position = files._load_file_window(self.test_file_positions, 10)
+        self.assertEqual(20, position)
+        self.assertEqual('6\n7\n8\n9\n10', text)
