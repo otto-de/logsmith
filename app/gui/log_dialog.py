@@ -96,6 +96,7 @@ class LogDialog(QDialog):
     def update_log_text_box(self):
         logs_as_text, self.last_read_position = files.load_log_with_position(self.last_read_position)
         if logs_as_text:
+            logs_as_text = logs_as_text.rstrip('\n')
             self.text_box.appendPlainText(logs_as_text)
             self.text_box.repaint()
             if self.trailing_logs:
