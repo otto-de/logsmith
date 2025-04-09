@@ -26,26 +26,22 @@ def parse(args):
                         help='list assumable roles for the given profile')
     parser.add_argument('--set-service-roles', nargs=3, metavar=('GROUP', 'PROFILE', 'ROLE'),
                         help='set service role for the given profile')
+    parser.add_argument('--toggle', nargs=2, metavar=('TOGGLE', 'VALUE'),
+                        help='set given toggle to either true or false. Toggles: script')
     parser.add_argument('-o', '--oneshot', action='store_true',
                         help='When used in combination with --login, the program will finish after login instead of running an infinite refresh loop')
     return parser.parse_args(args)
 
 
 def use_cli(args):
-    if args.list:
-        return True
-    if args.login:
-        return True
-    if args.logout:
-        return True
-    if args.region:
-        return True
-    if args.rotate_access_key:
-        return True
-    if args.set_access_key:
-        return True
-    if args.list_service_roles:
-        return True
-    if args.set_service_roles:
-        return True
-    return False
+    return any([
+        args.list,
+        args.login,
+        args.logout,
+        args.region,
+        args.rotate_access_key,
+        args.set_access_key,
+        args.list_service_roles,
+        args.set_service_roles,
+        args.toggle,
+    ])

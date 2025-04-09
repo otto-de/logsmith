@@ -99,6 +99,17 @@ class Cli:
         for role in result.payload:
             print(role)
 
+    def toggle(self, toggle, value):
+        boolean = self._parse_boolean(value)
+        if toggle == 'script':
+            self.core.toggles.run_script = boolean
+            self.core.toggles.save_toggles()
+            return
+
+        self._error('Could not set toggle')
+        self._error('Valid toggles are: script')
+        sys.exit(1)
+
     @staticmethod
     def ask_for_mfa_token():
         return input(f'mfa token: ')
@@ -125,3 +136,14 @@ class Cli:
     def _print_regions():
         for region in region_list:
             print(region)
+
+    def _parse_boolean(self, value):
+        if isinstance(value, str):
+            value_lower = value.strip().lower()
+            if value_lower == "true":
+                return True
+            elif value_lower == "false":
+                return False
+
+        self._error(f"Invalid value: {value}. Expected 'true' or 'false'.")
+        sys.exit(1)

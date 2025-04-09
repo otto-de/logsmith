@@ -20,3 +20,5 @@ def start_cli(args):
         profile = args.set_service_roles[1]
         role = args.set_service_roles[2]
         cli.set_service_role(group, profile, role)
+    if args.toggle:
+        cli.toggle(args.toggle[0], args.toggle[1])
