@@ -33,10 +33,13 @@ class TestToggles(TestCase):
         expected = [call({'run_script': 'SOME VALUE'})]
         self.assertEqual(expected, mock_save_toggles_file.mock_calls)
 
-    def test_toggle_run_script(self):
+    @mock.patch('app.core.toggles.Toggles.save_toggles')
+    def test_toggle_run_script(self, mock_save_toggles):
         self.toggles.run_script = True
         self.toggles.toggle_run_script()
         self.assertEqual(False, self.toggles.run_script)
+        self.assertEqual(1, mock_save_toggles.call_count)
 
         self.toggles.toggle_run_script()
         self.assertEqual(True, self.toggles.run_script)
+        self.assertEqual(2, mock_save_toggles.call_count)
