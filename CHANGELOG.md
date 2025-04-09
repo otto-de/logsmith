@@ -19,6 +19,9 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Added
+- Option to enable/disable the profile group script execution globally.
+
 ## 8.2.0 - 2025-02-05
 
 ### Added

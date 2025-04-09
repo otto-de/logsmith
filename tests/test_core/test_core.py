@@ -155,6 +155,43 @@ class TestCore(TestCase):
     @mock.patch('app.core.core.Core.set_region')
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.credentials')
+    def test_login__successful_login_with_run_script_disabled(self, mock_credentials, mock_ensure_session, mock_set_region,
+                                        mock_handle_support_files, mock_run_script):
+        mock_credentials.check_access_key.return_value = self.success_result
+        mock_ensure_session.return_value = self.success_result
+        mock_credentials.get_user_name.return_value = 'user'
+        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_set_region.return_value = self.success_result
+        mock_run_script.return_value = self.success_result
+
+        self.core.toggles.run_script = False
+
+        profile_group = get_test_profile_group()
+        result = self.core.login(profile_group, '123456')
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token='123456')]
+        self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+
+        expected_set_region_calls = [call(None)]
+        self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+
+        expected_handle_support_files_calls = [call(profile_group)]
+        self.assertEqual(expected_handle_support_files_calls, mock_handle_support_files.mock_calls)
+
+        self.assertEqual(0, mock_run_script.call_count)
+
+        expected_credential_calls = [call.check_access_key(access_key='some-access-key'),
+                                     call.get_user_name(access_key='some-access-key'),
+                                     call.fetch_role_credentials('user', profile_group)]
+        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+
+    @mock.patch('app.core.core.Core.run_script')
+    @mock.patch('app.core.core.Core._handle_support_files')
+    @mock.patch('app.core.core.Core.set_region')
+    @mock.patch('app.core.core.Core._ensure_session')
+    @mock.patch('app.core.core.credentials')
     def test_login__successful_login(self, mock_credentials, mock_ensure_session, mock_set_region,
                                      mock_handle_support_files, mock_run_script):
         mock_credentials.check_access_key.return_value = self.success_result
@@ -171,12 +208,16 @@ class TestCore(TestCase):
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token='123456')]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+
         expected_set_region_calls = [call(None)]
+        self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+
         expected_handle_support_files_calls = [call(profile_group)]
         self.assertEqual(expected_handle_support_files_calls, mock_handle_support_files.mock_calls)
-        self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+
         expected_run_script_calls = [call(profile_group)]
         self.assertEqual(expected_run_script_calls, mock_run_script.mock_calls)
+
         expected_credential_calls = [call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
                                      call.fetch_role_credentials('user', profile_group)]

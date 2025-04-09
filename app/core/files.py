@@ -7,6 +7,7 @@ from ruamel.yaml import YAML
 
 logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
+toggles_file_name = 'toggles.yaml'
 accounts_file_name = 'accounts.yaml'
 service_roles_file_name = 'service_roles.yaml'
 log_file_name = 'app.log'
@@ -30,6 +31,10 @@ def get_aws_path() -> str:
 
 def get_config_path() -> str:
     return f'{get_app_path()}/{config_file_name}'
+
+
+def get_toggles_path() -> str:
+    return f'{get_app_path()}/{toggles_file_name}'
 
 
 def get_accounts_path() -> str:
@@ -100,6 +105,10 @@ def load_config() -> dict:
     return parse_yaml(_load_file(get_config_path()))
 
 
+def load_toggles() -> dict:
+    return parse_yaml(_load_file(get_toggles_path()))
+
+
 def load_accounts() -> dict:
     return parse_yaml(_load_file(get_accounts_path()))
 
@@ -110,6 +119,10 @@ def load_service_roles() -> dict:
 
 def save_config_file(config_dict: dict) -> None:
     _write_file(get_config_path(), dump_yaml(config_dict))
+
+
+def save_toggles_file(toggles_dict: dict) -> None:
+    _write_file(get_toggles_path(), dump_yaml(toggles_dict))
 
 
 def save_accounts_file(account_dict: dict) -> None:

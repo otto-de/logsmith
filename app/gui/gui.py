@@ -9,7 +9,6 @@ from core.core import Core
 from gui.mfa_dialog import MfaDialog
 from gui.repeater import Repeater
 
-from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.core import Core
 from app.core.result import Result
@@ -39,6 +38,7 @@ class Gui(QMainWindow):
         self.login_repeater = Repeater()
         self.tray_icon = SystemTrayIcon(parent=self,
                                         assets=self.assets,
+                                        toggles=self.core.toggles,
                                         profile_list=self.core.config.list_groups())
         self.log_dialog = LogDialog(self)
         self.config_dialog = ConfigDialog(self)

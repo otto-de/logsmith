@@ -5,6 +5,7 @@ from app.aws import credentials, iam
 from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
+from app.core.toggles import Toggles
 from app.gcp import login, config
 from app.shell import shell
 
@@ -15,6 +16,9 @@ class Core:
     def __init__(self):
         self.config: Config = Config()
         self.config.initialize()
+        self.toggles: Toggles = Toggles()
+        self.toggles.initialize()
+
         self.active_profile_group: ProfileGroup = None
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
         self.region_override: str = None
@@ -45,9 +49,10 @@ class Core:
         logger.info('login success')
         self._handle_support_files(profile_group)
 
-        run_script_result = self.run_script(profile_group)
-        if not run_script_result.was_success:
-            return run_script_result
+        if self.toggles.run_script:
+            run_script_result = self.run_script(profile_group)
+            if not run_script_result.was_success:
+                return run_script_result
 
         result.set_success()
         return result
