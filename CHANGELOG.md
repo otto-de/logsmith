@@ -28,7 +28,7 @@ Release dates will be in YYYY-MM-DD format.
 
 ### Added
 - Overhaul of the log dialog, now with the option to trail the log file.
-- Script paths can now include home variables liks $HOME or ~.
+- Script paths can now include home variables like $HOME or ~.
 
 ### Fixed
 - Increase timeout for scripts that are run with login to 50 seconds, the default of 5 seconds proven to short.
