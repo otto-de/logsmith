@@ -27,6 +27,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.region_menu = None
         self.add_access_key_action = None
         self.rotate_access_key_action = None
+        self.add_sso_session_action = None
         self.service_role_action = None
         self.service_role_info = None
 
@@ -103,6 +104,8 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.add_access_key_action.triggered.connect(self.gui.show_set_key_dialog)
         self.rotate_access_key_action = menu.addAction('Rotate access key')
         self.rotate_access_key_action.triggered.connect(self.gui.show_access_key_rotation_dialog)
+        self.add_access_key_action = menu.addAction('Set SSO session')
+        self.add_access_key_action.triggered.connect(self.gui.show_sso_session_dialog)
 
         menu.addSeparator()
         # configuration
