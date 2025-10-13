@@ -252,6 +252,20 @@ def set_access_key(key_name: str, key_id: str, key_secret: str) -> Result:
     result.set_success()
     return result
 
+def set_sso_session(sso_name: str, sso_url: str, sso_region: str, sso_scopes: str) -> Result:
+    result = Result()
+
+    config_file = _load_config_file()
+    sso_session_section = f'sso-session {sso_name}'
+    if not config_file.has_section(sso_session_section):
+        config_file.add_section(sso_session_section)
+    config_file.set(sso_session_section, 'sso_start_url', sso_url)
+    config_file.set(sso_session_section, 'sso_region', sso_region)
+    config_file.set(sso_session_section, 'sso_registration_scopes', sso_scopes)
+    _write_config_file(config_file)
+
+    result.set_success()
+    return result
 
 def get_access_key_list() -> list:
     credentials_file = _load_credentials_file()

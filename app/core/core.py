@@ -260,6 +260,10 @@ class Core:
         return credentials.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
 
     @staticmethod
+    def set_sso_session(sso_name: str, sso_url: str, sso_region: str, sso_scopes: str) -> Result:
+        return credentials.set_sso_session(sso_name=sso_name, sso_url=sso_url, sso_region=sso_region, sso_scopes=sso_scopes)
+
+    @staticmethod
     def get_access_key_list() -> list:
         return credentials.get_access_key_list()
     

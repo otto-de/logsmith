@@ -205,6 +205,23 @@ class Gui(QMainWindow):
 
         self.rotate_access_key(key_name=key_name, mfa_token=mfa_token)
 
+    def set_sso_session_key(self, sso_name, sso_url, sso_region, sso_scopes):
+        self._to_busy_state()
+        logger.info('initiate set sso session')
+        self.task = BackgroundTask(
+            func=self.core.set_sso_session,
+            func_kwargs={'sso_name': sso_name, 'sso_url': sso_url, 'sso_region': sso_region, 'sso_scopes': sso_scopes},
+            on_success=self._on_set_sso_session_success,
+            on_failure=self._on_error,
+            on_error=self._on_error
+        )
+        self.task.start()
+
+    def _on_set_sso_session_success(self):
+        logger.info('sso session set')
+        self._signal('Success', 'sso session set')
+        self._to_login_state()
+
     def set_service_role(self, profile: str, role: str):
         self._to_busy_state()
         self.task = BackgroundTask(
