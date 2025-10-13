@@ -7,3 +7,5 @@ app.log
 legacy
 .DS_Store
 .coverage
+.env
+.vscode
