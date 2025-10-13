@@ -20,7 +20,7 @@ class Core:
         self.toggles.initialize()
 
         self.active_profile_group: ProfileGroup = None
-        self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '')
+        self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '', '')
         self.region_override: str = None
 
     def login(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
