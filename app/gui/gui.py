@@ -22,6 +22,7 @@ from app.gui.log_dialog import LogDialog
 from app.gui.mfa_dialog import MfaDialog
 from app.gui.repeater import Repeater
 from app.gui.service_profile_dialog import ServiceProfileDialog
+from app.gui.sso_session_dialog import SetSsoSessionDialog
 from app.gui.trayicon import SystemTrayIcon
 from app.yubico import mfa
 
@@ -44,6 +45,7 @@ class Gui(QMainWindow):
         self.config_dialog = ConfigDialog(self)
         self.set_key_dialog = SetKeyDialog(self)
         self.rotate_key_dialog = RotateKeyDialog(self)
+        self.set_sso_session_dialog = SetSsoSessionDialog(self)
         self.service_profile_dialog = ServiceProfileDialog(self)
 
         # This is needed to keep the task alive, otherwise it crashes the application
@@ -249,6 +251,9 @@ class Gui(QMainWindow):
 
     def show_access_key_rotation_dialog(self):
         self.rotate_key_dialog.show_dialog(access_key_list=self.core.get_access_key_list())
+
+    def show_sso_session_dialog(self):
+        self.set_sso_session_dialog.show_dialog(sso_session_list=self.core.get_sso_sessions_list())
 
     def show_service_role_dialog(self):
         self.service_profile_dialog.show_dialog(core=self.core, config=self.core.config)

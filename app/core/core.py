@@ -262,3 +262,7 @@ class Core:
     @staticmethod
     def get_access_key_list() -> list:
         return credentials.get_access_key_list()
+    
+    @staticmethod
+    def get_sso_sessions_list() -> list:
+        return credentials.get_sso_sessions_list()

@@ -266,6 +266,13 @@ def get_access_key_id(key_name: str) -> str:
     credentials_file = _load_credentials_file()
     return credentials_file.get(key_name, 'aws_access_key_id')
 
+def get_sso_sessions_list() -> list:
+    session_list = _load_config_file()
+    session_list = []
+    for profile in session_list.sections():
+        if profile.startswith('sso'):
+            session_list.append(profile)
+    return session_list
 
 def _add_profile_credentials(credentials_file: configparser, profile: str, secrets: dict) -> None:
     if not credentials_file.has_section(profile):
