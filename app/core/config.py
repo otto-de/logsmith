@@ -4,6 +4,7 @@ from app.core import files
 from app.core.profile_group import ProfileGroup
 
 _default_access_key = 'access-key'
+_default_sso_sesson = 'sso'
 
 
 class Config:
@@ -16,17 +17,20 @@ class Config:
 
         self.mfa_shell_command = None
         self.default_access_key = None
+        self.default_sso_session = None
 
     def initialize(self) -> None:
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
         self.default_access_key = config.get('default_access_key', _default_access_key)
+        self.default_sso_session = config.get('default_sso_session', _default_sso_sesson)
 
         self.service_roles = files.load_service_roles()
 
         accounts = files.load_accounts()
         self.initialize_profile_groups(accounts=accounts, service_roles=self.service_roles,
-                                       default_access_key=self.default_access_key)
+                                       default_access_key=self.default_access_key,
+                                       default_sso_session=self.default_sso_session)
 
     def initialize_profile_groups(self, accounts: dict, service_roles: dict, default_access_key: str, default_sso_session: str) -> None:
         self.profile_groups = {}

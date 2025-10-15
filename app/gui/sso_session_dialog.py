@@ -58,11 +58,11 @@ class SetSsoSessionDialog(QDialog):
         self.sso_region_text = QLabel("SSO Region:", self)
         self.sso_region_input = QLineEdit(self)
         self.sso_region_input.setStyleSheet(styles.input_field_style)
-        
+
         self.sso_scopes_text = QLabel("SSO Scopes:", self)
         self.sso_scopes_input = QLineEdit(self)
         self.sso_scopes_input.setStyleSheet(styles.input_field_style)
-        
+
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
         self.cancel_button = QPushButton("Cancel")
@@ -148,9 +148,12 @@ class SetSsoSessionDialog(QDialog):
         if sso_name != "" and not sso_name.startswith("sso"):
             self.set_error_text("new sso session names must start with 'sso'")
             return
-        
+
         self.gui.set_sso_session(
-            sso_name=sso_name, sso_url=sso_url, sso_region=sso_region, sso_scopes=sso_scopes
+            sso_name=sso_name,
+            sso_url=sso_url,
+            sso_region=sso_region,
+            sso_scopes=sso_scopes,
         )
         self.hide()
 

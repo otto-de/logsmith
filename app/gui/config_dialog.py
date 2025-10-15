@@ -40,6 +40,10 @@ class ConfigDialog(QDialog):
         self.default_access_key_label = QLabel("Default access key name:", self)
         self.default_access_key_input = QLineEdit(self)
         self.default_access_key_input.setStyleSheet(styles.input_field_style)
+        
+        self.default_sso_session_label = QLabel("Default sso session name:", self)
+        self.default_sso_session_input = QLineEdit(self)
+        self.default_sso_session_input.setStyleSheet(styles.input_field_style)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -66,6 +70,8 @@ class ConfigDialog(QDialog):
         vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignLeft)
         vbox.addWidget(self.default_access_key_label)
         vbox.addWidget(self.default_access_key_input)
+        vbox.addWidget(self.default_sso_session_label)
+        vbox.addWidget(self.default_sso_session_input)
 
         vbox.addLayout(hbox)
         self.setLayout(vbox)
@@ -83,10 +89,16 @@ class ConfigDialog(QDialog):
         if not default_access_key:
             self.set_error_text('default access-key must not be empty')
             return
+        
+        default_sso_session = self.default_sso_session_input.text()
+        if not default_sso_session:
+            self.set_error_text('default sso session must not be empty')
+            return
 
         config = Config()
         config.initialize_profile_groups(accounts=raw_config_dict, service_roles={},
-                                         default_access_key=default_access_key)
+                                         default_access_key=default_access_key,
+                                         default_sso_session=default_sso_session)
         if config.valid:
             config.set_mfa_shell_command(self.mfa_command_input.text())
             config.set_default_access_key(default_access_key)
@@ -145,6 +157,7 @@ class ConfigDialog(QDialog):
 
         self.mfa_command_input.setText(config.mfa_shell_command)
         self.default_access_key_input.setText(config.default_access_key)
+        self.default_sso_session_input.setText(config.default_sso_session)
 
         self.show()
         self.raise_()
