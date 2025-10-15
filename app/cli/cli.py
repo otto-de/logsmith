@@ -42,11 +42,11 @@ class Cli:
             self._print_regions()
             sys.exit(1)
 
-        login_result = self.core.login(profile_group=profile_group, mfa_token=None)
+        login_result = self.core.login_with_key(profile_group=profile_group, mfa_token=None)
         self._check_and_signal_error(login_result)
         if not login_result.was_success:
             mfa_token = self.ask_for_mfa_token()
-            login_with_mfa_result = self.core.login(profile_group=profile_group, mfa_token=mfa_token)
+            login_with_mfa_result = self.core.login_with_key(profile_group=profile_group, mfa_token=mfa_token)
             self._check_and_signal_error(login_with_mfa_result)
 
         if region:

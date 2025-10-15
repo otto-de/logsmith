@@ -2,7 +2,8 @@ class Profile:
     def __init__(self, group, profile: dict):
         self.group = group
         self.profile = profile.get('profile', None)
-        self.account = profile.get('account', None)
+        # TODO can be removed if type conversion in yaml loader is deactivated
+        self.account = str(profile.get('account', None))
         self.role = profile.get('role', None)
         self.default = profile.get('default', 'false') in ['True', 'true', True]
         self.source = profile.get('source', None)

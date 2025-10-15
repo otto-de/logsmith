@@ -22,12 +22,24 @@ class Core:
         self.active_profile_group: ProfileGroup = None
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '', '')
         self.region_override: str = None
-
-    def login(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
+    
+    def login(self, profile_group: ProfileGroup) -> Result:
+        if profile_group.get_auth_mode() == 'key':
+            self.login_with_key(profile_group=profile_group, mfa_token=None)
+        else:
+            self.login_with_sso(profile_group=profile_group)
+    
+    ########################
+    # ACCESS KEY LOGIN
+    def login_with_key(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
         result = Result()
-        logger.info(f'start login {profile_group.name} with token {mfa_token}')
+        logger.info(f'start key login {profile_group.name} with token {mfa_token}')
         self.active_profile_group = profile_group
         access_key = profile_group.get_access_key()
+
+        cleanup_resul = credentials.cleanup()
+        if not cleanup_resul.was_success:
+            return cleanup_resul
 
         access_key_result = credentials.check_access_key(access_key=access_key)
         if not access_key_result.was_success:
@@ -46,7 +58,7 @@ class Core:
         if not set_region_result.was_success:
             return set_region_result
 
-        logger.info('login success')
+        logger.info('key login success')
         self._handle_support_files(profile_group)
 
         if self.toggles.run_script:
@@ -56,7 +68,39 @@ class Core:
 
         result.set_success()
         return result
+    
+    ########################
+    # SSO LOGIN
+    def login_with_sso(self, profile_group: ProfileGroup) -> Result:
+        result = Result()
+        logger.info(f'start sso login {profile_group.name}')
+        self.active_profile_group = profile_group
+        
+        cleanup_resul = credentials.cleanup()
+        if not cleanup_resul.was_success:
+            return cleanup_resul
+ 
+        sso_result = credentials.fetch_sso_credentials(profile_group)
+        if not sso_result.was_success:
+            return sso_result
 
+        set_region_result = self.set_region(self.region_override)
+        if not set_region_result.was_success:
+            return set_region_result
+
+        logger.info('sso login success')
+        self._handle_support_files(profile_group)
+
+        if self.toggles.run_script:
+            run_script_result = self.run_script(profile_group)
+            if not run_script_result.was_success:
+                return run_script_result
+
+        result.set_success()
+        return result
+    
+    ########################
+    # GCP
     def login_gcp(self, profile_group: ProfileGroup) -> Result:
         result = Result()
         self.active_profile_group = profile_group
@@ -102,18 +146,21 @@ class Core:
         result.set_success()
         return result
 
+    ########################
+    # LOGOUT
     def logout(self) -> Result:
         result = Result()
         logger.info(f'start logout')
         self.active_profile_group = None
 
-        role_result = credentials.fetch_role_credentials(user_name='none', profile_group=self.empty_profile_group)
-        if not role_result.was_success:
-            return role_result
-
-        config_result = credentials.write_profile_config(profile_group=self.empty_profile_group, region='')
-        if not config_result.was_success:
-            return config_result
+        cleanup_result = credentials.cleanup()
+        if not cleanup_result.was_success:
+            return cleanup_result
+        
+        
+        sso_logout_result = credentials.sso_logout()
+        if not sso_logout_result.was_success:
+            return sso_logout_result
 
         logger.info('logout success')
         result.set_success()

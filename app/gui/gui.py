@@ -53,33 +53,74 @@ class Gui(QMainWindow):
 
         self.tray_icon.show()
 
-    def login(self, profile_group: ProfileGroup, mfa_token: Optional[str] = None):
-        self._to_busy_state()
+    def login(self, profile_group: ProfileGroup):
+        # login wither with key or with SSO
+        if profile_group.auth_mode == "key":
+            self.login_key(profile_group=profile_group)
+        if profile_group.auth_mode == "sso":
+            self.login_sso(profile_group=profile_group)
+    
+    ########################
+    # SSO LOGIN
+    def login_sso(self, profile_group: ProfileGroup):
+        self._to_busy_state()    
         self.task = BackgroundTask(
-            func=self.core.login,
-            func_kwargs={'profile_group': profile_group, 'mfa_token': mfa_token},
-            on_success=self._on_login_success,
-            on_failure=partial(self._on_login_failure, profile_group=profile_group),
+            func=self.core.login_with_sso,
+            func_kwargs={'profile_group': profile_group},
+            on_success=self._on_login_sso_success,
+            on_failure=self._on_login_sso_failure,
             on_error=self._on_error
         )
         self.task.start()
-
-    def _on_login_success(self):
-        logger.info('login success')
+            
+    def _on_login_sso_success(self):
+        logger.info('soo login success')
         if self.core.active_profile_group.service_profile:
             self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
 
-        logger.info('start repeater')
-        prepare_login = partial(self.login, profile_group=self.core.active_profile_group)
+        logger.info('start sso repeater')
+        # TODO should not always redo the login, because 
+        # prepare_login = partial(self.login_key, profile_group=self.core.active_profile_group)
+        # self.login_repeater.start(task=prepare_login,
+                                #   delay_seconds=300)
+        self._to_login_state()
+
+    def _on_login_sso_failure(self):
+        logger.info('sso login failure')
+        self._to_error_state()
+
+    ########################
+    # ACCESS KEY LOGIN
+    def login_key(self, profile_group: ProfileGroup, mfa_token: Optional[str] = None):
+        self._to_busy_state()    
+        self.task = BackgroundTask(
+            func=self.core.login_with_key,
+            func_kwargs={'profile_group': profile_group, 'mfa_token': mfa_token},
+            on_success=self._on_login_key_success,
+            on_failure=partial(self._on_login_key_failure, profile_group=profile_group),
+            on_error=self._on_error
+        )
+        self.task.start()
+
+    def _on_login_key_success(self):
+        logger.info('key login success')
+        if self.core.active_profile_group.service_profile:
+            self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
+                                            role_name=self.core.active_profile_group.service_profile.role)
+        self.tray_icon.update_region_text(self.core.get_region())
+        self.tray_icon.update_copy_menus(self.core.active_profile_group)
+
+        logger.info('start key repeater')
+        prepare_login = partial(self.login_key, profile_group=self.core.active_profile_group)
         self.login_repeater.start(task=prepare_login,
                                   delay_seconds=300)
         self._to_login_state()
 
-    def _on_login_failure(self, profile_group: ProfileGroup):
-        logger.info('login failure')
+    def _on_login_key_failure(self, profile_group: ProfileGroup):
+        logger.info('key login failure')
 
         mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
         if not mfa_token:
@@ -89,8 +130,10 @@ class Gui(QMainWindow):
                 self._to_error_state()
                 return
 
-        self.login(profile_group=profile_group, mfa_token=mfa_token)
+        self.login_key(profile_group=profile_group, mfa_token=mfa_token)
 
+    ########################
+    # GCP
     def login_gcp(self, profile_group: ProfileGroup):
         self._to_busy_state()
         self.task = BackgroundTask(
@@ -109,6 +152,8 @@ class Gui(QMainWindow):
                                   delay_seconds=8 * 60 * 60)
         self._to_login_state()
 
+    ########################
+    # LOGOUT
     def logout(self):
         self._to_busy_state()
         self.task = BackgroundTask(
@@ -125,6 +170,8 @@ class Gui(QMainWindow):
         self.tray_icon.update_region_text('not logged in')
         self.tray_icon.reset_copy_menus()
 
+    ########################
+    # REGION
     def set_region(self, region: str) -> None:
         self._to_busy_state()
         self.task = BackgroundTask(
@@ -143,6 +190,8 @@ class Gui(QMainWindow):
         self.tray_icon.update_region_text(region)
         self._to_login_state()
 
+    ########################
+    # CONFIG
     def edit_config(self, config: Config):
         self._to_busy_state()
         self.task = BackgroundTask(
@@ -158,6 +207,8 @@ class Gui(QMainWindow):
         self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
 
+    ########################
+    # MANAGE ACCESS KEY
     def set_access_key(self, key_name, key_id, key_secret):
         self._to_busy_state()
         logger.info('initiate set key')
@@ -205,7 +256,7 @@ class Gui(QMainWindow):
 
         self.rotate_access_key(key_name=key_name, mfa_token=mfa_token)
 
-    def set_sso_session_key(self, sso_name, sso_url, sso_region, sso_scopes):
+    def set_sso_session(self, sso_name, sso_url, sso_region, sso_scopes):
         self._to_busy_state()
         logger.info('initiate set sso session')
         self.task = BackgroundTask(
@@ -235,7 +286,7 @@ class Gui(QMainWindow):
 
     def _on_set_service_role_success(self):
         logger.info('service role was set')
-        self.login(profile_group=self.core.active_profile_group)
+        self.login_key(profile_group=self.core.active_profile_group)
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
         self.task = BackgroundTask(

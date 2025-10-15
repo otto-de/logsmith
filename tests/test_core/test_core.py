@@ -46,7 +46,7 @@ class TestCore(TestCase):
                                   mock_handle_support_files, mock_run_script):
         mock_credentials.check_access_key.return_value = self.error_result
 
-        result = self.core.login(self.config.get_group('development'), None)
+        result = self.core.login_with_key(self.config.get_group('development'), None)
         self.assertEqual(self.error_result, result)
 
         expected_credential_calls = [call.check_access_key(access_key='some-access-key')]
@@ -62,7 +62,7 @@ class TestCore(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.fail_result
 
-        result = self.core.login(get_test_profile_group(), None)
+        result = self.core.login_with_key(get_test_profile_group(), None)
         self.assertEqual(self.fail_result, result)
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
@@ -83,7 +83,7 @@ class TestCore(TestCase):
         mock_credentials.fetch_role_credentials.return_value = self.fail_result
 
         profile_group = get_test_profile_group()
-        result = self.core.login(profile_group, None)
+        result = self.core.login_with_key(profile_group, None)
         self.assertEqual(self.fail_result, result)
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
@@ -107,7 +107,7 @@ class TestCore(TestCase):
         mock_set_region.return_value = self.fail_result
 
         profile_group = get_test_profile_group()
-        result = self.core.login(profile_group, None)
+        result = self.core.login_with_key(profile_group, None)
         self.assertEqual(self.fail_result, result)
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
@@ -134,7 +134,7 @@ class TestCore(TestCase):
         mock_run_script.return_value = self.fail_result
 
         profile_group = get_test_profile_group()
-        result = self.core.login(profile_group, None)
+        result = self.core.login_with_key(profile_group, None)
         self.assertEqual(self.fail_result, result)
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
@@ -167,7 +167,7 @@ class TestCore(TestCase):
         self.core.toggles.run_script = False
 
         profile_group = get_test_profile_group()
-        result = self.core.login(profile_group, '123456')
+        result = self.core.login_with_key(profile_group, '123456')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -202,7 +202,7 @@ class TestCore(TestCase):
         mock_run_script.return_value = self.success_result
 
         profile_group = get_test_profile_group()
-        result = self.core.login(profile_group, '123456')
+        result = self.core.login_with_key(profile_group, '123456')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -240,7 +240,7 @@ class TestCore(TestCase):
         self.core.region_override = 'eu-north-1'
 
         profile_group = get_test_profile_group()
-        self.core.login(profile_group, None)
+        self.core.login_with_key(profile_group, None)
 
         expected_set_region_calls = [call('eu-north-1')]
         self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)

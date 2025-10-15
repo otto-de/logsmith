@@ -13,6 +13,7 @@ service_roles_file_name = 'service_roles.yaml'
 log_file_name = 'app.log'
 active_group_file_name = 'active_group'
 
+# TODO set to base to avoid automatic conversion
 yamli = YAML(typ='safe')
 yamli.default_flow_style = False
 yamli.sort_base_mapping_type_on_output = False
