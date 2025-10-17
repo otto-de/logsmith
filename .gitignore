@@ -9,3 +9,5 @@ legacy
 .coverage
 .env
 .vscode
+.clj-kondo
+.lsp

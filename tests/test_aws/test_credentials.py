@@ -1,6 +1,7 @@
 import os
 from unittest import TestCase, mock
 from unittest.mock import Mock, call
+import pytest
 
 from botocore.exceptions import ClientError, EndpointConnectionError, ParamValidationError, \
     NoCredentialsError, ReadTimeoutError
@@ -10,7 +11,6 @@ from app.core.profile_group import ProfileGroup
 from tests.test_data import test_accounts
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
-
 
 class TestCredentials(TestCase):
     @classmethod
@@ -168,22 +168,21 @@ class TestCredentials(TestCase):
         self.assertEqual('access_key credentials invalid', result.error_message)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
-    @mock.patch('app.aws.credentials._remove_unused_profiles')
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials(self, mock_credentials, mock_assume, mock_add_profile, mock_remove_profile,
+    def test_fetch_role_credentials(self, mock_load_credentials, mock_assume, mock_add_profile,
                                     mock_write_credentials):
         mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
+        mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session')
         result = credentials.fetch_role_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-        self.assertEqual(3, mock_write_credentials.call_count)
+        
 
         expected_mock_assume_calls = [
             call('session-token-default-access-key', 'test_user', '123456789012', 'developer'),
@@ -202,29 +201,25 @@ class TestCredentials(TestCase):
                                                  'SecretAccessKey': 'test-access-key',
                                                  'SessionToken': 'test-session-token'})]
         self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
-        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+        
+        self.assertEqual(2, mock_write_credentials.call_count)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
-    @mock.patch('app.aws.credentials._remove_unused_profiles')
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials_with_specific_access_key(self, mock_credentials, mock_assume, mock_add_profile,
-                                                             mock_remove_profile,
+    def test_fetch_role_credentials_with_specific_access_key(self, mock_load_credentials, mock_assume, mock_add_profile,
                                                              mock_write_credentials):
         mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
+        mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_with_specific_access_key(),
-                                     'default-access-key')
+                                     'default-access-key', 'default-sso-session')
         result = credentials.fetch_role_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
-        self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [
             call('session-token-specific-access-key', 'test_user', '123456789012', 'developer'),
@@ -243,27 +238,23 @@ class TestCredentials(TestCase):
                                                  'SecretAccessKey': 'test-access-key',
                                                  'SessionToken': 'test-session-token'})]
         self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
-        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+        
+        self.assertEqual(2, mock_write_credentials.call_count)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
-    @mock.patch('app.aws.credentials._remove_unused_profiles')
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials__no_default(self, mock_credentials, mock_assume, mock_add_profile,
-                                                mock_remove_profile, mock_write_credentials):
+    def test_fetch_role_credentials__no_default(self, mock_load_credentials, mock_assume, mock_add_profile,
+                                                mock_write_credentials):
         mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
+        mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session')
         result = credentials.fetch_role_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
-
-        self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [
             call('session-token-default-access-key', 'test-user', '123456789012', 'developer'),
@@ -279,27 +270,23 @@ class TestCredentials(TestCase):
                                                   'SecretAccessKey': 'test-access-key',
                                                   'SessionToken': 'test-session-token'})]
         self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
-        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+        
+        self.assertEqual(2, mock_write_credentials.call_count)
 
     @mock.patch('app.aws.credentials._write_credentials_file')
-    @mock.patch('app.aws.credentials._remove_unused_profiles')
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials__chain_assume(self, mock_credentials, mock_assume, mock_add_profile,
-                                                  mock_remove_profile, mock_write_credentials):
+    def test_fetch_role_credentials__chain_assume(self, mock_load_credentials, mock_assume, mock_add_profile,
+                                                  mock_write_credentials):
         mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
+        mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default-access-key')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default-access-key', 'default-sso-session')
         result = credentials.fetch_role_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
-
-        self.assertEqual(3, mock_write_credentials.call_count)
 
         expected_mock_assume_calls = [
             call('session-token-default-access-key', 'test-user', '123456789012', 'developer'),
@@ -315,36 +302,144 @@ class TestCredentials(TestCase):
                                                  'SecretAccessKey': 'test-access-key',
                                                  'SessionToken': 'test-session-token'})]
         self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+        
+        self.assertEqual(2, mock_write_credentials.call_count)
 
-        expected_mock_remove_profile_calls = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
-        self.assertEqual(expected_mock_remove_profile_calls, mock_remove_profile.call_args_list)
+    @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials._add_sso_profile')
+    @mock.patch('app.aws.credentials._sso_bash_login')
+    @mock.patch('app.aws.credentials._load_config_file')
+    def test_fetch_sso_credentials(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
+                                    mock_write_config):
+        mock_config_parser = Mock()
+        mock_load_config.return_value = mock_config_parser
+        mock_bash_login.return_value = None
 
-    def test__remove_unused_profiles(self):
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session')
+        result = credentials.fetch_sso_credentials(profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+        
+        expected_login_calls = [call(sso_session_name='specific-sso-session')]
+        self.assertEqual(expected_login_calls, mock_bash_login.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                option_file=mock_config_parser,
+                sso_session_name="specific-sso-session",
+                profile="developer",
+                account_id="123456789012",
+                role="developer",
+                region="us-east-1",
+            ),
+            call(
+                option_file=mock_config_parser,
+                sso_session_name="specific-sso-session",
+                profile="readonly",
+                account_id="012345678901",
+                role="readonly",
+                region="us-east-1",
+            ),
+            call(
+                option_file=mock_config_parser,
+                sso_session_name="specific-sso-session",
+                profile="default",
+                account_id="012345678901",
+                role="readonly",
+                region="us-east-1",
+            ),
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
+        
+        self.assertEqual(2, mock_write_config.call_count)
+        
+    @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials._add_sso_profile')
+    @mock.patch('app.aws.credentials._sso_bash_login')
+    @mock.patch('app.aws.credentials._load_config_file')
+    def test_fetch_sso_credentials__no_default(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
+                                    mock_write_config):
+        mock_config_parser = Mock()
+        mock_load_config.return_value = mock_config_parser
+        mock_bash_login.return_value = None
+
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__no_default(), 'default-access-key', 'default-sso-session')
+        result = credentials.fetch_sso_credentials(profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+        
+        expected_login_calls = [call(sso_session_name='specific-sso-session')]
+        self.assertEqual(expected_login_calls, mock_bash_login.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                option_file=mock_config_parser,
+                sso_session_name="specific-sso-session",
+                profile="developer",
+                account_id="123456789012",
+                role="developer",
+                region="us-east-1",
+            ),
+            call(
+                option_file=mock_config_parser,
+                sso_session_name="specific-sso-session",
+                profile="readonly",
+                account_id="012345678901",
+                role="readonly",
+                region="us-east-1",
+            )
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
+        
+        self.assertEqual(2, mock_write_config.call_count)
+        
+    @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials._add_sso_profile')
+    @mock.patch('app.aws.credentials._sso_bash_login')
+    @mock.patch('app.aws.credentials._load_config_file')
+    def test_fetch_sso_credentials__sso_bash_exception(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
+                                    mock_write_config):
+        mock_config_parser = Mock()
+        mock_load_config.return_value = mock_config_parser
+        mock_bash_login.side_effect = Exception('some bash exeption')
+
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session')
+        result = credentials.fetch_sso_credentials(profile_group)
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("error while attempting sso login", result.error_message)
+        
+        expected_login_calls = [call(sso_session_name='specific-sso-session')]
+        self.assertEqual(expected_login_calls, mock_bash_login.call_args_list)
+
+        expected_mock_add_profile_calls = []
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
+        
+        self.assertEqual(0, mock_write_config.call_count)
+
+
+    def test__cleanup_profiles(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = [
             'developer', 'unused-profile',
             'access-key', 'session-token-access-key',
-            'access-key-2', 'session-token-access-key-2'
+            'access-key-2', 'session-token-access-key-2',
+            'session-token-access-key-2'
         ]
 
-        mock_profile_group = Mock()
-        mock_profile_group.list_profile_names.return_value = ['developer']
+        credentials._cleanup_profiles(mock_config_parser)
 
-        credentials._remove_unused_profiles(mock_config_parser, mock_profile_group)
-
-        expected = [call('unused-profile')]
+        expected = [call('developer'), call('unused-profile')]
         self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
 
     @mock.patch('app.aws.credentials._write_config_file')
-    @mock.patch('app.aws.credentials._remove_unused_configs')
     @mock.patch('app.aws.credentials._add_profile_config')
     @mock.patch('app.aws.credentials._load_config_file')
-    def test_write_profile_config(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
+    def test_write_profile_config(self, mock_load_config, mock_add_profile, mock_write_config_file):
         mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
+        mock_load_config.return_value = mock_config_parser
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session')
         result = credentials.write_profile_config(profile_group, 'us-east-12')
 
         self.assertEqual(True, result.was_success)
@@ -354,32 +449,30 @@ class TestCredentials(TestCase):
                     call(mock_config_parser, 'readonly', 'us-east-12'),
                     call(mock_config_parser, 'default', 'us-east-12')]
         self.assertEqual(expected, mock_add_profile.call_args_list)
-        expected = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
+        
+        expected = [call(mock_config_parser)]
+        self.assertEqual(expected, mock_write_config_file.call_args_list)
 
     @mock.patch('app.aws.credentials._write_config_file')
-    @mock.patch('app.aws.credentials._remove_unused_configs')
     @mock.patch('app.aws.credentials._add_profile_config')
     @mock.patch('app.aws.credentials._load_config_file')
-    def test_write_profile_config__no_default_region(self, mock_credentials, mock_add_profile, mock_remove_profile, _):
+    def test_write_profile_config__no_default_region(self, mock_load_config, mock_add_profile, mock_write_config_file):
         mock_config_parser = Mock()
-        mock_credentials.return_value = mock_config_parser
+        mock_load_config.return_value = mock_config_parser
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session')
         result = credentials.write_profile_config(profile_group, 'us-east-12')
-
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
         expected = [call(mock_config_parser, 'developer', 'us-east-12'),
                     call(mock_config_parser, 'readonly', 'us-east-12')]
         self.assertEqual(expected, mock_add_profile.call_args_list)
-        expected = [call(mock_config_parser, profile_group)]
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
-        self.assertEqual(expected, mock_remove_profile.call_args_list)
+        
+        expected = [call(mock_config_parser)]
+        self.assertEqual(expected, mock_write_config_file.call_args_list)
 
-    def test__remove_unused_configs_but_keep_global_configs(self):
+    def test__cleanup_configs(self):
         mock_config_parser = Mock()
         mock_config_parser.sections.return_value = ['profile developer',
                                                     'profile unused-profile',
@@ -388,12 +481,10 @@ class TestCredentials(TestCase):
                                                     'default',
                                                     's3']
 
-        mock_profile_group = Mock()
-        mock_profile_group.list_profile_names.return_value = ['developer']
+        credentials._cleanup_configs(mock_config_parser)
 
-        credentials._remove_unused_configs(mock_config_parser, mock_profile_group)
-
-        expected = [call('profile unused-profile'),
+        expected = [call('profile developer'),
+                    call('profile unused-profile'),
                     call('profile access-key'),
                     call('profile session-token')]
         self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)

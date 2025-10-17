@@ -1,8 +1,8 @@
 from unittest import TestCase, mock
 from unittest.mock import call, Mock
 
-from app.core.config import Config, _default_access_key
-from tests.test_data.test_accounts import get_test_accounts, get_test_accounts__minimal
+from app.core.config import Config, _default_access_key, _default_sso_sesson
+from tests.test_data.test_accounts import get_default_test_accounts, get_test_accounts__minimal, get_test_accounts__mixed_auth_modes
 from tests.test_data.test_config import get_test_config
 from tests.test_data.test_service_roles import get_test_service_roles
 
@@ -22,9 +22,11 @@ class TestConfig(TestCase):
         mock_service_roles.return_value = {}
         self.config.initialize()
 
-        expected_calls = [call(accounts={}, service_roles={}, default_access_key=_default_access_key)]
+        expected_calls = [call(accounts={}, service_roles={}, default_access_key=_default_access_key, default_sso_session=_default_sso_sesson)]
 
         self.assertEqual(None, self.config.mfa_shell_command)
+        self.assertEqual(_default_access_key, self.config.default_access_key)
+        self.assertEqual(_default_sso_sesson, self.config.default_sso_session)
         self.assertEqual({}, self.config.profile_groups)
         self.assertEqual({}, self.config.service_roles)
         self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
@@ -33,19 +35,21 @@ class TestConfig(TestCase):
     @mock.patch('app.core.config.files.load_config')
     @mock.patch('app.core.config.files.load_accounts')
     @mock.patch('app.core.config.Config.initialize_profile_groups')
-    def test_initialize__with_default_access_key(self, mock_initialize_profile_groups, mock_load_accounts,
-                                                 mock_load_config, mock_service_roles):
-        mock_load_accounts.return_value = get_test_accounts()
+    def test_initialize__with_config(self, mock_initialize_profile_groups, mock_load_accounts, mock_load_config, mock_service_roles):
+        mock_load_accounts.return_value = {}
         mock_load_config.return_value = {
-            'mfa_shell_command': 'some command',
+            'mfa_shell_command': 'some-command',
+            'default_access_key': 'some-key',
+            'default_sso_session': 'some-session',
         }
         mock_service_roles.return_value = {}
         self.config.initialize()
 
-        expected_calls = [call(accounts=get_test_accounts(), service_roles={}, default_access_key='access-key')]
+        expected_calls = [call(accounts={}, service_roles={}, default_access_key='some-key', default_sso_session='some-session')]
 
-        self.assertEqual('access-key', self.config.default_access_key)
-        self.assertEqual('some command', self.config.mfa_shell_command)
+        self.assertEqual('some-key', self.config.default_access_key)
+        self.assertEqual('some-session', self.config.default_sso_session)
+        self.assertEqual('some-command', self.config.mfa_shell_command)
         self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
 
     @mock.patch('app.core.config.files.load_service_roles')
@@ -53,22 +57,23 @@ class TestConfig(TestCase):
     @mock.patch('app.core.config.files.load_accounts')
     @mock.patch('app.core.config.Config.initialize_profile_groups')
     def test_initialize(self, mock_initialize_profile_groups, mock_load_accounts, mock_load_config, mock_service_roles):
-        mock_load_accounts.return_value = get_test_accounts()
+        mock_load_accounts.return_value = get_default_test_accounts()
         mock_load_config.return_value = get_test_config()
         mock_service_roles.return_value = get_test_service_roles()
         self.config.initialize()
 
         expected_calls = [
-            call(accounts=get_test_accounts(), service_roles=get_test_service_roles(),
-                 default_access_key='some-access-key')]
+            call(accounts=get_default_test_accounts(), service_roles=get_test_service_roles(),
+                 default_access_key='some-access-key', default_sso_session='some-sso-session')]
 
         self.assertEqual('some-access-key', self.config.default_access_key)
+        self.assertEqual('some-sso-session', self.config.default_sso_session)
         self.assertEqual('some-command', self.config.mfa_shell_command)
         self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
 
     @mock.patch('app.core.config.files.save_accounts_file')
-    def test_save_accounts(self, mock_save_accounts_file):
-        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
+    def test_save_accounts__default(self, mock_save_accounts_file):
+        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 'some-access-key', 'some-sso-session')
         self.config.save_accounts()
         expected = [call(
             {
@@ -76,6 +81,7 @@ class TestConfig(TestCase):
                     'color': '#388E3C',
                     'team': 'awesome-team',
                     'region': 'us-east-1',
+                    'auth_mode': 'key',
                     'script': None,
                     'profiles': [
                         {
@@ -95,6 +101,7 @@ class TestConfig(TestCase):
                     'color': '#388E3C',
                     'team': 'awesome-team',
                     'region': 'us-east-1',
+                    'auth_mode': 'key',
                     'access_key': 'access-key-123',
                     'script': './some-script.sh',
                     'profiles': [
@@ -116,6 +123,69 @@ class TestConfig(TestCase):
                     'team': 'another-team',
                     'region': 'europe-west1',
                     'type': 'gcp',
+                    'auth_mode': 'key',
+                    'script': None,
+                    'profiles': [],  # this will be automatically added
+                }
+            }
+        )]
+
+        self.assertEqual(expected, mock_save_accounts_file.mock_calls)
+        
+    @mock.patch('app.core.config.files.save_accounts_file')
+    def test_save_accounts__auth_mode_mixed(self, mock_save_accounts_file):
+        self.config.initialize_profile_groups(get_test_accounts__mixed_auth_modes(), get_test_service_roles(), 'some-access-key', 'some-sso-session')
+        self.config.save_accounts()
+        expected = [call(
+            {
+                'development': {
+                    'color': '#388E3C',
+                    'team': 'awesome-team',
+                    'region': 'us-east-1',
+                    'auth_mode': 'key',
+                    'access_key': 'access-key-123',
+                    'script': None,
+                    'profiles': [
+                        {
+                            'profile': 'developer',
+                            'account': '123495678901',
+                            'role': 'developer',
+                            'default': True,
+                        },
+                        {
+                            'profile': 'readonly',
+                            'account': '012349567890',
+                            'role': 'readonly'
+                        }
+                    ]
+                },
+                'live': {
+                    'color': '#388E3C',
+                    'team': 'awesome-team',
+                    'region': 'us-east-1',
+                    'auth_mode': 'sso',
+                    'sso_session': 'sso-123',
+                    'script': './some-script.sh',
+                    'profiles': [
+                        {
+                            'profile': 'admin',
+                            'account': '9876543210',
+                            'role': 'admin',
+                            'default': True
+                        },
+                        {
+                            'profile': 'readonly',
+                            'account': '0000000000',
+                            'role': 'readonly'
+                        }
+                    ]
+                },
+                'gcp-project-dev': {
+                    'color': '#FF0000',
+                    'team': 'another-team',
+                    'region': 'europe-west1',
+                    'type': 'gcp',
+                    'auth_mode': 'key',
                     'script': None,
                     'profiles': [],  # this will be automatically added
                 }
@@ -125,12 +195,25 @@ class TestConfig(TestCase):
         self.assertEqual(expected, mock_save_accounts_file.mock_calls)
 
     @mock.patch('app.core.config.files.save_config_file')
+    def test_save_config__defaults(self, mock_save_config_file):
+        self.config.save_config()
+
+        expected = [call({'mfa_shell_command': None, 
+                          'default_access_key': None,
+                          'default_sso_session': None})]
+
+        self.assertEqual(expected, mock_save_config_file.mock_calls)
+        
+    @mock.patch('app.core.config.files.save_config_file')
     def test_save_config(self, mock_save_config_file):
         self.config.mfa_shell_command = 'some command'
         self.config.default_access_key = 'some access key'
+        self.config.default_sso_session = 'some sso session'
         self.config.save_config()
 
-        expected = [call({'mfa_shell_command': 'some command', 'default_access_key': 'some access key'})]
+        expected = [call({'mfa_shell_command': 'some command', 
+                          'default_access_key': 'some access key',
+                          'default_sso_session': 'some sso session'})]
 
         self.assertEqual(expected, mock_save_config_file.mock_calls)
 
@@ -198,7 +281,7 @@ class TestConfig(TestCase):
         self.assertEqual(expected, mock_save_service_roles_file.mock_calls)
 
     def test_initialize_profile_groups(self):
-        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
+        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 'default-access-key', 'default-sso-session')
 
         self.assertEqual(['development', 'live', 'gcp-project-dev'], list(self.config.profile_groups.keys()))
 
@@ -255,10 +338,10 @@ class TestConfig(TestCase):
         self.assertEqual(None, live_profile2.source)
 
     def test_initialize_profile_groups__replace_old_values_on_config_reload(self):
-        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(),
-                                              'default-access-key')
+        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(),
+                                              'default-access-key', 'defauls-sso-session')
         self.config.initialize_profile_groups(get_test_accounts__minimal(), get_test_service_roles(),
-                                              'default-access-key')
+                                              'default-access-key', 'defauls-sso-session')
 
         self.assertEqual(['development'], list(self.config.profile_groups.keys()))
 
@@ -287,7 +370,8 @@ class TestConfig(TestCase):
         self.assertEqual(expected, result)
 
     def test_validate(self):
-        self.config.initialize_profile_groups(get_test_accounts(), get_test_service_roles(), 'default-access-key')
+        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 
+                                              'default-access-key', 'defauls-sso-session')
         self.config.validate()
         self.assertEqual('', self.config.error)
         self.assertEqual(True, self.config.valid)

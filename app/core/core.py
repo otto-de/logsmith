@@ -26,8 +26,11 @@ class Core:
     def login(self, profile_group: ProfileGroup) -> Result:
         if profile_group.get_auth_mode() == 'key':
             self.login_with_key(profile_group=profile_group, mfa_token=None)
-        else:
+        elif profile_group.get_auth_mode() == 'sso':
             self.login_with_sso(profile_group=profile_group)
+        result = Result()
+        result.error('auth_mode was neither key or sso.')
+        return result
     
     ########################
     # ACCESS KEY LOGIN
@@ -35,12 +38,12 @@ class Core:
         result = Result()
         logger.info(f'start key login {profile_group.name} with token {mfa_token}')
         self.active_profile_group = profile_group
-        access_key = profile_group.get_access_key()
 
         cleanup_resul = credentials.cleanup()
         if not cleanup_resul.was_success:
             return cleanup_resul
 
+        access_key = profile_group.get_access_key()
         access_key_result = credentials.check_access_key(access_key=access_key)
         if not access_key_result.was_success:
             return access_key_result

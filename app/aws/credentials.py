@@ -227,7 +227,6 @@ def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Resul
 
 def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
     result = Result()
-    # credentials_file = _load_credentials_file()
     config_file = _load_config_file()
     logger.info("initiate sso login")
     sso_session = profile_group.get_sso_session()
@@ -242,6 +241,7 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
     try:
         for profile in profile_group.get_profile_list():
             logger.info(f"write {profile.profile}")
+            # TODO if source_profile, than use the old way of getting credentials?
             _add_sso_profile(
                 option_file=config_file,
                 sso_session_name=sso_session,
@@ -389,31 +389,25 @@ def _add_profile_credentials(
     credentials_file.set(profile, "aws_session_token", str(secrets["SessionToken"]))
 
 
-def _add_profile_config(option_file: configparser, profile: str, region: str) -> None:
+def _add_profile_config(config_file: configparser, profile: str, region: str) -> None:
     config_name = f"profile {profile}"
-    if not option_file.has_section(config_name):
-        option_file.add_section(config_name)
-    option_file.set(config_name, "region", region)
-    option_file.set(config_name, "output", "json")
+    if not config_file.has_section(config_name):
+        config_file.add_section(config_name)
+    config_file.set(config_name, "region", region)
+    config_file.set(config_name, "output", "json")
 
 
-def _add_sso_profile(
-    option_file: configparser,
-    sso_session_name: str,
-    profile: str,
-    account_id: str,
-    role: str,
-    region: str,
+def _add_sso_profile(config_file: configparser, sso_session_name: str, profile: str,
+    account_id: str, role: str, region: str,
 ):
     config_name = f"profile {profile}"
-    if not option_file.has_section(config_name):
-        option_file.add_section(config_name)
-    option_file.set(config_name, "sso_session", sso_session_name)
-    option_file.set(config_name, "sso_account_id", account_id)
-    option_file.set(config_name, "sso_role_name", role)
-    option_file.set(config_name, "region", region)
-    option_file.set(config_name, "output", "json")
-
+    if not config_file.has_section(config_name):
+        config_file.add_section(config_name)
+    config_file.set(config_name, "sso_session", sso_session_name)
+    config_file.set(config_name, "sso_account_id", account_id)
+    config_file.set(config_name, "sso_role_name", role)
+    config_file.set(config_name, "region", region)
+    config_file.set(config_name, "output", "json")
 
 def get_user_name(access_key) -> str:
     logger.info("fetch user name")

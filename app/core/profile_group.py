@@ -33,7 +33,7 @@ class ProfileGroup:
             return False, f'{self.name} has no region'
         if not self.color:
             return False, f'{self.name} has no color'
-        if not self.auth_mode:
+        if not self.auth_mode or not self.auth_mode in ['key', 'sso']:
             return False, f'{self.name} has no auth_mode (either key or sso)'
         if self.access_key and not self.access_key.startswith('access-key'):
             return False, f'access-key {self.access_key} must have the prefix \"access-key\"'
@@ -70,9 +70,7 @@ class ProfileGroup:
         return next((profile for profile in self.profiles if profile.default), None)
 
     def get_auth_mode(self) -> str:
-        if self.auth_mode:
-            return self.auth_mode
-        return self.default_access_key
+        return self.auth_mode
     
     def get_access_key(self) -> str:
         if self.access_key:
