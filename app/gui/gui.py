@@ -54,7 +54,6 @@ class Gui(QMainWindow):
         self.tray_icon.show()
 
     def login(self, profile_group: ProfileGroup):
-        # login wither with key or with SSO
         if profile_group.auth_mode == "key":
             self.login_key(profile_group=profile_group)
         if profile_group.auth_mode == "sso":
@@ -80,12 +79,6 @@ class Gui(QMainWindow):
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
-
-        logger.info('start sso repeater')
-        # TODO should not always redo the login, because 
-        # prepare_login = partial(self.login_key, profile_group=self.core.active_profile_group)
-        # self.login_repeater.start(task=prepare_login,
-                                #   delay_seconds=300)
         self._to_login_state()
 
     def _on_login_sso_failure(self):

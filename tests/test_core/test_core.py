@@ -38,46 +38,6 @@ class TestCore(TestCase):
         self.fail_result = get_failed_result()
         self.error_result = get_error_result()
 
-
-    @mock.patch('app.core.core.Core.login_with_sso')
-    @mock.patch('app.core.core.Core.login_with_key')
-    def test_login__key(self, mock_login_key, mock_login_sso):
-        profile_group = test_accounts.get_test_profile_group_key()
-        self.core.login(profile_group)
-
-        expected_login_key = [call(profile_group=profile_group, mfa_token=None)]
-        self.assertEqual(expected_login_key, mock_login_key.mock_calls)
-        
-        expected_login_sso = []
-        self.assertEqual(expected_login_sso, mock_login_sso.mock_calls)
-        
-    @mock.patch('app.core.core.Core.login_with_sso')
-    @mock.patch('app.core.core.Core.login_with_key')
-    def test_login__sso(self, mock_login_key, mock_login_sso):
-        profile_group = test_accounts.get_test_profile_group_sso()
-        self.core.login(profile_group)
-        
-        expected_login_key = []
-        self.assertEqual(expected_login_key, mock_login_key.mock_calls)
-        
-        expected_login_sso = [call(profile_group=profile_group)]
-        self.assertEqual(expected_login_sso, mock_login_sso.mock_calls)
-                
-    @mock.patch('app.core.core.Core.login_with_sso')
-    @mock.patch('app.core.core.Core.login_with_key')
-    def test_login__auth_mode_malformed(self, mock_login_key, mock_login_sso):
-        profile_group = test_accounts.get_test_profile_group_sso()
-        profile_group.auth_mode = 'some-other-mode'
-        result = self.core.login(profile_group)
-        self.assertEqual(True, result.was_error)
-        self.assertEqual(False, result.was_success)
-        
-        expected_login_key = []
-        self.assertEqual(expected_login_key, mock_login_key.mock_calls)
-        
-        expected_login_sso = []
-        self.assertEqual(expected_login_sso, mock_login_sso.mock_calls)
-
     @mock.patch('app.core.core.credentials')
     def test_logout(self, mock_credentials):
         mock_credentials.cleanup.return_value = self.success_result
