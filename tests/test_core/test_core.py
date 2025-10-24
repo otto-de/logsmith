@@ -80,25 +80,36 @@ class TestCore(TestCase):
 
     @mock.patch('app.core.core.credentials')
     def test_logout(self, mock_credentials):
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
-        mock_credentials.write_profile_config.return_value = self.success_result
+        mock_credentials.cleanup.return_value = self.success_result
+        mock_credentials.sso_logout.return_value = self.success_result
 
         result = self.core.logout()
 
-        expected = [call.fetch_role_credentials(user_name='none', profile_group=self.core.empty_profile_group),
-                    call.write_profile_config(profile_group=self.core.empty_profile_group, region='')]
+        expected = [call.cleanup(), call.sso_logout()]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
     @mock.patch('app.core.core.credentials')
-    def test_logout__error(self, mock_credentials):
-        mock_credentials.fetch_role_credentials.return_value = self.error_result
+    def test_logout__error_on_cleanup(self, mock_credentials):
+        mock_credentials.cleanup.return_value = self.error_result
 
         result = self.core.logout()
 
-        expected = [call.fetch_role_credentials(user_name='none', profile_group=self.core.empty_profile_group)]
+        expected = [call.cleanup()]
+        self.assertEqual(expected, mock_credentials.mock_calls)
+
+        self.assertEqual(self.error_result, result)
+        
+    @mock.patch('app.core.core.credentials')
+    def test_logout__error_on_sso_logout(self, mock_credentials):
+        mock_credentials.cleanup.return_value = self.success_result
+        mock_credentials.sso_logout.return_value = self.error_result
+
+        result = self.core.logout()
+
+        expected = [call.cleanup(), call.sso_logout()]
         self.assertEqual(expected, mock_credentials.mock_calls)
 
         self.assertEqual(self.error_result, result)
