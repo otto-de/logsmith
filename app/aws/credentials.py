@@ -243,7 +243,7 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
             logger.info(f"write {profile.profile}")
             # TODO if source_profile, than use the old way of getting credentials?
             _add_sso_profile(
-                option_file=config_file,
+                config_file=config_file,
                 sso_session_name=sso_session,
                 profile=profile.profile,
                 account_id=profile.account,
@@ -252,7 +252,7 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
             )
             if profile.default:
                 _add_sso_profile(
-                    option_file=config_file,
+                    config_file=config_file,
                     sso_session_name=sso_session,
                     profile="default",
                     account_id=profile.account,
