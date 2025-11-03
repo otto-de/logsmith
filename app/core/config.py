@@ -56,6 +56,9 @@ class Config:
 
     def set_default_access_key(self, default_access_key: str) -> None:
         self.default_access_key = default_access_key
+        
+    def set_default_sso_session(self, default_sso_session: str) -> None:
+        self.default_sso_session = default_sso_session
 
     def save_config(self) -> None:
         files.save_config_file({

@@ -102,6 +102,7 @@ class ConfigDialog(QDialog):
         if config.valid:
             config.set_mfa_shell_command(self.mfa_command_input.text())
             config.set_default_access_key(default_access_key)
+            config.set_default_sso_session(default_sso_session)
             self.gui.edit_config(config)
             self.hide()
         else:
