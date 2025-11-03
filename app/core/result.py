@@ -8,7 +8,7 @@ class Result:
         self.was_success = False
         self.was_error = False
         self.error_message = 'unknown'
-        self.payload = {}
+        self.payload = ""
 
     def set_success(self):
         self.was_success = True

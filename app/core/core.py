@@ -110,34 +110,29 @@ class Core:
         logger.info('gcp login detected')
 
         # first login
-        user_login = login.gcloud_auth_login()
-        if user_login is None:
-            result.error("gcloud auth login command failed")
-            return result
+        user_login_result = login.gcloud_auth_login()
+        if not user_login_result.was_success:
+            return user_login_result
 
         # second login for application default credentials
-        adc_login = login.gcloud_auth_application_login()
-        if adc_login is None:
-            result.error("gcloud auth application-default login command failed")
-            return result
+        adc_login_result = login.gcloud_auth_application_login()
+        if not adc_login_result.was_success:
+            return adc_login_result
 
         # set project
-        config_project = config.set_default_project(project=profile_group.name)
-        if config_project is None:
-            result.error("config gcp project failed")
-            return result
+        set_project_result = config.set_default_project(project=profile_group.name)
+        if not set_project_result.was_success:
+            return set_project_result
 
         # set region
-        config_region = config.set_default_region(region=profile_group.region)
-        if config_region is None:
-            result.error("config gcp region failed")
-            return result
-
+        config_region_result = config.set_default_region(region=profile_group.region)
+        if not config_region_result.was_success:
+            return config_region_result
+        
         # set quota-project
-        config_quota_project = config.set_default_quota_project(project=profile_group.name)
-        if config_quota_project is None:
-            result.error("config gcp quota-project failed")
-            return result
+        config_region_result = config.set_default_quota_project(project=profile_group.name)
+        if not config_region_result.was_success:
+            return config_region_result
 
         logger.info('login success')
         self._handle_support_files(profile_group)
@@ -275,13 +270,10 @@ class Core:
             result.error(f'{script_path} not found')
             return result
 
-        shell_output = shell.run(command=script_path, timeout=60)
-        if not shell_output:
-            logger.error(f'script output:\n{shell_output}')
-            result.error('script failed')
-            return result
-
-        logger.info(f'script output:\n{shell_output}')
+        script_result = shell.run(command=script_path, timeout=60)
+        if not script_result.was_success:
+            return script_result
+        
         result.set_success()
         return result
 

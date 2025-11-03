@@ -230,13 +230,10 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
     config_file = _load_config_file()
     logger.info("initiate sso login")
     sso_session = profile_group.get_sso_session()
-    try:
-        _sso_bash_login(sso_session_name=sso_session)
-    except Exception:
-        error_text = "error while attempting sso login"
-        result.error(error_text)
-        logger.error(error_text, exc_info=True)
-        return result
+    
+    sso_login_result = _sso_bash_login(sso_session_name=sso_session)
+    if not sso_login_result.was_success:
+        return sso_login_result
 
     try:
         for profile in profile_group.get_profile_list():
@@ -272,16 +269,7 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
 
 def sso_logout() -> Result:
     logger.info("initiate sso logout")
-    result = Result()
-    try:
-        _sso_bash_logout()
-    except:
-        error_text = "error while attempting sso logout"
-        result.error(error_text)
-        logger.error(error_text, exc_info=True)
-        return result
-    result.set_success()
-    return result
+    return _sso_bash_logout()
 
 
 def _cleanup_profiles(credentials_file: configparser) -> configparser:
@@ -444,10 +432,10 @@ def _assume_role(
     return response["Credentials"]
 
 
-def _sso_bash_login(sso_session_name: str):
+def _sso_bash_login(sso_session_name: str) -> Result:
     # boto3 does not support login at the moment
-    shell.run(command=f"aws sso login --sso-session {sso_session_name}", timeout=600)
+    return shell.run(command=f"aws sso login --sso-session {sso_session_name}", timeout=600)
 
 
-def _sso_bash_logout():
-    shell.run(command=f"aws sso logout", timeout=600)
+def _sso_bash_logout() -> Result:
+    return shell.run(command=f"aws sso logout", timeout=600)

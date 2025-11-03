@@ -2,14 +2,18 @@ import logging
 
 from app.shell import shell
 
-logger = logging.getLogger('logsmith')
+logger = logging.getLogger("logsmith")
 
 
-def fetch_mfa_token_from_shell(command):
+def fetch_mfa_token_from_shell(command) -> str | None:
     if not command:
         return None
-    logger.info(f'run shell command {command}')
-    token = shell.run(command)
+    logger.info(f"run shell command {command}")
+    script_result = shell.run(command)
+    if not script_result.was_success:
+        return None
+
+    token = script_result.payload
     if token:
         token = token.strip()
         if len(token) == 6 and token.isdigit():

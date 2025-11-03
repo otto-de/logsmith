@@ -388,7 +388,8 @@ class TestCore(TestCase):
     @mock.patch('app.core.core.files.file_exists', return_value=True)
     @mock.patch('app.core.core.shell.run')
     def test__run_script__script_successful(self, mock_shell_run, mock_files_exists):
-        mock_shell_run.return_value = 'shell output'
+        mock_shell_run.return_value = self.success_result
+        
         result = self.core.run_script(get_test_profile_group())
 
         self.assertEqual(True, result.was_success)
@@ -398,6 +399,7 @@ class TestCore(TestCase):
     @mock.patch('app.core.core.files.file_exists', return_value=False)
     @mock.patch('app.core.core.shell.run')
     def test__run_script__script_not_found(self, mock_shell_run, mock_files_exists):
+        
         result = self.core.run_script(get_test_profile_group())
 
         self.assertEqual(True, result.was_error)
@@ -407,7 +409,8 @@ class TestCore(TestCase):
     @mock.patch('app.core.core.files.file_exists', return_value=True)
     @mock.patch('app.core.core.shell.run')
     def test__run_script__script_failed(self, mock_shell_run, mock_files_exists):
-        mock_shell_run.return_value = None
+        mock_shell_run.return_value = self.error_result
+        
         result = self.core.run_script(get_test_profile_group())
 
         self.assertEqual(True, result.was_error)

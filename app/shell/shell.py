@@ -1,10 +1,13 @@
 import logging
 import subprocess
 
+from core.result import Result
+
 logger = logging.getLogger('logsmith')
 
 
-def run(command, timeout=5):
+def run(command, timeout=5) -> Result:
+    result = Result()
     proc = None
     bash_command = ['bash', '-c', command]
     try:
@@ -15,20 +18,37 @@ def run(command, timeout=5):
                               shell=False,
                               text=True,
                               universal_newlines=True)
-        proc.check_returncode()
-        return proc.stdout.rstrip()
+        proc.check_returncode()       
+        result.add_payload(proc.stdout.rstrip())
+        result.set_success()
+        return result
+    
     except subprocess.TimeoutExpired:
-        logger.warning(f'command {command} took too long and was aborted')
+        error_message = f'command {command} took too long and was aborted'
+        logger.warning(error_message)
+        result.error(error_message)
+        
     except FileNotFoundError:
-        logger.warning(f'command {command} not found')
+        error_message = f'command {command} not found'
+        logger.warning(error_message)
+        result.error(error_message)
+        
     except subprocess.CalledProcessError as error:
-        logger.warning(f'command {command} failed')
+        error_message = f'command {command} failed'
+        logger.warning(error_message)
         logger.warning(str(error), exc_info=True)
-        if proc:
-            logger.warning(f'script output: {proc.stderr}')
-        else:
-            logger.warning('could not fetch output')
+        result.error(error_message)
+        
     except Exception as error:
-        logger.error(f'command {command} failed with unknown error')
+        error_message = f'command {command} failed with unknown error'
+        logger.error(error_message)
         logger.error(str(error), exc_info=True)
-    return None
+        result.error(error_message)
+        
+    if proc is not None:
+        logger.info(f'--- script output start ---\n{proc.stdout.rstrip()}')
+        logger.info(f'--- script output end ---')
+    else:
+        logger.info(f'--- no script output ---')
+        
+    return result

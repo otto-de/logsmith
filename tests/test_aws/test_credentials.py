@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError, EndpointConnectionError, ParamValid
 from app.aws import credentials
 from app.core.profile_group import ProfileGroup
 from tests.test_data import test_accounts
+from tests.test_data.test_results import get_error_result, get_failed_result, get_success_result
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -29,6 +30,10 @@ class TestCredentials(TestCase):
         cls.test_secrets = {'AccessKeyId': 'test-key-id',
                             'SecretAccessKey': 'test-access-key',
                             'SessionToken': 'test-session-token'}
+        
+        cls.success_result = get_success_result()
+        cls.fail_result = get_failed_result()
+        cls.error_result = get_error_result()
 
     @mock.patch('app.aws.credentials.Path.home', return_value='home')
     def test___get_credentials_path(self, _):
@@ -313,7 +318,7 @@ class TestCredentials(TestCase):
                                     mock_write_config):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
-        mock_bash_login.return_value = None
+        mock_bash_login.return_value = self.success_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session')
         result = credentials.fetch_sso_credentials(profile_group)
@@ -325,7 +330,7 @@ class TestCredentials(TestCase):
 
         expected_mock_add_profile_calls = [
             call(
-                option_file=mock_config_parser,
+                config_file=mock_config_parser,
                 sso_session_name="specific-sso-session",
                 profile="developer",
                 account_id="123456789012",
@@ -333,7 +338,7 @@ class TestCredentials(TestCase):
                 region="us-east-1",
             ),
             call(
-                option_file=mock_config_parser,
+                config_file=mock_config_parser,
                 sso_session_name="specific-sso-session",
                 profile="readonly",
                 account_id="012345678901",
@@ -341,7 +346,7 @@ class TestCredentials(TestCase):
                 region="us-east-1",
             ),
             call(
-                option_file=mock_config_parser,
+                config_file=mock_config_parser,
                 sso_session_name="specific-sso-session",
                 profile="default",
                 account_id="012345678901",
@@ -361,7 +366,7 @@ class TestCredentials(TestCase):
                                     mock_write_config):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
-        mock_bash_login.return_value = None
+        mock_bash_login.return_value = self.success_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__no_default(), 'default-access-key', 'default-sso-session')
         result = credentials.fetch_sso_credentials(profile_group)
@@ -373,7 +378,7 @@ class TestCredentials(TestCase):
 
         expected_mock_add_profile_calls = [
             call(
-                option_file=mock_config_parser,
+                config_file=mock_config_parser,
                 sso_session_name="specific-sso-session",
                 profile="developer",
                 account_id="123456789012",
@@ -381,7 +386,7 @@ class TestCredentials(TestCase):
                 region="us-east-1",
             ),
             call(
-                option_file=mock_config_parser,
+                config_file=mock_config_parser,
                 sso_session_name="specific-sso-session",
                 profile="readonly",
                 account_id="012345678901",
@@ -397,17 +402,17 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._add_sso_profile')
     @mock.patch('app.aws.credentials._sso_bash_login')
     @mock.patch('app.aws.credentials._load_config_file')
-    def test_fetch_sso_credentials__sso_bash_exception(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
+    def test_fetch_sso_credentials__sso_bash_error(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
                                     mock_write_config):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
-        mock_bash_login.side_effect = Exception('some bash exeption')
+        mock_bash_login.return_value = self.error_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session')
         result = credentials.fetch_sso_credentials(profile_group)
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
-        self.assertEqual("error while attempting sso login", result.error_message)
+        self.assertEqual("some error", result.error_message)
         
         expected_login_calls = [call(sso_session_name='specific-sso-session')]
         self.assertEqual(expected_login_calls, mock_bash_login.call_args_list)
