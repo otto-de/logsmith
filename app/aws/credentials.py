@@ -230,7 +230,7 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
     config_file = _load_config_file()
     logger.info("initiate sso login")
     sso_session = profile_group.get_sso_session()
-    
+
     sso_login_result = _sso_bash_login(sso_session_name=sso_session)
     if not sso_login_result.was_success:
         return sso_login_result
@@ -257,6 +257,33 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
                     region=profile_group.region,
                 )
             _write_config_file(config_file)
+    except Exception:
+        error_text = "error while fetching role credentials"
+        result.error(error_text)
+        logger.error(error_text, exc_info=True)
+        return result
+
+    result.set_success()
+    return result
+
+
+def fetch_service_profile(profile_group: ProfileGroup) -> Result:
+    result = Result()
+    credentials_file = _load_credentials_file()
+    logger.info("fetch service profile credentials")
+
+    service_profile = profile_group.service_profile
+
+    try:
+        logger.info(f"fetch {service_profile.profile}")
+        secrets = _assume_role(
+            service_profile.source,
+            service_profile.role,
+            service_profile.account,
+            service_profile.role,
+        )
+        _add_profile_credentials(credentials_file, service_profile.profile, secrets)
+        _write_credentials_file(credentials_file)
     except Exception:
         error_text = "error while fetching role credentials"
         result.error(error_text)
@@ -385,8 +412,13 @@ def _add_profile_config(config_file: configparser, profile: str, region: str) ->
     config_file.set(config_name, "output", "json")
 
 
-def _add_sso_profile(config_file: configparser, sso_session_name: str, profile: str,
-    account_id: str, role: str, region: str,
+def _add_sso_profile(
+    config_file: configparser,
+    sso_session_name: str,
+    profile: str,
+    account_id: str,
+    role: str,
+    region: str,
 ):
     config_name = f"profile {profile}"
     if not config_file.has_section(config_name):
@@ -396,6 +428,25 @@ def _add_sso_profile(config_file: configparser, sso_session_name: str, profile: 
     config_file.set(config_name, "sso_role_name", role)
     config_file.set(config_name, "region", region)
     config_file.set(config_name, "output", "json")
+
+
+def _add_sso_profile(
+    config_file: configparser,
+    sso_session_name: str,
+    profile: str,
+    account_id: str,
+    role: str,
+    region: str,
+):
+    config_name = f"profile {profile}"
+    if not config_file.has_section(config_name):
+        config_file.add_section(config_name)
+    config_file.set(config_name, "sso_session", sso_session_name)
+    config_file.set(config_name, "sso_account_id", account_id)
+    config_file.set(config_name, "sso_role_name", role)
+    config_file.set(config_name, "region", region)
+    config_file.set(config_name, "output", "json")
+
 
 def get_user_name(access_key) -> str:
     logger.info("fetch user name")
@@ -434,7 +485,9 @@ def _assume_role(
 
 def _sso_bash_login(sso_session_name: str) -> Result:
     # boto3 does not support login at the moment
-    return shell.run(command=f"aws sso login --sso-session {sso_session_name}", timeout=600)
+    return shell.run(
+        command=f"aws sso login --sso-session {sso_session_name}", timeout=600
+    )
 
 
 def _sso_bash_logout() -> Result:

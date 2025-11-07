@@ -58,10 +58,7 @@ class ProfileGroup:
         return profile_list
 
     def get_profile_list(self) -> List[Profile]:
-        profile_list = self.profiles.copy()
-        if self.service_profile:
-            profile_list.append(self.service_profile)
-        return profile_list
+        return self.profiles
 
     def get_profile(self, profile_name) -> Optional[Profile]:
         return next((profile for profile in self.profiles if profile.profile == profile_name), None)

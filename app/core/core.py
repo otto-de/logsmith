@@ -57,6 +57,11 @@ class Core:
         if not role_result.was_success:
             return role_result
 
+        if profile_group.service_profile is not None:
+            service_profile_result = credentials.fetch_service_profile(profile_group)
+            if not service_profile_result.was_success:
+                return service_profile_result
+        
         set_region_result = self.set_region(self.region_override)
         if not set_region_result.was_success:
             return set_region_result
@@ -86,6 +91,11 @@ class Core:
         sso_result = credentials.fetch_sso_credentials(profile_group)
         if not sso_result.was_success:
             return sso_result
+        
+        if profile_group.service_profile is not None:
+            service_profile_result = credentials.fetch_service_profile(profile_group)
+            if not service_profile_result.was_success:
+                return service_profile_result
 
         set_region_result = self.set_region(self.region_override)
         if not set_region_result.was_success:
