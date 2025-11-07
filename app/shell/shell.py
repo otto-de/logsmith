@@ -7,8 +7,11 @@ from core.result import Result
 
 logger = logging.getLogger('logsmith')
 
+def get_login_shell():
+    return os.environ.get("SHELL") or pwd.getpwuid(os.getuid()).pw_shell or "/bin/sh"
+
 def login_shell_env():
-    shell = os.environ.get("SHELL") or pwd.getpwuid(os.getuid()).pw_shell or "/bin/sh"
+    shell = get_login_shell()
     cmd = [shell, "-l", "-c", "printenv"]
     out = subprocess.check_output(cmd).decode()
     env = {}
@@ -21,7 +24,7 @@ def login_shell_env():
 
 def run(command, timeout=5) -> Result:
     logger.info(f"run command: {command}")
-    shell = pwd.getpwuid(os.getuid()).pw_shell
+    shell = get_login_shell()
     logger.info(f"shell: {shell}")
 
     result = Result()
