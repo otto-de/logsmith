@@ -1,27 +1,44 @@
 import logging
+import os
+import pwd
 import subprocess
 
 from core.result import Result
 
 logger = logging.getLogger('logsmith')
 
+def login_shell_env():
+    shell = os.environ.get("SHELL") or pwd.getpwuid(os.getuid()).pw_shell or "/bin/sh"
+    cmd = [shell, "-l", "-c", "printenv"]
+    out = subprocess.check_output(cmd).decode()
+    env = {}
+    for kv in out.split("\n"):
+        if not kv:
+            continue
+        k, _, v = kv.partition("=")
+        env[k] = v
+    return env
 
 def run(command, timeout=5) -> Result:
+    logger.info(f"run command: {command}")
+    shell = pwd.getpwuid(os.getuid()).pw_shell
+    logger.info(f"shell: {shell}")
+
     result = Result()
     proc = None
-    bash_command = ['bash', '-c', command]
     try:
-        proc = subprocess.run(bash_command,
+        proc = subprocess.run(command,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE,
                               timeout=timeout,
-                              shell=False,
+                              shell=True,
                               text=True,
-                              universal_newlines=True)
+                              universal_newlines=True,
+                              executable=shell,
+                              env=login_shell_env())
         proc.check_returncode()       
         result.add_payload(proc.stdout.rstrip())
         result.set_success()
-        return result
     
     except subprocess.TimeoutExpired:
         error_message = f'command {command} took too long and was aborted'
@@ -46,9 +63,9 @@ def run(command, timeout=5) -> Result:
         result.error(error_message)
         
     if proc is not None:
-        logger.info(f'--- script output start ---\n{proc.stdout.rstrip()}')
-        logger.info(f'--- script output end ---')
+        logger.info(f'--- shell output start ---\n{proc.stdout.rstrip()}')
+        logger.info(f'--- shell output end ---')
     else:
-        logger.info(f'--- no script output ---')
+        logger.info(f'--- no shell output ---')
         
     return result
