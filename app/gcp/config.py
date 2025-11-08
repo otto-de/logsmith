@@ -17,7 +17,7 @@ def set_default_project(project: str) -> Result:
     if script_result.payload is None:
         result.error("config gcp project failed")
     else:
-        result.set_success
+        result.set_success()
     return result
 
 
@@ -32,7 +32,7 @@ def set_default_quota_project(project: str) -> Result:
     if script_result.payload is None:
         result.error("config gcp quota-project failed")
     else:
-        result.set_success
+        result.set_success()
     return result
 
 
@@ -47,5 +47,5 @@ def set_default_region(region: str) -> Result:
     if script_result.payload is None:
         result.error("config gcp region failed")
     else:
-        result.set_success
+        result.set_success()
     return result
