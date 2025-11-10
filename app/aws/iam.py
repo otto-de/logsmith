@@ -54,25 +54,27 @@ def delete_iam_access_key(user_name, key_name, key_id) -> Result:
     result.set_success()
     return result
 
-
-def get_role_arn(profile: str):
+def get_role_name(profile: str):
     session = boto3.Session(profile_name=profile)
     client = session.client('sts')
     arn = client.get_caller_identity()['Arn']
-    arn = arn.replace(':assumed-role/', ':role/')
-    arn = arn.replace(':sts::', ':iam::')
-    arn_parts = arn.rsplit('/', 1)
-    return arn_parts[0]
+    return arn.split('/')[-2]
 
+def fetch_role_arn(profile: str, role_name: str):
+    session = boto3.Session(profile_name=profile)
+    client = session.client('iam')
+    role = client.get_role(RoleName=role_name)
+    return role['Role']['Arn']
 
 def list_assumable_roles(source_profile: str) -> Result:
-    logger.info(f'list assumable roles with {source_profile}')
+    logger.error(f'list assumable roles with profile {source_profile}')
     result = Result()
     session = boto3.Session(profile_name=source_profile)
     client = session.client('iam')
     
-    source_role_arn = get_role_arn(source_profile)
-    logger.info(f'source-arn: {source_role_arn}')
+    source_role_name = get_role_name(source_profile)
+    source_role_arn = fetch_role_arn(source_profile, source_role_name)
+    logger.error(f'source-arn: {source_role_arn}')
     
     assumable_roles = []
 
@@ -86,8 +88,7 @@ def list_assumable_roles(source_profile: str) -> Result:
                     assumable_roles.append(role['RoleName'])
 
     if not assumable_roles:
-        error_text = 'no assumable roles found'
-        result.error(error_text)
+        result.error('no assumable roles found')
     else:
         result.set_success()
         result.add_payload(assumable_roles)
