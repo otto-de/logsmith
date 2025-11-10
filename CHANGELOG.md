@@ -20,8 +20,12 @@ Release dates will be in YYYY-MM-DD format.
 ## Unreleased
 
 ### Added
-- Option to login with aws sso
-- Option to set sso data similar to access-keys
+- Option to login with aws sso.
+- Option to set sso session data similar to access-keys.
+- Chain assume for sso.
+
+### Changed
+- Changed how source profile arns are fetched to accomondate longer aws reserved sso role arns.
 
 ## 8.3.0 - 2025-04-09
 
