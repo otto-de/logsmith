@@ -279,7 +279,7 @@ class Gui(QMainWindow):
 
     def _on_set_service_role_success(self):
         logger.info('service role was set')
-        self.login_key(profile_group=self.core.active_profile_group)
+        self.login(profile_group=self.core.active_profile_group)
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
         self.task = BackgroundTask(
