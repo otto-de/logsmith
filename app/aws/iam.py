@@ -66,11 +66,14 @@ def get_role_arn(profile: str):
 
 
 def list_assumable_roles(source_profile: str) -> Result:
+    logger.info(f'list assumable roles with {source_profile}')
     result = Result()
     session = boto3.Session(profile_name=source_profile)
     client = session.client('iam')
-
+    
     source_role_arn = get_role_arn(source_profile)
+    logger.info(f'source-arn: {source_role_arn}')
+    
     assumable_roles = []
 
     role_list = client.list_roles()['Roles']
