@@ -185,6 +185,29 @@ def get_test_group__with_sso__no_default():
                 'role': 'readonly',
             }
         ]
+    }    
+    
+def get_test_group__with_sso__chain_assume():
+    return {
+        'color': '#388E3C',
+        'team': 'awesome-team',
+        'region': 'us-east-1',
+        'auth_mode': 'sso',
+        'sso_session': 'specific-sso-session',
+        'script': './some-script.sh',
+        'profiles': [
+            {
+                'profile': 'developer',
+                'account': '123456789012',
+                'role': 'developer',
+            },
+            {
+                'profile': 'pipeline',
+                'account': '012345678901',
+                'role': 'pipeline',
+                'source': 'developer'
+            }
+        ]
     }
     
 

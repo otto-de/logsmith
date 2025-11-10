@@ -311,11 +311,13 @@ class TestCredentials(TestCase):
         self.assertEqual(2, mock_write_credentials.call_count)
 
     @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials.iam.fetch_role_arn')
+    @mock.patch('app.aws.credentials._add_sso_chain_profile')
     @mock.patch('app.aws.credentials._add_sso_profile')
     @mock.patch('app.aws.credentials._sso_bash_login')
     @mock.patch('app.aws.credentials._load_config_file')
     def test_fetch_sso_credentials(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
-                                    mock_write_config):
+                                    mock_add_sso_chain, mock_iam, mock_write_config):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.success_result
@@ -356,14 +358,17 @@ class TestCredentials(TestCase):
         ]
         self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
         
+        self.assertEqual(0, mock_add_sso_chain.call_count)
         self.assertEqual(2, mock_write_config.call_count)
         
     @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials.iam.fetch_role_arn')
+    @mock.patch('app.aws.credentials._add_sso_chain_profile')
     @mock.patch('app.aws.credentials._add_sso_profile')
     @mock.patch('app.aws.credentials._sso_bash_login')
     @mock.patch('app.aws.credentials._load_config_file')
     def test_fetch_sso_credentials__no_default(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
-                                    mock_write_config):
+                                    mock_add_sso_chain, mock_iam, mock_write_config):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.success_result
@@ -396,14 +401,64 @@ class TestCredentials(TestCase):
         ]
         self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
         
+        self.assertEqual(0, mock_add_sso_chain.call_count)
         self.assertEqual(2, mock_write_config.call_count)
         
     @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials.iam.fetch_role_arn')
+    @mock.patch('app.aws.credentials._add_sso_chain_profile')
+    @mock.patch('app.aws.credentials._add_sso_profile')
+    @mock.patch('app.aws.credentials._sso_bash_login')
+    @mock.patch('app.aws.credentials._load_config_file')
+    def test_fetch_sso_credentials__chain_assume(self, mock_load_config, mock_bash_login, 
+                                                 mock_add_sso_profile, mock_add_sso_chain, 
+                                                 mock_iam, mock_write_config):
+        mock_config_parser = Mock()
+        mock_load_config.return_value = mock_config_parser
+        mock_bash_login.return_value = self.success_result
+        mock_iam.return_value = 'some-arn'
+
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__chain_assume(), 'default-access-key', 'default-sso-session')
+        result = credentials.fetch_sso_credentials(profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+        
+        expected_login_calls = [call(sso_session_name='specific-sso-session')]
+        self.assertEqual(expected_login_calls, mock_bash_login.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                config_file=mock_config_parser,
+                sso_session_name="specific-sso-session",
+                profile="developer",
+                account_id="123456789012",
+                role="developer",
+                region="us-east-1",
+            ),
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
+        
+        expected_mock_chain_profile_calls = [
+             call(
+                config_file=mock_config_parser,
+                profile="pipeline",
+                role_arn="some-arn",
+                source_profile="developer",
+                region="us-east-1",
+            ),
+        ]
+        self.assertEqual(expected_mock_chain_profile_calls, mock_add_sso_chain.call_args_list)
+        
+        self.assertEqual(2, mock_write_config.call_count)    
+        
+    @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials.iam.fetch_role_arn')
+    @mock.patch('app.aws.credentials._add_sso_chain_profile')
     @mock.patch('app.aws.credentials._add_sso_profile')
     @mock.patch('app.aws.credentials._sso_bash_login')
     @mock.patch('app.aws.credentials._load_config_file')
     def test_fetch_sso_credentials__sso_bash_error(self, mock_load_config, mock_bash_login, mock_add_sso_profile,
-                                    mock_write_config):
+                                    mock_add_sso_chain, mock_iam, mock_write_config):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.error_result
@@ -417,9 +472,8 @@ class TestCredentials(TestCase):
         expected_login_calls = [call(sso_session_name='specific-sso-session')]
         self.assertEqual(expected_login_calls, mock_bash_login.call_args_list)
 
-        expected_mock_add_profile_calls = []
-        self.assertEqual(expected_mock_add_profile_calls, mock_add_sso_profile.call_args_list)
-        
+        self.assertEqual(0, mock_add_sso_profile.call_count)
+        self.assertEqual(0, mock_add_sso_chain.call_count)
         self.assertEqual(0, mock_write_config.call_count)
 
 

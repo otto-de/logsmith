@@ -5,18 +5,15 @@ from pathlib import Path
 
 import boto3
 import botocore
-from botocore.exceptions import (
-    ClientError,
-    ParamValidationError,
-    EndpointConnectionError,
-    NoCredentialsError,
-    ReadTimeoutError,
-)
+from aws import iam
+from botocore.exceptions import (ClientError, EndpointConnectionError,
+                                 NoCredentialsError, ParamValidationError,
+                                 ReadTimeoutError)
+from shell import shell
 
 from app.core.profile_group import ProfileGroup
 from app.core.result import Result
 from app.util import util
-from shell import shell
 
 logger = logging.getLogger("logsmith")
 
@@ -238,24 +235,36 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
     try:
         for profile in profile_group.get_profile_list():
             logger.info(f"write {profile.profile}")
-            # TODO if source_profile, than use the old way of getting credentials?
-            _add_sso_profile(
-                config_file=config_file,
-                sso_session_name=sso_session,
-                profile=profile.profile,
-                account_id=profile.account,
-                role=profile.role,
-                region=profile_group.region,
-            )
-            if profile.default:
+
+            if profile.source:
+                role_arn = iam.fetch_role_arn(
+                    profile=profile.source, role_name=profile.role
+                )
+                _add_sso_chain_profile(
+                    config_file=config_file,
+                    profile=profile.profile,
+                    role_arn=role_arn,
+                    source_profile=profile.source,
+                    region=profile_group.region,
+                )
+            else:
                 _add_sso_profile(
                     config_file=config_file,
                     sso_session_name=sso_session,
-                    profile="default",
+                    profile=profile.profile,
                     account_id=profile.account,
                     role=profile.role,
                     region=profile_group.region,
                 )
+                if profile.default:
+                    _add_sso_profile(
+                        config_file=config_file,
+                        sso_session_name=sso_session,
+                        profile="default",
+                        account_id=profile.account,
+                        role=profile.role,
+                        region=profile_group.region,
+                    )
             _write_config_file(config_file)
     except Exception:
         error_text = "error while fetching role credentials"
@@ -314,7 +323,7 @@ def write_profile_config(profile_group: ProfileGroup, region: str) -> Result:
 
     try:
         for profile in profile_group.get_profile_list():
-            logger.info(f"add regoin config for {profile.profile}")
+            logger.info(f"add region config for {profile.profile}")
             _add_profile_config(config_file, profile.profile, region)
             if profile.default:
                 _add_profile_config(config_file, "default", region)
@@ -444,6 +453,22 @@ def _add_sso_profile(
     config_file.set(config_name, "sso_session", sso_session_name)
     config_file.set(config_name, "sso_account_id", account_id)
     config_file.set(config_name, "sso_role_name", role)
+    config_file.set(config_name, "region", region)
+    config_file.set(config_name, "output", "json")
+
+
+def _add_sso_chain_profile(
+    config_file: configparser,
+    profile: str,
+    role_arn: str,
+    source_profile: str,
+    region: str,
+):
+    config_name = f"profile {profile}"
+    if not config_file.has_section(config_name):
+        config_file.add_section(config_name)
+    config_file.set(config_name, "role_arn", role_arn)
+    config_file.set(config_name, "source_profile", source_profile)
     config_file.set(config_name, "region", region)
     config_file.set(config_name, "output", "json")
 
