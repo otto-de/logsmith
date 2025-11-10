@@ -17,7 +17,7 @@ def gcloud_auth_login() -> Result:
     if script_result.payload is None:
         result.error("gcloud auth login command failed")
     else:
-        result.set_success
+        result.set_success()
     return result
 
 
@@ -32,7 +32,5 @@ def gcloud_auth_application_login() -> Result:
     if script_result.payload is None:
         result.error("gcloud auth application-default login command failed")
     else:
-        result.set_success
+        result.set_success()
     return result
-    
-    return 
