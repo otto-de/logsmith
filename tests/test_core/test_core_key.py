@@ -110,13 +110,13 @@ class TestCoreKey(TestCase):
     @mock.patch('app.core.core.Core.set_region')
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.credentials')
-    def test_login_key__fetch_role_credentials_failure(self, mock_credentials, mock_ensure_session, mock_set_region,
+    def test_login_key__fetch_key_credentials_failure(self, mock_credentials, mock_ensure_session, mock_set_region,
                                                    mock_handle_support_files, mock_run_script):
         mock_credentials.cleanup.return_value = self.success_result
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.fail_result
+        mock_credentials.fetch_key_credentials.return_value = self.fail_result
 
         profile_group = get_test_profile_group()
         result = self.core.login_with_key(profile_group, None)
@@ -127,7 +127,7 @@ class TestCoreKey(TestCase):
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
-                                     call.fetch_role_credentials('user', profile_group)]
+                                     call.fetch_key_credentials('user', profile_group)]
         self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
         self.assertEqual([], mock_set_region.mock_calls)
         self.assertEqual([], mock_handle_support_files.mock_calls)
@@ -144,7 +144,7 @@ class TestCoreKey(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
         mock_set_region.return_value = self.fail_result
 
         profile_group = get_test_profile_group()
@@ -158,7 +158,7 @@ class TestCoreKey(TestCase):
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
-                                     call.fetch_role_credentials('user', profile_group)]
+                                     call.fetch_key_credentials('user', profile_group)]
         self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
         self.assertEqual([], mock_handle_support_files.mock_calls)
         self.assertEqual([], mock_run_script.mock_calls)
@@ -174,7 +174,7 @@ class TestCoreKey(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
         mock_set_region.return_value = self.success_result
         mock_run_script.return_value = self.fail_result
 
@@ -194,7 +194,7 @@ class TestCoreKey(TestCase):
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
-                                     call.fetch_role_credentials('user', profile_group)]
+                                     call.fetch_key_credentials('user', profile_group)]
         self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
 
     @mock.patch('app.core.core.Core.run_script')
@@ -208,7 +208,7 @@ class TestCoreKey(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
         mock_set_region.return_value = self.success_result
         mock_run_script.return_value = self.success_result
 
@@ -233,7 +233,7 @@ class TestCoreKey(TestCase):
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
-                                     call.fetch_role_credentials('user', profile_group)]
+                                     call.fetch_key_credentials('user', profile_group)]
         self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
 
     @mock.patch('app.core.core.Core.run_script')
@@ -247,7 +247,7 @@ class TestCoreKey(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
         mock_set_region.return_value = self.success_result
         mock_run_script.return_value = self.success_result
 
@@ -271,7 +271,7 @@ class TestCoreKey(TestCase):
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
-                                     call.fetch_role_credentials('user', profile_group)]
+                                     call.fetch_key_credentials('user', profile_group)]
         self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
 
     @mock.patch('app.core.core.Core.run_script')
@@ -284,7 +284,7 @@ class TestCoreKey(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
         mock_set_region.return_value = self.success_result
         mock_run_script.return_value = self.success_result
 

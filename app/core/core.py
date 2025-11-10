@@ -53,7 +53,7 @@ class Core:
             return session_result
 
         user_name = credentials.get_user_name(access_key=access_key)
-        role_result = credentials.fetch_role_credentials(user_name, profile_group)
+        role_result = credentials.fetch_key_credentials(user_name, profile_group)
         if not role_result.was_success:
             return role_result
 

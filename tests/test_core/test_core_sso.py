@@ -206,7 +206,7 @@ class TestCoreSSO(TestCase):
         mock_credentials.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_credentials.get_user_name.return_value = 'user'
-        mock_credentials.fetch_role_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
         mock_set_region.return_value = self.success_result
         mock_run_script.return_value = self.success_result
 

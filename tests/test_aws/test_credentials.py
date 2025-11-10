@@ -176,14 +176,14 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials(self, mock_load_credentials, mock_assume, mock_add_profile,
+    def test_fetch_key_credentials(self, mock_load_credentials, mock_assume, mock_add_profile,
                                     mock_write_credentials):
         mock_config_parser = Mock()
         mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session')
-        result = credentials.fetch_role_credentials('test_user', profile_group)
+        result = credentials.fetch_key_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -213,7 +213,7 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials_with_specific_access_key(self, mock_load_credentials, mock_assume, mock_add_profile,
+    def test_fetch_key_credentials_with_specific_access_key(self, mock_load_credentials, mock_assume, mock_add_profile,
                                                              mock_write_credentials):
         mock_config_parser = Mock()
         mock_load_credentials.return_value = mock_config_parser
@@ -221,7 +221,7 @@ class TestCredentials(TestCase):
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_with_specific_access_key(),
                                      'default-access-key', 'default-sso-session')
-        result = credentials.fetch_role_credentials('test_user', profile_group)
+        result = credentials.fetch_key_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -250,14 +250,14 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials__no_default(self, mock_load_credentials, mock_assume, mock_add_profile,
+    def test_fetch_key_credentials__no_default(self, mock_load_credentials, mock_assume, mock_add_profile,
                                                 mock_write_credentials):
         mock_config_parser = Mock()
         mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session')
-        result = credentials.fetch_role_credentials('test-user', profile_group)
+        result = credentials.fetch_key_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -282,14 +282,14 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._add_profile_credentials')
     @mock.patch('app.aws.credentials._assume_role')
     @mock.patch('app.aws.credentials._load_credentials_file')
-    def test_fetch_role_credentials__chain_assume(self, mock_load_credentials, mock_assume, mock_add_profile,
+    def test_fetch_key_credentials__chain_assume(self, mock_load_credentials, mock_assume, mock_add_profile,
                                                   mock_write_credentials):
         mock_config_parser = Mock()
         mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default-access-key', 'default-sso-session')
-        result = credentials.fetch_role_credentials('test-user', profile_group)
+        result = credentials.fetch_key_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 

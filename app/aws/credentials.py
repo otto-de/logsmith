@@ -197,7 +197,7 @@ def fetch_session_token(access_key: str, mfa_token: str) -> Result:
     return result
 
 
-def fetch_role_credentials(user_name: str, profile_group: ProfileGroup) -> Result:
+def fetch_key_credentials(user_name: str, profile_group: ProfileGroup) -> Result:
     result = Result()
     credentials_file = _load_credentials_file()
     logger.info("fetch role credentials")
