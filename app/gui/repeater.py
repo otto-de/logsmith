@@ -13,7 +13,7 @@ class Repeater:
         delay_millies = delay_seconds * 1000
         self.stop()
 
-        logger.info('start timer')
+        logger.info(f'start timer for {delay_seconds}s')
         timer = QTimer()
         timer.setSingleShot(True)
         timer.timeout.connect(task)
