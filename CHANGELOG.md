@@ -19,6 +19,9 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Added
+- show version in menu (thanks @henrypratsch)
+
 ## 9.0.0 - 2025-11-13
 
 ### Added

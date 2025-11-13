@@ -21,20 +21,20 @@ Logsmith is a desktop trayicon to:
 - removes unused profiles  
 - custom icon color for each profile group
 - set and rotate access key
+- set sso session
 - fetches mfa token
 - comfortably assume service roles
 - copy account ids and profile names
-- run ascript after login
+- run a script after login
 - has a graphical user interface and a cli
-
-access-key name! it must be 
 
 ## Getting started
 ![](./docs/warning.svg)
-**Warning**: logsmith will write in your `.aws/credentials` and `./aws/config` files and part of its feature set is to remove unused profiles.
+**Warning**: logsmith will write in your `.aws/credentials` and `./aws/config` files and it will remove unused profiles, this is a feature to "logout" the user.
 This includes potential **access-keys** (which are profiles as well). If you have data in there that must not be lost, please back up the data beforehand.
 
-Logsmith identifies access-keys if their profile name starts with `access-key` (e.g. `access-key` or `access-key-foo`) and will not remove them.
+Logsmith identifies **access-keys** if their profile name starts with `access-key` (e.g. `access-key` or `access-key-foo`) in `.aws/credentials` and will not remove them.
+The same is true for **sso sessions**, which must start with `sso` in the `.aws/config` to not be removed.
 
 ### Run from source
 If you want to run logsmith from source, please use the following steps:
@@ -57,10 +57,12 @@ This will create a venv.
 ```
 After startup, a small cloud should appear in the start bar (this application has no main window).
 
-#### 4. Add access-key (aws) 
-Click on the cloud and select "Set access key".
+#### 4. Add access-key or sso-session (aws) 
+Click on the cloud and select "Set access key" or "Set SSO Session".
 
-A dialog will appear where you can add your access key data. Please be advised that an access-key must start with the prefix `access-key`. The default name is simply `access-key`.
+A dialog will appear where you can add your data. Please be advised that an access-key must start with the prefix `access-key` and sso-sessions must start with `sso`.
+
+The default name is simply `access-key` and `sso` respectively.
 
 #### 5. Add configuration
 To add your configuration for the accounts and profiles (aka profile groups) you want to login in, click on the cloud and select "Edit Config".
@@ -81,7 +83,7 @@ The configuration is a YAML file that contains any number of profile groups. Eac
 
 ![](./docs/warning.svg) **Warning**: If you have account ids with leading zeros, please make sure to put them in quotes, otherwise they will be interpreted as octal numbers.
 
-Do not use "access-key" (or anything with prefix "access-key") or "service" as profile names. These are reserved for access keys and service profiles.
+Do not use "access-key", "sso" (or anything with these as prefix) or "service" as profile names. These are reserved for access keys and service profiles.
 
 ```yaml
 productive:                     # profile group name (will be displayed)
@@ -90,13 +92,15 @@ productive:                     # profile group name (will be displayed)
   color: '#388E3C'              # color code used to color the tray icon
   script: 'some-script.sh'      # script to run after login (optional)
   access_key: 'access-key'      # access-key name that this group should use (optional)
+  sso_session: 'sso-session'    # sso-session name that this group should use (optional)
+  auth_mode: key                # use either key or sso as auth modes
   profiles:
     - profile: nonlive          # local profile name
       account: '123456789123'   # account id
       role: developer           # role name that will be assumed  
       default: true             # flag if this profile should be the default profile (optional)
     - profile: live
-      account: '123456789123'
+      account: '987654321987'
       role: developer
 
 # for google cloud:
@@ -163,13 +167,24 @@ productive:
 ```
 
 ## AWS Access key
-Please use the dialog option provided by logsmith to set your access key or save it in `.aws/credentials` 
+Please use the dialog option provided by logsmith to set your access key or set it manually in `.aws/credentials` 
 under the profile name *access-key*.
 
 ```config
 [access-key]
 aws_access_key_id = blablubb
 aws_secret_access_key = supersecret
+```
+
+## AWS SSO Session
+Please use the dialog option provided by logsmith to set your sso session or set it manually in `.aws/config` 
+under the profile name *sso*.
+
+```config
+[sso-session sso]
+sso_start_url = some-url
+sso_region = some-region
+sso_registration_scopes = some-scopes
 ```
 
 ## AWS Regions
@@ -184,7 +199,7 @@ output = json
 The region in your config will be used if you don't specify a region in your aws cli call or set AWS_REGION environment variable.
 
 ## Logout
-If you choose the logout option under the profile groups, logsmith will remove all profiles from your `.aws/credentials` and `.aws/config` files.
+If you choose the logout option under the profile groups, logsmith will remove all profiles (that do not start with **access-key** or **sso**) from your `.aws/credentials` and `.aws/config` files.
 
 This can be useful if you want to restrict access to the AWS/GCP before running local tests.
 
@@ -196,10 +211,9 @@ For example:
 - yubioath (linux)
 
 On the logsmith config dialog, you can specify the appropriate command to fetch the token. Your command should return the 6 digit code.
-Please also keep in mind that you might have to provide the whole path/command.
 
 Example:
-`/usr/local/bin/ykman oath accounts code  | awk 'NF>1{print $NF}'` .
+`ykman oath accounts code  | awk 'NF>1{print $NF}'` .
 
 ## Service Profile
 The Service Profile feature allows you to list and select roles that can be assumed with a given profile, allowing users to easily filter and select a role without needing to manually write role names. 
