@@ -69,6 +69,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                 action.setIcon(self.assets.get_icon(style=ICON_STYLE_GCP, color_code=profile_group.color))
                 self.actions.append(action)
 
+        menu.addSeparator()
         # script checkbox
         self.script_checkbox = menu.addAction("Run Script")
         self.script_checkbox.setCheckable(True)
