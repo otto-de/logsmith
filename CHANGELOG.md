@@ -19,6 +19,8 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## 9.0.1 - 2025-11-13
+
 ### Added
 - show version in menu (thanks @henrypratsch)
 
@@ -32,7 +34,8 @@ Release dates will be in YYYY-MM-DD format.
 
 ### Changed
 - Changed how source profile arns are fetched to accomondate longer aws reserved sso role arns.
-- Scripts will now run with context of the local standard shell
+- Scripts will now run with context of the local standard shell.
+- All script output will now be captured and are shown in the logs.
 
 ### Fixed 
 - Failing gco login flow (thanks to @3cham)
