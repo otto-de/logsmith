@@ -57,7 +57,11 @@ class ProfileGroup:
                 profile_list.append('service')
         return profile_list
 
-    def get_profile_list(self) -> List[Profile]:
+    def get_profile_list(self, include_service_profile=False) -> List[Profile]:
+        if include_service_profile and self.service_profile:
+            profile_list = self.profiles.copy()
+            profile_list.append(self.service_profile)
+            return profile_list
         return self.profiles
 
     def get_profile(self, profile_name) -> Optional[Profile]:

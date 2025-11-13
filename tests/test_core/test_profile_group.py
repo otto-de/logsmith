@@ -297,6 +297,15 @@ class TestProfileGroup(TestCase):
 
         self.assertEqual(expected, result)
 
+    def test_get_profile_list__with_service_role(self):
+        profile_group = get_test_profile_group()
+        profile_group.set_service_role_profile(source_profile_name='developer', role_name='pipeline')
+
+        result = profile_group.get_profile_list(True)
+        expected = [profile_group.profiles[0], profile_group.profiles[1], profile_group.service_profile]
+
+        self.assertEqual(expected, result)
+
     def test_get_profile(self):
         profile_group = get_test_profile_group()
 

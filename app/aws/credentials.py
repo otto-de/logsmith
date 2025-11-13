@@ -354,7 +354,7 @@ def write_profile_config(profile_group: ProfileGroup, region: str) -> Result:
     config_file = _load_config_file()
 
     try:
-        for profile in profile_group.get_profile_list():
+        for profile in profile_group.get_profile_list(include_service_profile=True):
             logger.info(f"add region config for {profile.profile}")
             _add_profile_config(config_file, profile.profile, region)
             if profile.default:
