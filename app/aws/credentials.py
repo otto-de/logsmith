@@ -439,24 +439,6 @@ def _add_sso_profile(
     config_file.set(config_name, "output", "json")
 
 
-def _add_sso_profile(
-    config_file: configparser,
-    sso_session_name: str,
-    profile: str,
-    account_id: str,
-    role: str,
-    region: str,
-):
-    config_name = f"profile {profile}"
-    if not config_file.has_section(config_name):
-        config_file.add_section(config_name)
-    config_file.set(config_name, "sso_session", sso_session_name)
-    config_file.set(config_name, "sso_account_id", account_id)
-    config_file.set(config_name, "sso_role_name", role)
-    config_file.set(config_name, "region", region)
-    config_file.set(config_name, "output", "json")
-
-
 def _add_sso_chain_profile(
     config_file: configparser,
     profile: str,
