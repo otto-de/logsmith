@@ -17,7 +17,7 @@ def parse(args):
     parser.add_argument('--logout', action='store_true',
                         help='Remove profiles')
     parser.add_argument('--region',
-                        help='Overwrite region to login to')
+                        help='Overwrite region')
     parser.add_argument('--set-access-key', action='store_true',
                         help='start dialog to set access key')
     parser.add_argument('--rotate-access-key', metavar='KEY_NAME',

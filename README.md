@@ -226,9 +226,10 @@ If you provide one of the following parameter logsmith will automatically start 
   --list                                  lists profile groups
   --login GROUP                           Login with group
   --logout                                Remove profiles
-  --region REGION                         Overwrite region to login to
-  --set-access-key                        set access key
+  --region REGION                         Overwrite region
+  --set-access-key                        start dialog to set access key
   --rotate-access-key KEY_NAME            rotate access key
+  --set-sso-session                       start dialog to set sso session
   --list-service-roles PROFILE            list assumable roles for the given profile
   --set-service-roles GROUP PROFILE ROLE  set service role for the given profile
   -o --oneshot                            exit after login

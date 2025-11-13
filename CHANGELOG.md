@@ -19,13 +19,17 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## 9.0.0 - 2025-11-13
+
 ### Added
 - Option to login with aws sso.
 - Option to set sso session data similar to access-keys.
 - Chain assume for sso.
+- service role for assume for sso.
 
 ### Changed
 - Changed how source profile arns are fetched to accomondate longer aws reserved sso role arns.
+- Scripts will now run with context of the local standard shell
 
 ## 8.3.0 - 2025-04-09
 
