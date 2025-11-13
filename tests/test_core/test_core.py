@@ -416,3 +416,23 @@ class TestCore(TestCase):
         self.assertEqual(True, result.was_error)
         self.assertEqual([call('./some-script.sh')], mock_files_exists.mock_calls)
         self.assertEqual([call(command='./some-script.sh', timeout=60)], mock_shell_run.mock_calls)
+
+    def test__check_name(self):
+        result = self.core.check_name('sso', 'sso-test')
+        
+        self.assertEqual(False, result.was_error)
+        self.assertEqual(True, result.was_success)
+        
+    def test__check_name__does_not_start_right(self):
+        result = self.core.check_name('sso', 'test')
+        
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("'test' must start with sso", result.error_message)
+        self.assertEqual(False, result.was_success)
+        
+    def test__check_name__contain_spaces(self):
+        result = self.core.check_name('sso', 'sso test')
+        
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("'sso test' must not contain spaces", result.error_message)
+        self.assertEqual(False, result.was_success)

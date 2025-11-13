@@ -23,15 +23,6 @@ class Core:
         self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '', '')
         self.region_override: str = None
     
-    def login(self, profile_group: ProfileGroup) -> Result:
-        if profile_group.get_auth_mode() == 'key':
-            self.login_with_key(profile_group=profile_group, mfa_token=None)
-        elif profile_group.get_auth_mode() == 'sso':
-            self.login_with_sso(profile_group=profile_group)
-        result = Result()
-        result.error('auth_mode was neither key or sso.')
-        return result
-    
     ########################
     # ACCESS KEY LOGIN
     def login_with_key(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
@@ -322,3 +313,15 @@ class Core:
     @staticmethod
     def get_sso_sessions_list() -> list:
         return credentials.get_sso_sessions_list()
+
+    @staticmethod
+    def check_name(prefix: str, name: str) -> Result:
+        result = Result()
+        if not name.startswith(prefix):
+            result.error(f"'{name}' must start with {prefix}")
+            return result
+        if ' ' in name:
+            result.error(f"'{name}' must not contain spaces")
+            return result
+        result.set_success()
+        return result

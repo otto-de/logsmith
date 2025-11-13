@@ -19,9 +19,11 @@ def parse(args):
     parser.add_argument('--region',
                         help='Overwrite region to login to')
     parser.add_argument('--set-access-key', action='store_true',
-                        help='set access key')
+                        help='start dialog to set access key')
     parser.add_argument('--rotate-access-key', metavar='KEY_NAME',
                         help='rotate given access key')
+    parser.add_argument('--set-sso-session', action='store_true',
+                        help='start dialog to set sso session')
     parser.add_argument('--list-service-roles', metavar='PROFILE',
                         help='list assumable roles for the given profile')
     parser.add_argument('--set-service-roles', nargs=3, metavar=('GROUP', 'PROFILE', 'ROLE'),
@@ -41,6 +43,7 @@ def use_cli(args):
         args.region,
         args.rotate_access_key,
         args.set_access_key,
+        args.set_sso_session,
         args.list_service_roles,
         args.set_service_roles,
         args.toggle,

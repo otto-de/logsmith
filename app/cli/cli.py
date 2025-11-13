@@ -7,6 +7,7 @@ from app.aws import iam
 from app.aws.regions import region_list
 from app.core.core import Core
 from app.core.result import Result
+from core.profile_group import ProfileGroup
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 work_dir = os.getcwd()
@@ -41,7 +42,16 @@ class Cli:
             self._warning('available regions:')
             self._print_regions()
             sys.exit(1)
+            
+        if profile_group.get_auth_mode() == 'key':
+            self.login_with_key(profile_group=profile_group, region=region, oneshot=oneshot)
+        elif profile_group.get_auth_mode() == 'sso':
+            self.login_with_sso(profile_group=profile_group, region=region, oneshot=oneshot)
+        result = Result()
+        result.error('auth_mode was neither key or sso.')
+        return result
 
+    def login_with_key(self, profile_group: ProfileGroup, region: str, oneshot: bool):
         login_result = self.core.login_with_key(profile_group=profile_group, mfa_token=None)
         self._check_and_signal_error(login_result)
         if not login_result.was_success:
@@ -57,8 +67,28 @@ class Cli:
         if oneshot:
             return
 
-        time.sleep(300)
-        self.login(profile_group_name, region)
+        seconds = 300
+        self._info(f'start timer for {seconds}')
+        time.sleep(seconds)
+        self.login(profile_group.name, region)
+
+
+    def login_with_sso(self, profile_group: ProfileGroup, region: str, oneshot: bool):
+        login_result = self.core.login_with_sso(profile_group=profile_group)
+        self._check_and_signal_error(login_result)
+    
+        if region:
+            region_result = self.core.set_region(region=region)
+            self._check_and_signal_error(region_result)
+        self._info('login successful')
+
+        if oneshot:
+            return
+
+        seconds = 28800
+        self._info(f'start timer for {seconds}')
+        time.sleep(seconds)
+        self.login(profile_group.name, region)
 
     def logout(self):
         logout_result = self.core.logout()
@@ -75,16 +105,37 @@ class Cli:
         self._info('key was successfully rotated')
 
     def set_access_key(self):
+        print("Set Access Key")
+        print("You will be ask to input the key Name, ID and Secret.")
+        print("The Name must have the prefix 'access-key' and contains no spaces.")
         while True:
             key_name = input('Key Name: ')
-            if not key_name.startswith('access-key'):
-                self._error('key name must start with \'access-key\'')
+            result = self.core.check_name('access-key', key_name)
+            if result.was_error:
+                self._error(result.error_message)
             else:
                 break
         key_id = getpass(prompt='Key ID: ')
         key_secret = getpass(prompt='Secret Access Key: ')
         self.core.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
         self._info('key was successfully set')
+
+    def set_sso_session(self):
+        print("Set SSO Session")
+        print("You will be ask to input the Name, URL, Region and Scope of your SSO session.")
+        print("The Name must have the prefix 'sso' and contain no spaces.")
+        while True:
+            sso_name = input('Session Name: ')
+            result = self.core.check_name('sso', sso_name)
+            if result.was_error:
+                self._error(result.error_message)
+            else:
+                break
+        sso_url = getpass(prompt='URL: ')
+        sso_region = getpass(prompt='Region: ')
+        sso_scopes = getpass(prompt='Scopes: ')
+        self.core.set_sso_session(sso_name=sso_name, sso_url=sso_url, sso_region=sso_region, sso_scopes=sso_scopes)
+        self._info('sso session was successfully set')
 
     def set_service_role(self, group, profile, role):
         self.core.config.save_selected_service_role(group_name=group, profile_name=profile, role_name=role)
