@@ -476,6 +476,55 @@ class TestCredentials(TestCase):
         self.assertEqual(0, mock_add_sso_chain.call_count)
         self.assertEqual(0, mock_write_config.call_count)
 
+    @mock.patch('app.aws.credentials._write_credentials_file')
+    @mock.patch('app.aws.credentials._add_profile_credentials')
+    @mock.patch('app.aws.credentials._assume_role')
+    @mock.patch('app.aws.credentials._load_credentials_file')
+    def test_fetch_key_service_profile(self, mock_load_credentials, mock_assume_role, mock_add_profile_credentials, mock_write_credentials_file):
+        mock_config_parser = Mock()
+        mock_load_credentials.return_value = mock_config_parser
+        mock_assume_role.return_value = 'secrets'
+        
+        profile_group = test_accounts.get_test_profile_group(include_service_role=True)
+        result = credentials.fetch_key_service_profile(profile_group)
+        self.assertEqual(True, result.was_success)
+        
+        expected_assume_role_calls = [call('developer', 'dummy', '123456789012', 'dummy')]
+        self.assertEqual(expected_assume_role_calls, mock_assume_role.call_args_list)     
+           
+        expected_add_profile_credentialscalls = [call(mock_config_parser, 'service', 'secrets')]
+        self.assertEqual(expected_add_profile_credentialscalls, mock_add_profile_credentials.call_args_list)           
+        
+        expected_write_credentials_file_calls = [call(mock_config_parser)]
+        self.assertEqual(expected_write_credentials_file_calls, mock_write_credentials_file.call_args_list)
+        
+
+    @mock.patch('app.aws.credentials._write_config_file')
+    @mock.patch('app.aws.credentials._add_sso_chain_profile')
+    @mock.patch('app.aws.credentials.iam.fetch_role_arn')
+    @mock.patch('app.aws.credentials._load_config_file')
+    def test_fetch_sso_service_profile(self,  mock_load_config, mock_fetch_role_arn, mock_add_sso_chain, mock_write_config_file):
+        mock_load_config.return_value = 'config-file'
+        mock_fetch_role_arn.return_value = 'some-arn'
+        
+        profile_group = test_accounts.get_test_profile_group(include_service_role=True)
+        result = credentials.fetch_sso_service_profile(profile_group)
+        self.assertEqual(True, result.was_success)
+        
+        expected_assume_role_calls = [call(profile='developer', role_name='dummy')]
+        self.assertEqual(expected_assume_role_calls, mock_fetch_role_arn.call_args_list)     
+           
+        expected_add_profile_credentialscalls = [call(
+            config_file='config-file',
+            profile='dummy',
+            role_arn='some-arn',
+            source_profile='developer',
+            region='some')]
+        self.assertEqual(expected_add_profile_credentialscalls, mock_add_sso_chain.call_args_list)           
+        
+        expected_write_credentials_file_calls = [call('config-file')]
+        self.assertEqual(expected_write_credentials_file_calls, mock_write_config_file.call_args_list)
+        
 
     def test__cleanup_profiles(self):
         mock_config_parser = Mock()

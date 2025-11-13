@@ -98,6 +98,7 @@ class TestCoreKey(TestCase):
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+        
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key')]
         self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
@@ -124,6 +125,7 @@ class TestCoreKey(TestCase):
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+        
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
@@ -153,8 +155,10 @@ class TestCoreKey(TestCase):
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+        
         expected_set_region_calls = [call(None)]
         self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+        
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
@@ -185,12 +189,16 @@ class TestCoreKey(TestCase):
 
         expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token=None)]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+        
         expected_set_region_calls = [call(None)]
         self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+        
         expected_handle_support_files_calls = [call(profile_group)]
         self.assertEqual(expected_handle_support_files_calls, mock_handle_support_files.mock_calls)
+        
         expected_run_script_calls = [call(profile_group)]
         self.assertEqual(expected_run_script_calls, mock_run_script.mock_calls)
+        
         expected_credential_calls = [call.cleanup(),
                                      call.check_access_key(access_key='some-access-key'),
                                      call.get_user_name(access_key='some-access-key'),
@@ -295,3 +303,76 @@ class TestCoreKey(TestCase):
 
         expected_set_region_calls = [call('eu-north-1')]
         self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+        
+
+    @mock.patch('app.core.core.Core.run_script')
+    @mock.patch('app.core.core.Core._handle_support_files')
+    @mock.patch('app.core.core.Core.set_region')
+    @mock.patch('app.core.core.Core._ensure_session')
+    @mock.patch('app.core.core.credentials')
+    def test_login_key__fetch_service_role_failure(self, mock_credentials, mock_ensure_session, mock_set_region,
+                                     mock_handle_support_files, mock_run_script):
+        mock_credentials.cleanup.return_value = self.success_result
+        mock_credentials.check_access_key.return_value = self.success_result
+        mock_ensure_session.return_value = self.success_result
+        mock_credentials.get_user_name.return_value = 'user'
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_service_profile.return_value = self.fail_result
+        mock_set_region.return_value = self.success_result
+        mock_run_script.return_value = self.success_result
+
+        profile_group = get_test_profile_group(include_service_role=True)
+        result = self.core.login_with_key(profile_group, '123456')
+        self.assertEqual(result, self.fail_result)
+
+        expected_credential_calls = [call.cleanup(),
+                                     call.check_access_key(access_key='some-access-key'),
+                                     call.get_user_name(access_key='some-access-key'),
+                                     call.fetch_key_credentials('user', profile_group),
+                                     call.fetch_key_service_profile(profile_group)]
+        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+        
+        self.assertEqual([], mock_set_region.mock_calls)
+        self.assertEqual([], mock_handle_support_files.mock_calls)
+        self.assertEqual([], mock_run_script.mock_calls)
+
+
+    @mock.patch('app.core.core.Core.run_script')
+    @mock.patch('app.core.core.Core._handle_support_files')
+    @mock.patch('app.core.core.Core.set_region')
+    @mock.patch('app.core.core.Core._ensure_session')
+    @mock.patch('app.core.core.credentials')
+    def test_login_key__successfull_login_with_service_role(self, mock_credentials, mock_ensure_session, mock_set_region,
+                                     mock_handle_support_files, mock_run_script):
+        mock_credentials.cleanup.return_value = self.success_result
+        mock_credentials.check_access_key.return_value = self.success_result
+        mock_ensure_session.return_value = self.success_result
+        mock_credentials.get_user_name.return_value = 'user'
+        mock_credentials.fetch_key_credentials.return_value = self.success_result
+        mock_credentials.fetch_key_service_profile.return_value = self.success_result
+        mock_set_region.return_value = self.success_result
+        mock_run_script.return_value = self.success_result
+
+        profile_group = get_test_profile_group(include_service_role=True)
+        result = self.core.login_with_key(profile_group, '123456')
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_ensure_session_calls = [call(access_key='some-access-key', mfa_token='123456')]
+        self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
+
+        expected_set_region_calls = [call(None)]
+        self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+
+        expected_handle_support_files_calls = [call(profile_group)]
+        self.assertEqual(expected_handle_support_files_calls, mock_handle_support_files.mock_calls)
+
+        expected_run_script_calls = [call(profile_group)]
+        self.assertEqual(expected_run_script_calls, mock_run_script.mock_calls)
+
+        expected_credential_calls = [call.cleanup(),
+                                     call.check_access_key(access_key='some-access-key'),
+                                     call.get_user_name(access_key='some-access-key'),
+                                     call.fetch_key_credentials('user', profile_group),
+                                     call.fetch_key_service_profile(profile_group)]
+        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)

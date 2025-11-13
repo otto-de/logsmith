@@ -217,4 +217,57 @@ class TestCoreSSO(TestCase):
 
         expected_set_region_calls = [call('eu-north-1')]
         self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+
+    @mock.patch('app.core.core.Core.run_script')
+    @mock.patch('app.core.core.Core._handle_support_files')
+    @mock.patch('app.core.core.Core.set_region')
+    @mock.patch('app.core.core.credentials')
+    def test_login_sso__fetch_service_role_failure(self, mock_credentials, mock_set_region,
+                                                   mock_handle_support_files, mock_run_script):
+        mock_credentials.cleanup.return_value = self.success_result
+        mock_credentials.fetch_sso_credentials.return_value = self.success_result
+        mock_credentials.fetch_sso_service_profile.return_value = self.fail_result
+
+        profile_group = get_test_profile_group(include_service_role=True)
+        result = self.core.login_with_sso(profile_group)
+        self.assertEqual(self.fail_result, result)
+
+        expected_credential_calls = [call.cleanup(),
+                                     call.fetch_sso_credentials(profile_group),
+                                     call.fetch_sso_service_profile(profile_group)]                                     
+        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
         
+        self.assertEqual([], mock_set_region.mock_calls)
+        self.assertEqual([], mock_handle_support_files.mock_calls)
+        self.assertEqual([], mock_run_script.mock_calls)
+
+    @mock.patch('app.core.core.Core.run_script')
+    @mock.patch('app.core.core.Core._handle_support_files')
+    @mock.patch('app.core.core.Core.set_region')
+    @mock.patch('app.core.core.credentials')
+    def test_login_sso__successfull_login_with_service_role(self, mock_credentials, mock_set_region,
+                                                   mock_handle_support_files, mock_run_script):
+        mock_credentials.cleanup.return_value = self.success_result
+        mock_credentials.fetch_sso_credentials.return_value = self.success_result
+        mock_credentials.fetch_sso_service_profile.return_value = self.success_result
+        mock_set_region.return_value = self.success_result
+        mock_run_script.return_value = self.success_result
+
+        profile_group = get_test_profile_group(include_service_role=True)
+        result = self.core.login_with_sso(profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_set_region_calls = [call(None)]
+        self.assertEqual(expected_set_region_calls, mock_set_region.mock_calls)
+
+        expected_handle_support_files_calls = [call(profile_group)]
+        self.assertEqual(expected_handle_support_files_calls, mock_handle_support_files.mock_calls)
+
+        expected_run_script_calls = [call(profile_group)]
+        self.assertEqual(expected_run_script_calls, mock_run_script.mock_calls)
+
+        expected_credential_calls = [call.cleanup(),
+                                     call.fetch_sso_credentials(profile_group),
+                                     call.fetch_sso_service_profile(profile_group)]
+        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)

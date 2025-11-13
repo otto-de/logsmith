@@ -1,8 +1,9 @@
 from unittest import TestCase, mock
 from unittest.mock import Mock, call
 
+from app.core.result import Result
 from app.yubico import mfa
-from core.result import Result
+
 
 
 class TestStart(TestCase):
