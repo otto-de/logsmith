@@ -31,6 +31,9 @@ Release dates will be in YYYY-MM-DD format.
 - Changed how source profile arns are fetched to accomondate longer aws reserved sso role arns.
 - Scripts will now run with context of the local standard shell
 
+### Fixed 
+- Failing gco login flow (thanks to @3cham)
+
 ## 8.3.0 - 2025-04-09
 
 ### Added
