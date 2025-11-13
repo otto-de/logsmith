@@ -3,6 +3,7 @@ from typing import List, TYPE_CHECKING
 
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
+from app.__version__ import __version_string__
 from app.aws import regions
 from app.core.profile_group import ProfileGroup
 from app.core.toggles import Toggles
@@ -129,6 +130,10 @@ class SystemTrayIcon(QSystemTrayIcon):
         menu.addMenu(self.copy_id_menu)
 
         menu.addSeparator()
+        self.version_action = menu.addAction(f"Version: {__version_string__}")
+        self.version_action.setDisabled(True)
+
+        # menu.addSeparator()
         # exit
         exit_action = menu.addAction("Exit")
         exit_action.triggered.connect(self.gui.stop_and_exit)
