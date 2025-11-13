@@ -49,7 +49,7 @@ class Core:
             return role_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = credentials.fetch_service_profile(profile_group)
+            service_profile_result = credentials.fetch_key_service_profile(profile_group)
             if not service_profile_result.was_success:
                 return service_profile_result
         
@@ -84,7 +84,7 @@ class Core:
             return sso_result
         
         if profile_group.service_profile is not None:
-            service_profile_result = credentials.fetch_service_profile(profile_group)
+            service_profile_result = credentials.fetch_sso_service_profile(profile_group)
             if not service_profile_result.was_success:
                 return service_profile_result
 

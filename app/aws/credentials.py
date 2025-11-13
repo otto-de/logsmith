@@ -6,9 +6,13 @@ from pathlib import Path
 import boto3
 import botocore
 from aws import iam
-from botocore.exceptions import (ClientError, EndpointConnectionError,
-                                 NoCredentialsError, ParamValidationError,
-                                 ReadTimeoutError)
+from botocore.exceptions import (
+    ClientError,
+    EndpointConnectionError,
+    NoCredentialsError,
+    ParamValidationError,
+    ReadTimeoutError,
+)
 from shell import shell
 
 from app.core.profile_group import ProfileGroup
@@ -276,10 +280,10 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
     return result
 
 
-def fetch_service_profile(profile_group: ProfileGroup) -> Result:
+def fetch_key_service_profile(profile_group: ProfileGroup) -> Result:
     result = Result()
     credentials_file = _load_credentials_file()
-    logger.info("fetch service profile credentials")
+    logger.info("add service profile via access-key")
 
     service_profile = profile_group.service_profile
 
@@ -295,6 +299,34 @@ def fetch_service_profile(profile_group: ProfileGroup) -> Result:
         _write_credentials_file(credentials_file)
     except Exception:
         error_text = "error while fetching role credentials"
+        result.error(error_text)
+        logger.error(error_text, exc_info=True)
+        return result
+
+    result.set_success()
+    return result
+
+
+def fetch_sso_service_profile(profile_group: ProfileGroup) -> Result:
+    result = Result()
+    config_file = _load_config_file()
+    logger.info("add service profile via sso")
+
+    service_profile = profile_group.service_profile
+
+    try:
+        logger.info(f"fetch {service_profile.profile}")
+        role_arn = iam.fetch_role_arn(profile=service_profile.source, role_name=service_profile.role)
+        _add_sso_chain_profile(
+            config_file=config_file,
+            profile=service_profile.profile,
+            role_arn=role_arn,
+            source_profile=service_profile.source,
+            region=profile_group.region,
+        )
+        _write_config_file(config_file)
+    except Exception:
+        error_text = "error while writing sso service profile"
         result.error(error_text)
         logger.error(error_text, exc_info=True)
         return result
