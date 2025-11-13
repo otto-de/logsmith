@@ -1,7 +1,6 @@
 import os
 from unittest import TestCase, mock
 from unittest.mock import Mock, call
-import pytest
 
 from botocore.exceptions import ClientError, EndpointConnectionError, ParamValidationError, \
     NoCredentialsError, ReadTimeoutError
@@ -514,12 +513,7 @@ class TestCredentials(TestCase):
         expected_assume_role_calls = [call(profile='developer', role_name='dummy')]
         self.assertEqual(expected_assume_role_calls, mock_fetch_role_arn.call_args_list)     
            
-        expected_add_profile_credentialscalls = [call(
-            config_file='config-file',
-            profile='dummy',
-            role_arn='some-arn',
-            source_profile='developer',
-            region='some')]
+        expected_add_profile_credentialscalls = [call(config_file='config-file', profile='service', role_arn='some-arn', source_profile='developer', region='us-east-1')]
         self.assertEqual(expected_add_profile_credentialscalls, mock_add_sso_chain.call_args_list)           
         
         expected_write_credentials_file_calls = [call('config-file')]

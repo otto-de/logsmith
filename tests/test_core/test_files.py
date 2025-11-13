@@ -169,7 +169,7 @@ class Test(TestCase):
         expected = [call(self.test_file)]
         self.assertEqual(expected, mock_os_path_exists.mock_calls)
 
-    @mock.patch('app.core.core.files.get_home_dir', return_value='/home/user')
+    @mock.patch('app.core.files.get_home_dir', return_value='/home/user')
     def test__replace_home_variable(self, mock_get_home_dir):
         self.assertEqual('/home/user/some/path', files.replace_home_variable('\"${HOME}\"/some/path'))
         self.assertEqual('/home/user/some/path', files.replace_home_variable('\"$HOME\"/some/path'))

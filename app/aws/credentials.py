@@ -5,7 +5,7 @@ from pathlib import Path
 
 import boto3
 import botocore
-from aws import iam
+from app.aws import iam
 from botocore.exceptions import (
     ClientError,
     EndpointConnectionError,
@@ -13,7 +13,7 @@ from botocore.exceptions import (
     ParamValidationError,
     ReadTimeoutError,
 )
-from shell import shell
+from app.shell import shell
 
 from app.core.profile_group import ProfileGroup
 from app.core.result import Result

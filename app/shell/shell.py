@@ -3,7 +3,7 @@ import os
 import pwd
 import subprocess
 
-from core.result import Result
+from app.core.result import Result
 
 logger = logging.getLogger('logsmith')
 

@@ -1,7 +1,7 @@
 import logging
 
 from app.shell import shell
-from core.result import Result
+from app.core.result import Result
 
 logger = logging.getLogger('logsmith')
 
