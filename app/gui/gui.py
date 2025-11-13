@@ -345,6 +345,7 @@ class Gui(QMainWindow):
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_OUTLINE))
         self.tray_icon.disable_actions(False)
         self.tray_icon.update_last_login('never')
+        self.tray_icon.set_service_role(None, None)
 
     def _to_error_state(self):
         self._to_reset_state()
