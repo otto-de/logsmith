@@ -524,10 +524,16 @@ def _assume_role(
 
 def _sso_bash_login(sso_session_name: str) -> Result:
     # boto3 does not support login at the moment
+    # unset AWS_PROFILE and AWS_DEFAULT_PROFILE because sso login fails is profile is present
+    # or aborts when profiles are not found.
     return shell.run(
-        command=f"aws sso login --sso-session {sso_session_name}", timeout=600
+        command=f"unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso login --sso-session {sso_session_name}",
+        timeout=600,
     )
 
 
 def _sso_bash_logout() -> Result:
-    return shell.run(command=f"aws sso logout", timeout=600)
+    return shell.run(
+        command=f"unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso logout",
+        timeout=600,
+    )

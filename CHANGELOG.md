@@ -19,6 +19,9 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Fixed
+- Failing sso login when AWS_PROFILE or AWS_DEFAULT_PROFILE is set in environment.
+
 ## 9.0.1 - 2025-11-13
 
 ### Added
