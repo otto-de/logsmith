@@ -68,6 +68,8 @@ def run(command, timeout=5) -> Result:
     if proc is not None:
         logger.info(f'--- shell output start ---\n{proc.stdout.rstrip()}')
         logger.info(f'--- shell output end ---')
+        logger.info(f'--- shell error start ---\n{proc.stderr.rstrip()}')
+        logger.info(f'--- shell error end ---')
     else:
         logger.info(f'--- no shell output ---')
         
