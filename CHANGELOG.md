@@ -19,6 +19,9 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Added
+- log stderr when running scripts (thanks @MarcellSchmenkel)
+
 ## 9.0.2 - 2025-11-18
 
 ### Fixed
