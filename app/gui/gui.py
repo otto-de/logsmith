@@ -3,7 +3,7 @@ from datetime import datetime
 from functools import partial
 from typing import List, Optional
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, QEvent, Qt
 from PyQt6.QtWidgets import QMainWindow
 from core.core import Core
 from gui.mfa_dialog import MfaDialog
@@ -33,6 +33,9 @@ class Gui(QMainWindow):
     def __init__(self, app):
         QMainWindow.__init__(self)
         self.app = app
+        self.app.installEventFilter(self)
+        # self.app.applicationStateChanged.connect(self._on_app_state_changed)
+
         self.core = Core()
         self.assets: Assets = Assets()
         self.last_login: str = 'never'
@@ -52,6 +55,28 @@ class Gui(QMainWindow):
         self.task: Optional[BackgroundTask] = None
 
         self.tray_icon.show()
+        
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.ApplicationStateChange:
+            state = QCoreApplication.instance().applicationState()
+            print("eventFilter ApplicationStateChange ", state)
+            # if state in (
+            #     Qt.ApplicationState.ApplicationInactive,
+            #     Qt.ApplicationState.ApplicationHidden,
+            #     Qt.ApplicationState.ApplicationSuspended,
+            # ):
+            #     self.login_repeater.pause_for_sleep()
+            # elif state == Qt.ApplicationState.ApplicationActive:
+            #     self.login_repeater.resume_after_sleep()
+        return super().eventFilter(obj, event)
+
+    def _on_app_state_changed(self, state):
+        print("_on_app_state_changed ", state)
+        # Only react to real suspend/resume transitions; ignore inactive/hidden window focus changes
+        # if state == Qt.ApplicationState.ApplicationSuspended:
+            # self.login_repeater.pause_for_sleep()
+        # elif state == Qt.ApplicationState.ApplicationActive:
+            # self.login_repeater.resume_after_sleep()
 
     def login(self, profile_group: ProfileGroup):
         if profile_group.auth_mode == "key":
