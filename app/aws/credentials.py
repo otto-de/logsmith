@@ -241,13 +241,14 @@ def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
             logger.info(f"write {profile.profile}")
 
             if profile.source:
-                role_arn = iam.fetch_role_arn(
-                    profile=profile.source, role_name=profile.role
-                )
+                source = profile_group.get_profile(profile.source)
+                if source is None:
+                    result.error(f"Source profile {profile.source} not found")
+                    return result
                 _add_sso_chain_profile(
                     config_file=config_file,
                     profile=profile.profile,
-                    role_arn=role_arn,
+                    role_arn=f"arn:aws:iam::{source.account}:role/{profile.role}",
                     source_profile=profile.source,
                     region=profile_group.region,
                 )
