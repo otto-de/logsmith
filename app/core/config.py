@@ -5,6 +5,7 @@ from app.core.profile_group import ProfileGroup
 
 _default_access_key = 'access-key'
 _default_sso_sesson = 'sso'
+_default_sso_interval = '8'
 
 
 class Config:
@@ -16,14 +17,18 @@ class Config:
         self.error = False
 
         self.mfa_shell_command = None
+        self.shell_path_extension = None
         self.default_access_key = None
         self.default_sso_session = None
+        self.default_sso_interval = None
 
     def initialize(self) -> None:
         config = files.load_config()
         self.mfa_shell_command = config.get('mfa_shell_command', None)
+        self.shell_path_extension = config.get('shell_path_extension', None)
         self.default_access_key = config.get('default_access_key', _default_access_key)
         self.default_sso_session = config.get('default_sso_session', _default_sso_sesson)
+        self.default_sso_interval = config.get('default_sso_interval', _default_sso_interval)
 
         self.service_roles = files.load_service_roles()
 
@@ -53,18 +58,29 @@ class Config:
 
     def set_mfa_shell_command(self, mfa_shell_command: str) -> None:
         self.mfa_shell_command = mfa_shell_command
+        
+    def set_path_extension(self, shell_path_extension: str) -> None:
+        self.shell_path_extension = shell_path_extension
 
     def set_default_access_key(self, default_access_key: str) -> None:
         self.default_access_key = default_access_key
         
+    def set_default_sso_interval(self, default_sso_interval: str) -> None:
+        if default_sso_interval == 'None':
+            self.default_sso_interval = None
+        else:
+            self.default_sso_interval = default_sso_interval
+
     def set_default_sso_session(self, default_sso_session: str) -> None:
         self.default_sso_session = default_sso_session
 
     def save_config(self) -> None:
         files.save_config_file({
             'mfa_shell_command': self.mfa_shell_command,
+            'shell_path_extension': self.shell_path_extension,
             'default_access_key': self.default_access_key,
             'default_sso_session': self.default_sso_session,
+            'default_sso_interval': self.default_sso_interval,
         })
 
     def save_accounts(self) -> None:

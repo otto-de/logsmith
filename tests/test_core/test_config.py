@@ -199,21 +199,27 @@ class TestConfig(TestCase):
         self.config.save_config()
 
         expected = [call({'mfa_shell_command': None, 
+                          'shell_path_extension': None,
                           'default_access_key': None,
-                          'default_sso_session': None})]
+                          'default_sso_session': None,
+                          'default_sso_interval': None})]
 
         self.assertEqual(expected, mock_save_config_file.mock_calls)
         
     @mock.patch('app.core.config.files.save_config_file')
     def test_save_config(self, mock_save_config_file):
         self.config.mfa_shell_command = 'some command'
+        self.config.shell_path_extension = 'some path'
         self.config.default_access_key = 'some access key'
         self.config.default_sso_session = 'some sso session'
+        self.config.default_sso_interval = 'some interval'
         self.config.save_config()
 
         expected = [call({'mfa_shell_command': 'some command', 
+                          'shell_path_extension': 'some path',
                           'default_access_key': 'some access key',
-                          'default_sso_session': 'some sso session'})]
+                          'default_sso_session': 'some sso session',
+                          'default_sso_interval': 'some interval'})]
 
         self.assertEqual(expected, mock_save_config_file.mock_calls)
 

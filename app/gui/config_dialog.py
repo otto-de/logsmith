@@ -36,6 +36,10 @@ class ConfigDialog(QDialog):
         self.mfa_command_label = QLabel("Shell command to fetch mfa token:", self)
         self.mfa_command_input = QLineEdit(self)
         self.mfa_command_input.setStyleSheet(styles.input_field_style)
+        
+        self.shell_path_label = QLabel("Expand PATH for shell commands (seperate with :):", self)
+        self.shell_path_input = QLineEdit(self)
+        self.shell_path_input.setStyleSheet(styles.input_field_style)
 
         self.default_access_key_label = QLabel("Default access key name:", self)
         self.default_access_key_input = QLineEdit(self)
@@ -44,6 +48,10 @@ class ConfigDialog(QDialog):
         self.default_sso_session_label = QLabel("Default sso session name:", self)
         self.default_sso_session_input = QLineEdit(self)
         self.default_sso_session_input.setStyleSheet(styles.input_field_style)
+                
+        self.default_sso_interval_label = QLabel("Default sso renewal interval (in hours) or None to disable:", self)
+        self.default_sso_interval_input = QLineEdit(self)
+        self.default_sso_interval_input.setStyleSheet(styles.input_field_style)
 
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.ok)
@@ -67,14 +75,25 @@ class ConfigDialog(QDialog):
 
         vbox.addWidget(self.mfa_command_label)
         vbox.addWidget(self.mfa_command_input)
+        vbox.addWidget(self.shell_path_label)
+        vbox.addWidget(self.shell_path_input)
         vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignLeft)
         vbox.addWidget(self.default_access_key_label)
         vbox.addWidget(self.default_access_key_input)
         vbox.addWidget(self.default_sso_session_label)
         vbox.addWidget(self.default_sso_session_input)
+        vbox.addWidget(self.default_sso_interval_label)
+        vbox.addWidget(self.default_sso_interval_input)
 
         vbox.addLayout(hbox)
         self.setLayout(vbox)
+
+    def is_positive_int(self, value) -> bool:
+        try:
+            s = str(value).strip()
+            return s.isdigit() and int(s) > 0
+        except Exception:
+            return False
 
     def ok(self):
         text = self.text_box.toPlainText()
@@ -86,13 +105,26 @@ class ConfigDialog(QDialog):
             return
 
         default_access_key = self.default_access_key_input.text()
+        default_access_key = default_access_key.strip()
         if not default_access_key:
             self.set_error_text('default access-key must not be empty')
             return
         
         default_sso_session = self.default_sso_session_input.text()
+        default_sso_session = default_sso_session.strip()
         if not default_sso_session:
             self.set_error_text('default sso session must not be empty')
+            return
+        
+        default_sso_interval = self.default_sso_interval_input.text()
+        default_sso_interval = default_sso_interval.strip()
+        if not default_sso_interval:
+            self.set_error_text('sso interval must not be empty')
+            return
+        print(self.is_positive_int(default_sso_interval))
+        print(default_sso_interval != 'None')
+        if not self.is_positive_int(default_sso_interval) and default_sso_interval != 'None':
+            self.set_error_text('sso interval must not be a positive integer or None')
             return
 
         config = Config()
@@ -101,8 +133,10 @@ class ConfigDialog(QDialog):
                                          default_sso_session=default_sso_session)
         if config.valid:
             config.set_mfa_shell_command(self.mfa_command_input.text())
+            config.set_path_extension(self.shell_path_input.text())
             config.set_default_access_key(default_access_key)
             config.set_default_sso_session(default_sso_session)
+            config.set_default_sso_interval(default_sso_interval)
             self.gui.edit_config(config)
             self.hide()
         else:
@@ -157,8 +191,13 @@ class ConfigDialog(QDialog):
         self.update_error_text(config)
 
         self.mfa_command_input.setText(config.mfa_shell_command)
+        self.shell_path_input.setText(config.shell_path_extension)
         self.default_access_key_input.setText(config.default_access_key)
         self.default_sso_session_input.setText(config.default_sso_session)
+        if config.default_sso_interval is None:
+            self.default_sso_interval_input.setText("None")
+        else:
+            self.default_sso_interval_input.setText(config.default_sso_interval)
 
         self.show()
         self.raise_()
