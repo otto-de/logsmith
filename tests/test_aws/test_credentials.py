@@ -181,7 +181,7 @@ class TestCredentials(TestCase):
         mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_key_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -219,7 +219,7 @@ class TestCredentials(TestCase):
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_with_specific_access_key(),
-                                     'default-access-key', 'default-sso-session')
+                                     'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_key_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -255,7 +255,7 @@ class TestCredentials(TestCase):
         mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_key_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -287,7 +287,7 @@ class TestCredentials(TestCase):
         mock_load_credentials.return_value = mock_config_parser
         mock_assume.return_value = self.test_secrets
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_key_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -321,7 +321,7 @@ class TestCredentials(TestCase):
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.success_result
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_sso_credentials(profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -372,7 +372,7 @@ class TestCredentials(TestCase):
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.success_result
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__no_default(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__no_default(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_sso_credentials(profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -415,7 +415,7 @@ class TestCredentials(TestCase):
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.success_result
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__chain_assume(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__chain_assume(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_sso_credentials(profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -460,7 +460,7 @@ class TestCredentials(TestCase):
         mock_load_config.return_value = mock_config_parser
         mock_bash_login.return_value = self.error_result
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.fetch_sso_credentials(profile_group)
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -539,7 +539,7 @@ class TestCredentials(TestCase):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.write_profile_config(profile_group, 'us-east-12')
 
         self.assertEqual(True, result.was_success)
@@ -560,7 +560,7 @@ class TestCredentials(TestCase):
         mock_config_parser = Mock()
         mock_load_config.return_value = mock_config_parser
 
-        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session')
+        profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
         result = credentials.write_profile_config(profile_group, 'us-east-12')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)

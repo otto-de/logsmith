@@ -22,6 +22,7 @@ Release dates will be in YYYY-MM-DD format.
 ### Added
 - log stderr when running scripts (thanks @MarcellSchmenkel).
 - read shell output as stream to get all output while the command runs.
+- sso renewal interval can now be set in hours.
 
 ## 9.0.2 - 2025-11-18
 

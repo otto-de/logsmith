@@ -10,6 +10,7 @@ from app import __version__
 from app.core import files
 from app.core.config import Config
 from app.gui import styles
+from app.util import util
 from app.yubico import mfa
 
 if TYPE_CHECKING:
@@ -49,7 +50,7 @@ class ConfigDialog(QDialog):
         self.default_sso_session_input = QLineEdit(self)
         self.default_sso_session_input.setStyleSheet(styles.input_field_style)
                 
-        self.default_sso_interval_label = QLabel("Default sso renewal interval (in hours) or None to disable:", self)
+        self.default_sso_interval_label = QLabel("Default sso renewal interval (in hours) or 0 to disable renewal:", self)
         self.default_sso_interval_input = QLineEdit(self)
         self.default_sso_interval_input.setStyleSheet(styles.input_field_style)
 
@@ -88,13 +89,6 @@ class ConfigDialog(QDialog):
         vbox.addLayout(hbox)
         self.setLayout(vbox)
 
-    def is_positive_int(self, value) -> bool:
-        try:
-            s = str(value).strip()
-            return s.isdigit() and int(s) > 0
-        except Exception:
-            return False
-
     def ok(self):
         text = self.text_box.toPlainText()
         text = text.replace('\t', '  ')
@@ -121,16 +115,17 @@ class ConfigDialog(QDialog):
         if not default_sso_interval:
             self.set_error_text('sso interval must not be empty')
             return
-        print(self.is_positive_int(default_sso_interval))
-        print(default_sso_interval != 'None')
-        if not self.is_positive_int(default_sso_interval) and default_sso_interval != 'None':
-            self.set_error_text('sso interval must not be a positive integer or None')
+
+        if not util.is_positive_int(default_sso_interval) and default_sso_interval != 'None':
+            self.set_error_text('sso interval must not be a positive integer or 0')
             return
 
         config = Config()
-        config.initialize_profile_groups(accounts=raw_config_dict, service_roles={},
+        config.initialize_profile_groups(accounts=raw_config_dict, 
+                                         service_roles={},
                                          default_access_key=default_access_key,
-                                         default_sso_session=default_sso_session)
+                                         default_sso_session=default_sso_session,
+                                         default_sso_interval=default_sso_interval)
         if config.valid:
             config.set_mfa_shell_command(self.mfa_command_input.text())
             config.set_path_extension(self.shell_path_input.text())

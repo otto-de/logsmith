@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import QMainWindow
+from app.util import util
 from core.core import Core
 from gui.mfa_dialog import MfaDialog
 from gui.repeater import Repeater
@@ -73,18 +74,27 @@ class Gui(QMainWindow):
         self.task.start()
             
     def _on_login_sso_success(self):
-        logger.info('soo login success')
+        logger.info('sso login success')
         if self.core.active_profile_group.service_profile:
             self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
         
-        logger.info('start sso repeater')
-        prepare_login = partial(self.login_sso, profile_group=self.core.active_profile_group)
-        self.login_repeater.start(task=prepare_login,
-                                  delay_seconds=28800)
-        self._to_login_state()
+        repeater_interval = self.core.active_profile_group.get_sso_interval()
+        if not util.is_positive_int(repeater_interval):
+            logger.info(f'sso interval was {repeater_interval} and not a positive integer or 0')
+            self._to_error_state()
+        else:
+            repeater_interval_int = int(repeater_interval)
+            if repeater_interval_int != 0:
+                logger.info('start sso repeater')
+                prepare_login = partial(self.login_sso, profile_group=self.core.active_profile_group)
+                self.login_repeater.start(task=prepare_login,
+                                        delay_seconds=int(repeater_interval) * 60 * 60)
+            else:
+                logger.info('sso repeater is disabled')
+            self._to_login_state()
 
     def _on_login_sso_failure(self):
         logger.info('sso login failure')

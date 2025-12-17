@@ -2,12 +2,14 @@ import logging
 from typing import List, Optional
 
 from app.core.profile import Profile
+from app.util import util
 
 logger = logging.getLogger('logsmith')
 
+#   sso_interval: 2
 
 class ProfileGroup:
-    def __init__(self, name, group: dict, default_access_key: str, default_sso_session: str):
+    def __init__(self, name, group: dict, default_access_key: str, default_sso_session: str, default_sso_interval: str):
         self.name: str = name
         self.team: str = group.get('team', None)
         self.region: str = group.get('region', None)
@@ -17,6 +19,8 @@ class ProfileGroup:
         self.access_key: str = group.get('access_key', None)
         self.default_sso_session = default_sso_session
         self.sso_session: str = group.get('sso_session', None)
+        self.default_sso_interval = default_sso_interval
+        self.sso_interval: str = group.get('sso_interval', None)
         self.profiles: List[Profile] = []
         self.type: str = group.get('type', 'aws')  # only aws (default) & gcp as values are allowed
         self.script: str = group.get('script', None)  # only aws (default) & gcp as values are allowed
@@ -38,9 +42,11 @@ class ProfileGroup:
         if self.access_key and not self.access_key.startswith('access-key'):
             return False, f'access-key {self.access_key} must have the prefix \"access-key\"'
         if self.sso_session and not self.sso_session.startswith('sso'):
-            return False, f'sso session {self.sso_session} must have the prefix \"sso\"'
+            return False, f'sso_session \"{self.sso_session}\" must have the prefix \"sso\"'
+        if self.sso_interval and not util.is_positive_int(self.sso_interval):
+            return False, f'sso_interval \"{self.sso_interval}\" must be a positive integer or 0'
         if self.type == "aws" and len(self.profiles) == 0:
-            return False, f'aws "{self.name}" has no profiles'
+            return False, f'aws \"{self.name}\" has no profiles'
         for profile in self.profiles:
             valid, error = profile.validate()
             if not valid:
@@ -81,7 +87,12 @@ class ProfileGroup:
     def get_sso_session(self) -> str:
         if self.sso_session:
             return self.sso_session
-        return self.default_sso_session
+        return self.default_sso_session    
+
+    def get_sso_interval(self) -> str:
+        if self.sso_interval:
+            return self.sso_interval
+        return self.default_sso_interval
 
     def set_service_role_profile(self, source_profile_name, role_name) -> None:
         source_profile = self.get_profile(profile_name=source_profile_name)
@@ -110,6 +121,8 @@ class ProfileGroup:
             result_dict['access_key'] = self.access_key
         if self.sso_session and self.sso_session != self.default_sso_session:
             result_dict['sso_session'] = self.sso_session
+        if self.sso_interval and self.sso_interval != self.default_sso_interval:
+            result_dict['sso_interval'] = self.sso_interval
         if self.type != "aws":
             result_dict["type"] = self.type
         return result_dict

@@ -347,19 +347,19 @@ def get_test_profile_with_source():
 
 
 def get_test_profile_group(include_service_role=False) -> ProfileGroup:
-    profile_group = ProfileGroup('test', get_test_group(), 'some-access-key', 'some-sso-session')
+    profile_group = ProfileGroup('test', get_test_group(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
     if include_service_role:
         profile_group.set_service_role_profile('developer', 'dummy')
     return profile_group
 
 def get_test_profile_group_key(include_service_role=False) -> ProfileGroup:
-    profile_group =  ProfileGroup('test', get_test_group__with_key(), 'some-access-key', 'some-sso-session')
+    profile_group =  ProfileGroup('test', get_test_group__with_key(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
     if include_service_role:
         profile_group.set_service_role_profile('developer', 'dummy')
     return profile_group
 
 def get_test_profile_group_sso(include_service_role=False) -> ProfileGroup:
-    profile_group =  ProfileGroup('test', get_test_group__with_sso(), 'some-access-key', 'some-sso-session')
+    profile_group =  ProfileGroup('test', get_test_group__with_sso(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
     if include_service_role:
         profile_group.set_service_role_profile('developer', 'dummy')
     return profile_group

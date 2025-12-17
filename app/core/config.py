@@ -35,16 +35,20 @@ class Config:
         accounts = files.load_accounts()
         self.initialize_profile_groups(accounts=accounts, service_roles=self.service_roles,
                                        default_access_key=self.default_access_key,
-                                       default_sso_session=self.default_sso_session)
+                                       default_sso_session=self.default_sso_session,
+                                       default_sso_interval=self.default_sso_interval)
 
     def initialize_profile_groups(self, accounts: dict, service_roles: dict, 
-                                  default_access_key: str, default_sso_session: str) -> None:
+                                  default_access_key: str, 
+                                  default_sso_session: str,
+                                  default_sso_interval: str) -> None:
         self.profile_groups = {}
         for group_name, group_data in accounts.items():
             profile_group = ProfileGroup(name=group_name,
                                          group=group_data,
                                          default_access_key=default_access_key,
-                                         default_sso_session=default_sso_session)
+                                         default_sso_session=default_sso_session,
+                                         default_sso_interval=default_sso_interval)
             self.profile_groups[group_name] = profile_group
 
             if group_name in service_roles:

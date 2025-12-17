@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 from unittest.mock import call, Mock
 
-from app.core.config import Config, _default_access_key, _default_sso_sesson
+from app.core.config import Config, _default_access_key, _default_sso_sesson, _default_sso_interval
 from tests.test_data.test_accounts import get_default_test_accounts, get_test_accounts__minimal, get_test_accounts__mixed_auth_modes
 from tests.test_data.test_config import get_test_config
 from tests.test_data.test_service_roles import get_test_service_roles
@@ -22,7 +22,7 @@ class TestConfig(TestCase):
         mock_service_roles.return_value = {}
         self.config.initialize()
 
-        expected_calls = [call(accounts={}, service_roles={}, default_access_key=_default_access_key, default_sso_session=_default_sso_sesson)]
+        expected_calls = [call(accounts={}, service_roles={}, default_access_key=_default_access_key, default_sso_session=_default_sso_sesson, default_sso_interval=_default_sso_interval)]
 
         self.assertEqual(None, self.config.mfa_shell_command)
         self.assertEqual(_default_access_key, self.config.default_access_key)
@@ -41,11 +41,12 @@ class TestConfig(TestCase):
             'mfa_shell_command': 'some-command',
             'default_access_key': 'some-key',
             'default_sso_session': 'some-session',
+            'default_sso_interval': 'some-sso-interval',
         }
         mock_service_roles.return_value = {}
         self.config.initialize()
 
-        expected_calls = [call(accounts={}, service_roles={}, default_access_key='some-key', default_sso_session='some-session')]
+        expected_calls = [call(accounts={}, service_roles={}, default_access_key='some-key', default_sso_session='some-session', default_sso_interval='some-sso-interval')]
 
         self.assertEqual('some-key', self.config.default_access_key)
         self.assertEqual('some-session', self.config.default_sso_session)
@@ -63,17 +64,21 @@ class TestConfig(TestCase):
         self.config.initialize()
 
         expected_calls = [
-            call(accounts=get_default_test_accounts(), service_roles=get_test_service_roles(),
-                 default_access_key='some-access-key', default_sso_session='some-sso-session')]
+            call(accounts=get_default_test_accounts(), 
+                 service_roles=get_test_service_roles(),
+                 default_access_key='some-access-key', 
+                 default_sso_session='some-sso-session', 
+                 default_sso_interval='some-sso-interval')]
 
         self.assertEqual('some-access-key', self.config.default_access_key)
         self.assertEqual('some-sso-session', self.config.default_sso_session)
         self.assertEqual('some-command', self.config.mfa_shell_command)
+        self.assertEqual('/some/dir/', self.config.shell_path_extension)
         self.assertEqual(expected_calls, mock_initialize_profile_groups.mock_calls)
 
     @mock.patch('app.core.config.files.save_accounts_file')
     def test_save_accounts__default(self, mock_save_accounts_file):
-        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 'some-access-key', 'some-sso-session')
+        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 'some-access-key', 'some-sso-session', 'default-sso-interval')
         self.config.save_accounts()
         expected = [call(
             {
@@ -134,7 +139,7 @@ class TestConfig(TestCase):
         
     @mock.patch('app.core.config.files.save_accounts_file')
     def test_save_accounts__auth_mode_mixed(self, mock_save_accounts_file):
-        self.config.initialize_profile_groups(get_test_accounts__mixed_auth_modes(), get_test_service_roles(), 'some-access-key', 'some-sso-session')
+        self.config.initialize_profile_groups(get_test_accounts__mixed_auth_modes(), get_test_service_roles(), 'some-access-key', 'some-sso-session', 'default-sso-interval')
         self.config.save_accounts()
         expected = [call(
             {
@@ -287,7 +292,7 @@ class TestConfig(TestCase):
         self.assertEqual(expected, mock_save_service_roles_file.mock_calls)
 
     def test_initialize_profile_groups(self):
-        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 'default-access-key', 'default-sso-session')
+        self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
 
         self.assertEqual(['development', 'live', 'gcp-project-dev'], list(self.config.profile_groups.keys()))
 
@@ -345,9 +350,9 @@ class TestConfig(TestCase):
 
     def test_initialize_profile_groups__replace_old_values_on_config_reload(self):
         self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(),
-                                              'default-access-key', 'defauls-sso-session')
+                                              'default-access-key', 'defauls-sso-session', 'default-sso-interval')
         self.config.initialize_profile_groups(get_test_accounts__minimal(), get_test_service_roles(),
-                                              'default-access-key', 'defauls-sso-session')
+                                              'default-access-key', 'defauls-sso-session', 'default-sso-interval')
 
         self.assertEqual(['development'], list(self.config.profile_groups.keys()))
 
@@ -369,6 +374,14 @@ class TestConfig(TestCase):
 
         self.assertEqual(1, len(development_group.profiles))
 
+    def test_set_default_sso_interval__string_none_sets_none(self):
+        self.config.set_default_sso_interval('None')
+        self.assertIsNone(self.config.default_sso_interval)
+
+    def test_set_default_sso_interval__stores_value(self):
+        self.config.set_default_sso_interval('15')
+        self.assertEqual('15', self.config.default_sso_interval)
+
     def test_add_to_history(self):
         history = ['profile-1 : role-1', 'profile-2 : role-2']
         result = self.config._add_to_history('profile-3', 'role-3', history)
@@ -377,7 +390,7 @@ class TestConfig(TestCase):
 
     def test_validate(self):
         self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 
-                                              'default-access-key', 'defauls-sso-session')
+                                              'default-access-key', 'defauls-sso-session', 'default-sso-interval')
         self.config.validate()
         self.assertEqual('', self.config.error)
         self.assertEqual(True, self.config.valid)

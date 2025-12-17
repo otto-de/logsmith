@@ -9,7 +9,7 @@ from tests.test_data.test_accounts import get_test_accounts__mixed_auth_modes, g
 
 class TestProfileGroup(TestCase):
     def setUp(self):
-        self.profile_group = ProfileGroup('test', get_test_group(), 'default-key', 'default-session')
+        self.profile_group = ProfileGroup('test', get_test_group(), 'default-key', 'default-session', 'default-sso-interval')
 
     def test_init__defaults(self):
         self.assertEqual('test', self.profile_group.name)
@@ -26,7 +26,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(2, len(self.profile_group.profiles))
         
     def test_init__sso_auth_modes(self):
-        self.profile_group = ProfileGroup('test', get_test_group__with_sso(), 'default-key', 'default-session')
+        self.profile_group = ProfileGroup('test', get_test_group__with_sso(), 'default-key', 'default-session', 'default-sso-interval')
         self.assertEqual('test', self.profile_group.name)
         self.assertEqual('awesome-team', self.profile_group.team)
         self.assertEqual('us-east-1', self.profile_group.region)
@@ -41,7 +41,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(2, len(self.profile_group.profiles))        
         
     def test_init__key_auth_modes(self):
-        self.profile_group = ProfileGroup('test', get_test_group__with_key(), 'default-key', 'default-session')
+        self.profile_group = ProfileGroup('test', get_test_group__with_key(), 'default-key', 'default-session', 'default-sso-interval')
         self.assertEqual('test', self.profile_group.name)
         self.assertEqual('awesome-team', self.profile_group.team)
         self.assertEqual('us-east-1', self.profile_group.region)
@@ -106,7 +106,14 @@ class TestProfileGroup(TestCase):
         self.profile_group.sso_session = 'no-session'
         result = self.profile_group.validate()
 
-        expected = (False, 'sso session no-session must have the prefix \"sso\"')
+        expected = (False, 'sso_session \"no-session\" must have the prefix \"sso\"')
+        self.assertEqual(expected, result)
+
+    def test_validate__sso_interval_malformed(self):
+        self.profile_group.sso_interval = 'not-an-int'
+        result = self.profile_group.validate()
+
+        expected = (False, 'sso_interval \"not-an-int\" must be a positive integer or 0')
         self.assertEqual(expected, result)
 
     def test_validate__aws_type_must_have_profiled(self):
@@ -115,6 +122,24 @@ class TestProfileGroup(TestCase):
 
         expected = (False, 'aws \"test\" has no profiles')
         self.assertEqual(expected, result)
+
+    def test_validate__gcp_allows_no_profiles(self):
+        profile_group = ProfileGroup(
+            'gcp-group',
+            {
+                'color': '#123456',
+                'team': 'data',
+                'region': 'europe-west1',
+                'type': 'gcp',
+                'profiles': []
+            },
+            'default-key',
+            'default-session',
+            'default-sso-interval'
+        )
+
+        result = profile_group.validate()
+        self.assertEqual((True, ''), result)
 
     def test_validate__calls_profile_validate(self):
         mock_profile1 = Mock()
@@ -138,7 +163,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(expected, self.profile_group.list_profile_names())
 
     def test_list_profile_names__no_default(self):
-        profile_group = ProfileGroup('test', get_test_group_no_default(), 'some-access-key', 'some-sso-session')
+        profile_group = ProfileGroup('test', get_test_group_no_default(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
         expected = ['developer', 'readonly']
         self.assertEqual(expected, profile_group.list_profile_names())
 
@@ -147,7 +172,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual('readonly', result.profile)
 
     def test_get_default_profile__no_default(self):
-        profile_group = ProfileGroup('test', get_test_group_no_default(), 'some-access-key', 'some-sso-session')
+        profile_group = ProfileGroup('test', get_test_group_no_default(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
         result = profile_group.get_default_profile()
         self.assertEqual(None, result)
         
@@ -178,6 +203,13 @@ class TestProfileGroup(TestCase):
         self.assertEqual('some-access-key', access_key)
         self.assertEqual('specific-sso-session', sso_session)
 
+    def test_get_sso_interval__default(self):
+        self.assertEqual('default-sso-interval', self.profile_group.get_sso_interval())
+
+    def test_get_sso_interval__specific_value(self):
+        profile_group = ProfileGroup('test', {**get_test_group(), 'sso_interval': '5'}, 'default-key', 'default-session', '10')
+        self.assertEqual('5', profile_group.get_sso_interval())
+
     def test_to_dict(self):
         profile_group = get_test_profile_group()
         mock_profile1 = Mock()
@@ -204,7 +236,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual(expected, result)
 
     def test_to_dict__with_specific_access_key(self):
-        profile_group = ProfileGroup('test', get_test_group_with_specific_access_key(), 'some-access-key', 'some-sso-session')
+        profile_group = ProfileGroup('test', get_test_group_with_specific_access_key(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
         mock_profile1 = Mock()
         mock_profile1.to_dict.return_value = 'profile 1'
         mock_profile2 = Mock()
@@ -230,8 +262,8 @@ class TestProfileGroup(TestCase):
 
         self.assertEqual(expected, result)
         
-    def test_to_dict__with_specific_access_key(self):
-        profile_group = ProfileGroup('test', get_test_group_with_specific_sso_session(), 'some-access-key', 'some-sso-session')
+    def test_to_dict__with_specific_sso_session(self):
+        profile_group = ProfileGroup('test', get_test_group_with_specific_sso_session(), 'some-access-key', 'some-sso-session', 'some-sso-interval')
         mock_profile1 = Mock()
         mock_profile1.to_dict.return_value = 'profile 1'
         mock_profile2 = Mock()
@@ -253,6 +285,55 @@ class TestProfileGroup(TestCase):
             'script': None,
             'auth_mode': 'sso',
             'sso_session': 'specific-sso-session',
+        }
+
+        self.assertEqual(expected, result)
+
+    def test_to_dict__with_specific_sso_interval(self):
+        profile_group = ProfileGroup('test', {**get_test_group(), 'sso_interval': '5'}, 'some-access-key', 'some-sso-session', '10')
+        mock_profile1 = Mock()
+        mock_profile1.to_dict.return_value = 'profile 1'
+        profile_group.profiles = [mock_profile1]
+
+        result = profile_group.to_dict()
+        self.assertEqual(1, mock_profile1.to_dict.call_count)
+
+        expected = {
+            'color': '#388E3C',
+            'profiles': ['profile 1'],
+            'region': 'us-east-1',
+            'team': 'awesome-team',
+            'script': './some-script.sh',
+            'auth_mode': 'key',
+            'sso_interval': '5',
+        }
+
+        self.assertEqual(expected, result)
+
+    def test_to_dict__gcp_includes_type(self):
+        profile_group = ProfileGroup(
+            'gcp-group',
+            {
+                'color': '#123456',
+                'team': 'data',
+                'region': 'europe-west1',
+                'type': 'gcp',
+                'profiles': []
+            },
+            'default-key',
+            'default-session',
+            'default-sso-interval'
+        )
+
+        result = profile_group.to_dict()
+        expected = {
+            'color': '#123456',
+            'profiles': [],
+            'region': 'europe-west1',
+            'team': 'data',
+            'script': None,
+            'auth_mode': 'key',
+            'type': 'gcp',
         }
 
         self.assertEqual(expected, result)

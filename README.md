@@ -93,6 +93,7 @@ productive:                     # profile group name (will be displayed)
   script: 'some-script.sh'      # script to run after login (optional)
   access_key: 'access-key'      # access-key name that this group should use (optional)
   sso_session: 'sso-session'    # sso-session name that this group should use (optional)
+  sso_interval: 'sso-interval'  # renewal interval for sso in hours (optional)
   auth_mode: key                # use either key or sso as auth modes
   profiles:
     - profile: nonlive          # local profile name
