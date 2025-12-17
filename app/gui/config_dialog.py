@@ -75,9 +75,9 @@ class ConfigDialog(QDialog):
 
         vbox.addWidget(self.mfa_command_label)
         vbox.addWidget(self.mfa_command_input)
+        vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignLeft)
         vbox.addWidget(self.shell_path_label)
         vbox.addWidget(self.shell_path_input)
-        vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignLeft)
         vbox.addWidget(self.default_access_key_label)
         vbox.addWidget(self.default_access_key_input)
         vbox.addWidget(self.default_sso_session_label)
