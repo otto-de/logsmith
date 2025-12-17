@@ -388,6 +388,52 @@ class TestConfig(TestCase):
         expected = ['profile-3 : role-3', 'profile-1 : role-1', 'profile-2 : role-2']
         self.assertEqual(expected, result)
 
+    def test_add_to_history__deduplicates_and_limits(self):
+        history = [f'profile-{i} : role-{i}' for i in range(1, 11)]
+        history.append('profile-3 : role-3')
+
+        result = self.config._add_to_history('profile-99', 'role-99', history)
+
+        expected = [
+            'profile-99 : role-99',
+            'profile-1 : role-1',
+            'profile-2 : role-2',
+            'profile-3 : role-3',
+            'profile-4 : role-4',
+            'profile-5 : role-5',
+            'profile-6 : role-6',
+            'profile-7 : role-7',
+            'profile-8 : role-8',
+            'profile-9 : role-9',
+        ]
+        self.assertEqual(expected, result)
+
+    def test_add_to_history__ignores_missing_profile_or_role(self):
+        history = ['profile-1 : role-1']
+        result = self.config._add_to_history(profile=None, role='role-2', history=list(history))
+        self.assertEqual(history, result)
+
+    def test_get_service_role_helpers(self):
+        self.config.service_roles = {
+            'dev': {
+                'selected_profile': 'developer',
+                'selected_role': 'pipeline',
+                'available': {'developer': ['pipeline']},
+                'history': ['developer : pipeline']
+            }
+        }
+
+        self.assertEqual('developer', self.config.get_selected_service_role_source_profile('dev'))
+        self.assertEqual('pipeline', self.config.get_selected_service_role('dev'))
+        self.assertEqual(['pipeline'], self.config.get_available_service_roles('dev', 'developer'))
+        self.assertEqual(['developer : pipeline'], self.config.get_history('dev'))
+
+    def test_get_service_role_helpers__defaults(self):
+        self.assertIsNone(self.config.get_selected_service_role_source_profile('unknown'))
+        self.assertIsNone(self.config.get_selected_service_role('unknown'))
+        self.assertEqual([], self.config.get_available_service_roles('unknown', 'developer'))
+        self.assertEqual([], self.config.get_history('unknown'))
+
     def test_validate(self):
         self.config.initialize_profile_groups(get_default_test_accounts(), get_test_service_roles(), 
                                               'default-access-key', 'defauls-sso-session', 'default-sso-interval')
