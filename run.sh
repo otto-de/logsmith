@@ -11,7 +11,7 @@ DIR="$( cd -P "$( dirname "$SCRIPT" )" >/dev/null 2>&1 && pwd )"
 
 cd ${DIR} || exit
 
-if [[ ! -d ./venv/ ]]; then
+if [[ ! -d ./.venv/ ]]; then
     ./setup.sh
 fi
 export PYTHONPATH=${PYTHONPATH}:${DIR}
