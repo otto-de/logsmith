@@ -20,7 +20,8 @@ Release dates will be in YYYY-MM-DD format.
 ## Unreleased
 
 ### Added
-- log stderr when running scripts (thanks @MarcellSchmenkel)
+- log stderr when running scripts (thanks @MarcellSchmenkel).
+- read shell output as stream to get all output while the command runs.
 
 ## 9.0.2 - 2025-11-18
 
