@@ -1,6 +1,7 @@
 .idea
 *.pyc
 venv
+.venv
 dist
 build
 app.log
