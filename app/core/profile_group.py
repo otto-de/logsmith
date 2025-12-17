@@ -114,8 +114,7 @@ class ProfileGroup:
             'team': self.team,
             'region': self.region,
             'script': self.script,
-            'auth_mode': self.auth_mode,
-            'profiles': [profile.to_dict() for profile in self.profiles],
+            'auth_mode': self.auth_mode
         }
         if self.access_key and self.access_key != self.default_access_key:
             result_dict['access_key'] = self.access_key
@@ -125,4 +124,5 @@ class ProfileGroup:
             result_dict['sso_interval'] = self.sso_interval
         if self.type != "aws":
             result_dict["type"] = self.type
+        result_dict['profiles'] = [profile.to_dict() for profile in self.profiles]
         return result_dict
