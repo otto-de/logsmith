@@ -19,6 +19,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual('default-key', self.profile_group.default_access_key)
         self.assertEqual('default-session', self.profile_group.default_sso_session)
         self.assertEqual('key', self.profile_group.auth_mode)
+        self.assertEqual('key', self.profile_group.write_mode)
         self.assertEqual(None, self.profile_group.access_key)
         self.assertEqual(None, self.profile_group.sso_session)
         self.assertEqual('./some-script.sh', self.profile_group.script)
@@ -34,6 +35,7 @@ class TestProfileGroup(TestCase):
         self.assertEqual('default-key', self.profile_group.default_access_key)
         self.assertEqual('default-session', self.profile_group.default_sso_session)
         self.assertEqual('sso', self.profile_group.auth_mode)
+        self.assertEqual('sso', self.profile_group.write_mode)
         self.assertEqual(None, self.profile_group.access_key)
         self.assertEqual('specific-sso-session', self.profile_group.sso_session)
         self.assertEqual('./some-script.sh', self.profile_group.script)
@@ -49,11 +51,19 @@ class TestProfileGroup(TestCase):
         self.assertEqual('default-key', self.profile_group.default_access_key)
         self.assertEqual('default-session', self.profile_group.default_sso_session)
         self.assertEqual('key', self.profile_group.auth_mode)
+        self.assertEqual('key', self.profile_group.write_mode)
         self.assertEqual('specific-access-key', self.profile_group.access_key)
         self.assertEqual(None, self.profile_group.sso_session)
         self.assertEqual('./some-script.sh', self.profile_group.script)
         self.assertEqual('aws', self.profile_group.type)
         self.assertEqual(2, len(self.profile_group.profiles))
+        
+    def test_init__write_mode_override(self):
+        group = {**get_test_group(), 'write_mode': 'sso'}
+        profile_group = ProfileGroup('test', group, 'default-key', 'default-session', 'default-sso-interval')
+
+        self.assertEqual('key', profile_group.auth_mode)
+        self.assertEqual('sso', profile_group.write_mode)
 
     def test_validate(self):
         result = self.profile_group.validate()
@@ -85,14 +95,29 @@ class TestProfileGroup(TestCase):
         self.profile_group.auth_mode = None
         result = self.profile_group.validate()
 
-        expected = (False, 'test has no auth_mode (either key or sso)')
+        expected = (False, 'test has an invalid auth_mode (either key or sso)')
         self.assertEqual(expected, result)
 
     def test_validate__auth_mode_malformed(self):
         self.profile_group.auth_mode = 'no-auth'
         result = self.profile_group.validate()
 
-        expected = (False, 'test has no auth_mode (either key or sso)')
+        expected = (False, 'test has an invalid auth_mode (either key or sso)')
+        self.assertEqual(expected, result)
+
+    def test_validate__write_mode_malformed(self):
+        self.profile_group.write_mode = 'no-write-mode'
+        result = self.profile_group.validate()
+
+        expected = (False, 'test has an invalid write_mode (either key or sso)')
+        self.assertEqual(expected, result)
+
+    def test_validate__write_mode_incompatible_with_auth_mode(self):
+        self.profile_group.auth_mode = 'key'
+        self.profile_group.write_mode = 'sso'
+        result = self.profile_group.validate()
+
+        expected = (False, "test has auth_mode 'key' and write_mode 'sso', \nwhich are not compatible")
         self.assertEqual(expected, result)
         
     def test_validate__access_key_malformed(self):
@@ -232,6 +257,26 @@ class TestProfileGroup(TestCase):
             'team': 'awesome-team',
             'script': './some-script.sh',
             'auth_mode': 'key'
+        }
+        self.assertEqual(expected, result)
+
+    def test_to_dict__with_write_mode_override(self):
+        profile_group = ProfileGroup('test', {**get_test_group(), 'write_mode': 'sso'}, 'some-access-key', 'some-sso-session', 'some-sso-interval')
+        mock_profile1 = Mock()
+        mock_profile1.to_dict.return_value = 'profile 1'
+        profile_group.profiles = [mock_profile1]
+
+        result = profile_group.to_dict()
+        self.assertEqual(1, mock_profile1.to_dict.call_count)
+
+        expected = {
+            'color': '#388E3C',
+            'profiles': ['profile 1'],
+            'region': 'us-east-1',
+            'team': 'awesome-team',
+            'script': './some-script.sh',
+            'auth_mode': 'key',
+            'write_mode': 'sso'
         }
         self.assertEqual(expected, result)
 

@@ -13,6 +13,7 @@ from botocore.exceptions import (
     ParamValidationError,
     ReadTimeoutError,
 )
+from app.core import files
 from app.shell import shell
 
 from app.core.profile_group import ProfileGroup
@@ -226,15 +227,11 @@ def fetch_key_credentials(user_name: str, profile_group: ProfileGroup) -> Result
     return result
 
 
-def fetch_sso_credentials(profile_group: ProfileGroup) -> Result:
+def write_sso_credentials(profile_group: ProfileGroup) -> Result:
     result = Result()
     config_file = _load_config_file()
     logger.info("initiate sso login")
     sso_session = profile_group.get_sso_session()
-
-    sso_login_result = _sso_bash_login(sso_session_name=sso_session)
-    if not sso_login_result.was_success:
-        return sso_login_result
 
     try:
         for profile in profile_group.get_profile_list():
@@ -308,7 +305,7 @@ def fetch_key_service_profile(profile_group: ProfileGroup) -> Result:
     return result
 
 
-def fetch_sso_service_profile(profile_group: ProfileGroup) -> Result:
+def write_sso_service_profile(profile_group: ProfileGroup) -> Result:
     result = Result()
     config_file = _load_config_file()
     logger.info("add service profile via sso")
@@ -317,7 +314,9 @@ def fetch_sso_service_profile(profile_group: ProfileGroup) -> Result:
 
     try:
         logger.info(f"fetch {service_profile.profile}")
-        role_arn = iam.fetch_role_arn(profile=service_profile.source, role_name=service_profile.role)
+        role_arn = iam.fetch_role_arn(
+            profile=service_profile.source, role_name=service_profile.role
+        )
         _add_sso_chain_profile(
             config_file=config_file,
             profile=service_profile.profile,
@@ -335,10 +334,37 @@ def fetch_sso_service_profile(profile_group: ProfileGroup) -> Result:
     result.set_success()
     return result
 
+def write_sso_as_key_credentials(profile_group: ProfileGroup) -> Result:
+    result = Result()
+    credentials_file = _load_credentials_file()
+    logger.info("fetch credentials")
 
-def sso_logout() -> Result:
-    logger.info("initiate sso logout")
-    return _sso_bash_logout()
+    try:
+        for profile in profile_group.get_profile_list():
+            logger.info(f"fetch {profile.profile}")
+            
+            if not profile.source:
+                credential_result = fetch_role_credentials_via_sso(account_id=profile.account, 
+                                                                region=profile_group.region,
+                                                                role_name=profile.role)
+                if not credential_result.was_success:
+                    return credential_result
+                secrets = credential_result.payload
+            else:
+                secrets = _assume_role(profile.source, profile.role, profile.account, profile.role)           
+            
+            _add_profile_credentials(credentials_file, profile.profile, secrets)
+            if profile.default:
+                _add_profile_credentials(credentials_file, "default", secrets)
+            _write_credentials_file(credentials_file)
+    except Exception:
+        error_text = "error while fetching role credentials"
+        result.error(error_text)
+        logger.error(error_text, exc_info=True)
+        return result
+
+    result.set_success()
+    return result
 
 
 def _cleanup_profiles(credentials_file: configparser) -> configparser:
@@ -523,7 +549,10 @@ def _assume_role(
     return response["Credentials"]
 
 
-def _sso_bash_login(sso_session_name: str) -> Result:
+def sso_login(profile_group: ProfileGroup) -> Result:
+    logger.info("initiate sso login")
+    sso_session_name = profile_group.get_sso_session()
+
     # boto3 does not support login at the moment
     # unset AWS_PROFILE and AWS_DEFAULT_PROFILE because sso login fails is profile is present
     # or aborts when profiles are not found.
@@ -533,8 +562,43 @@ def _sso_bash_login(sso_session_name: str) -> Result:
     )
 
 
-def _sso_bash_logout() -> Result:
+def sso_logout() -> Result:
+    logger.info("initiate sso logout")
     return shell.run(
         command=f"unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso logout",
         timeout=600,
     )
+
+
+def fetch_role_credentials_via_sso(account_id, region, role_name) -> Result:
+    result = Result()
+
+    access_tokens = files.get_local_sso_access_token()
+
+    sso = boto3.client("sso", region_name=region)
+    for token in access_tokens:
+        try:
+            resp = sso.get_role_credentials(
+                accessToken=token,
+                accountId=account_id,
+                roleName=role_name,
+            )
+            
+            credentials = {
+                'AccessKeyId': resp["roleCredentials"]['accessKeyId'],
+                'SecretAccessKey': resp["roleCredentials"]['secretAccessKey'],
+                'SessionToken': resp["roleCredentials"]['sessionToken'],
+            }
+
+            result.add_payload(credentials)
+            result.set_success()
+            return result
+
+        except sso.exceptions.UnauthorizedException:
+            pass
+        # except Exception:
+            # result.error('error while prasing local token cache')
+            # return result        
+    
+    result.error('no valid sso access-token found')
+    return result

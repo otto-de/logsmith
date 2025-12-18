@@ -6,8 +6,6 @@ from app.util import util
 
 logger = logging.getLogger('logsmith')
 
-#   sso_interval: 2
-
 class ProfileGroup:
     def __init__(self, name, group: dict, default_access_key: str, default_sso_session: str, default_sso_interval: str):
         self.name: str = name
@@ -15,6 +13,7 @@ class ProfileGroup:
         self.region: str = group.get('region', None)
         self.color: str = group.get('color', None)
         self.auth_mode: str = group.get('auth_mode', 'key')
+        self.write_mode: str = group.get('write_mode', self.auth_mode)
         self.default_access_key = default_access_key
         self.access_key: str = group.get('access_key', None)
         self.default_sso_session = default_sso_session
@@ -38,7 +37,11 @@ class ProfileGroup:
         if not self.color:
             return False, f'{self.name} has no color'
         if not self.auth_mode or not self.auth_mode in ['key', 'sso']:
-            return False, f'{self.name} has no auth_mode (either key or sso)'
+            return False, f'{self.name} has an invalid auth_mode (either key or sso)'
+        if not self.write_mode or not self.write_mode in ['key', 'sso']:
+            return False, f'{self.name} has an invalid write_mode (either key or sso)'
+        if not self.write_mode or (self.auth_mode == 'key' and self.write_mode == 'sso'):
+            return False, f'{self.name} has auth_mode \'key\' and write_mode \'sso\', \nwhich are not compatible'
         if self.access_key and not self.access_key.startswith('access-key'):
             return False, f'access-key {self.access_key} must have the prefix \"access-key\"'
         if self.sso_session and not self.sso_session.startswith('sso'):
@@ -116,6 +119,8 @@ class ProfileGroup:
             'script': self.script,
             'auth_mode': self.auth_mode
         }
+        if self.write_mode and self.write_mode != self.auth_mode:
+            result_dict['write_mode'] = self.write_mode
         if self.access_key and self.access_key != self.default_access_key:
             result_dict['access_key'] = self.access_key
         if self.sso_session and self.sso_session != self.default_sso_session:

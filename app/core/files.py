@@ -1,7 +1,9 @@
 import io
+import json
 import logging
 import os
 from pathlib import Path
+from typing import List
 
 from ruamel.yaml import YAML
 
@@ -29,6 +31,8 @@ def get_app_path() -> str:
 def get_aws_path() -> str:
     return os.path.join(str(Path.home()), '.aws')
 
+def get_aws_cache_path() -> str:
+    return os.path.join(get_aws_path(), 'sso', 'cache')
 
 def get_config_path() -> str:
     return f'{get_app_path()}/{config_file_name}'
@@ -150,8 +154,24 @@ def get_home_dir():
     return os.path.expanduser("~")
 
 
-def replace_home_variable(script_path: str) -> str:
+def replace_home_variable(script_path: str) -> str | None:
     for variable_name in home_variables:
         if variable_name in script_path:
             return script_path.replace(variable_name, get_home_dir())
     return script_path
+
+def get_local_sso_access_token() -> List[str]:
+    json_files = sorted(Path(get_aws_cache_path()).glob("*.json"))
+    access_tokens = []
+    
+    for p in json_files:
+        try:
+            with p.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        
+        token = data.get("accessToken")
+        if token is not None:
+            access_tokens.append(token)
+    return access_tokens

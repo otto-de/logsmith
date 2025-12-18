@@ -5,7 +5,7 @@ from unittest.mock import Mock, call
 from botocore.exceptions import ClientError, EndpointConnectionError, ParamValidationError, \
     NoCredentialsError, ReadTimeoutError
 
-from app.aws import credentials
+from app.aws import key
 from app.core.profile_group import ProfileGroup
 from tests.test_data import test_accounts
 from tests.test_data.test_results import get_error_result, get_failed_result, get_success_result
@@ -36,21 +36,21 @@ class TestCredentials(TestCase):
 
     @mock.patch('app.aws.credentials.Path.home', return_value='home')
     def test___get_credentials_path(self, _):
-        self.assertEqual('home/.aws/credentials', credentials._get_credentials_path())
+        self.assertEqual('home/.aws/credentials', key._get_credentials_path())
 
     @mock.patch('app.aws.credentials.Path.home', return_value='home')
     def test___get_config_path(self, _):
-        self.assertEqual('home/.aws/config', credentials._get_config_path())
+        self.assertEqual('home/.aws/config', key._get_config_path())
 
     def test___load_file(self):
-        config_parser = credentials._load_file(self.test_credentials_file_path)
+        config_parser = key._load_file(self.test_credentials_file_path)
         self.assertEqual('some_key_id', config_parser.get(section='access-key', option='aws_access_key_id'))
         self.assertEqual('some_access_key', config_parser.get(section='access-key', option='aws_secret_access_key'))
 
     @mock.patch('app.aws.credentials._get_credentials_path')
     def test_has_access_key(self, mock_path):
         mock_path.return_value = self.test_credentials_file_path
-        result = credentials.has_access_key('access-key')
+        result = key.has_access_key('access-key')
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -58,7 +58,7 @@ class TestCredentials(TestCase):
     @mock.patch('app.aws.credentials._get_credentials_path')
     def test_has_access_key__no_access_key(self, mock_path):
         mock_path.return_value = self.test_credentials_file_path_without_keys
-        result = credentials.has_access_key('access-key')
+        result = key.has_access_key('access-key')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -68,7 +68,7 @@ class TestCredentials(TestCase):
     def test_check_session__no_session_found(self, mock_path):
         mock_path.return_value = self.test_credentials_file_path_without_keys
 
-        result = credentials.check_session('access-key')
+        result = key.check_session('access-key')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -78,7 +78,7 @@ class TestCredentials(TestCase):
     def test_check_session(self, mock_path, mock_get_client):
         mock_path.return_value = self.test_credentials_file_path
 
-        result = credentials.check_session('access-key')
+        result = key.check_session('access-key')
         expected_calls = [
             call('session-token-access-key', 'sts', timeout=2, retries=2),
             call().get_caller_identity()
@@ -96,7 +96,7 @@ class TestCredentials(TestCase):
         mock_client.get_caller_identity.side_effect = self.client_error
         mock_get_client.return_value = mock_client
 
-        result = credentials.check_session('access-key')
+        result = key.check_session('access-key')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -109,7 +109,7 @@ class TestCredentials(TestCase):
         mock_client.get_caller_identity.side_effect = self.timeout_error
         mock_get_client.return_value = mock_client
 
-        result = credentials.check_session('access-key')
+        result = key.check_session('access-key')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -121,7 +121,7 @@ class TestCredentials(TestCase):
     def test_fetch_session_token(self, mock_credentials, mock_session, mock_add_profile, mock_write):
         mock_session.return_value = self.test_secrets
 
-        result = credentials.fetch_session_token('some-access-key', 'mfa-token')
+        result = key.fetch_session_token('some-access-key', 'mfa-token')
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -141,7 +141,7 @@ class TestCredentials(TestCase):
         mock_session.return_value = {}
         mock_session.side_effect = self.client_error
 
-        result = credentials.fetch_session_token('some-access-key', 'mfa-token')
+        result = key.fetch_session_token('some-access-key', 'mfa-token')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -153,7 +153,7 @@ class TestCredentials(TestCase):
         mock_session.return_value = {}
         mock_session.side_effect = self.param_validation_error
 
-        result = credentials.fetch_session_token('some-access-key', 'mfa-token')
+        result = key.fetch_session_token('some-access-key', 'mfa-token')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -165,7 +165,7 @@ class TestCredentials(TestCase):
         mock_session.return_value = {}
         mock_session.side_effect = self.no_credentials_error
 
-        result = credentials.fetch_session_token('some-access-key', 'mfa-token')
+        result = key.fetch_session_token('some-access-key', 'mfa-token')
 
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
@@ -182,7 +182,7 @@ class TestCredentials(TestCase):
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_key_credentials('test_user', profile_group)
+        result = key.fetch_key_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -220,7 +220,7 @@ class TestCredentials(TestCase):
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_with_specific_access_key(),
                                      'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_key_credentials('test_user', profile_group)
+        result = key.fetch_key_credentials('test_user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -256,7 +256,7 @@ class TestCredentials(TestCase):
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_key_credentials('test-user', profile_group)
+        result = key.fetch_key_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -288,7 +288,7 @@ class TestCredentials(TestCase):
         mock_assume.return_value = self.test_secrets
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_chain_assume(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_key_credentials('test-user', profile_group)
+        result = key.fetch_key_credentials('test-user', profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -322,7 +322,7 @@ class TestCredentials(TestCase):
         mock_bash_login.return_value = self.success_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_sso_credentials(profile_group)
+        result = key.write_sso_credentials(profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
         
@@ -373,7 +373,7 @@ class TestCredentials(TestCase):
         mock_bash_login.return_value = self.success_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__no_default(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_sso_credentials(profile_group)
+        result = key.write_sso_credentials(profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
         
@@ -416,7 +416,7 @@ class TestCredentials(TestCase):
         mock_bash_login.return_value = self.success_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso__chain_assume(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_sso_credentials(profile_group)
+        result = key.write_sso_credentials(profile_group)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
         
@@ -461,7 +461,7 @@ class TestCredentials(TestCase):
         mock_bash_login.return_value = self.error_result
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group__with_sso(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.fetch_sso_credentials(profile_group)
+        result = key.write_sso_credentials(profile_group)
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
         self.assertEqual("some error", result.error_message)
@@ -483,7 +483,7 @@ class TestCredentials(TestCase):
         mock_assume_role.return_value = 'secrets'
         
         profile_group = test_accounts.get_test_profile_group(include_service_role=True)
-        result = credentials.fetch_key_service_profile(profile_group)
+        result = key.fetch_key_service_profile(profile_group)
         self.assertEqual(True, result.was_success)
         
         expected_assume_role_calls = [call('developer', 'dummy', '123456789012', 'dummy')]
@@ -505,7 +505,7 @@ class TestCredentials(TestCase):
         mock_fetch_role_arn.return_value = 'some-arn'
         
         profile_group = test_accounts.get_test_profile_group(include_service_role=True)
-        result = credentials.fetch_sso_service_profile(profile_group)
+        result = key.write_sso_service_profile(profile_group)
         self.assertEqual(True, result.was_success)
         
         expected_assume_role_calls = [call(profile='developer', role_name='dummy')]
@@ -527,7 +527,7 @@ class TestCredentials(TestCase):
             'session-token-access-key-2'
         ]
 
-        credentials._cleanup_profiles(mock_config_parser)
+        key._cleanup_profiles(mock_config_parser)
 
         expected = [call('developer'), call('unused-profile')]
         self.assertEqual(expected, mock_config_parser.remove_section.call_args_list)
@@ -540,7 +540,7 @@ class TestCredentials(TestCase):
         mock_load_config.return_value = mock_config_parser
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.write_profile_config(profile_group, 'us-east-12')
+        result = key.write_profile_config(profile_group, 'us-east-12')
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
@@ -561,7 +561,7 @@ class TestCredentials(TestCase):
         mock_load_config.return_value = mock_config_parser
 
         profile_group = ProfileGroup('test', test_accounts.get_test_group_no_default(), 'default-access-key', 'default-sso-session', 'default-sso-interval')
-        result = credentials.write_profile_config(profile_group, 'us-east-12')
+        result = key.write_profile_config(profile_group, 'us-east-12')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -581,7 +581,7 @@ class TestCredentials(TestCase):
                                                     'default',
                                                     's3']
 
-        credentials._cleanup_configs(mock_config_parser)
+        key._cleanup_configs(mock_config_parser)
 
         expected = [call('profile developer'),
                     call('profile unused-profile'),
@@ -596,7 +596,7 @@ class TestCredentials(TestCase):
         mock_config_parser.has_section.return_value = False
         mock_load_credentials_file.return_value = mock_config_parser
 
-        result = credentials.set_access_key('key-name', 'key-id', 'access-key')
+        result = key.set_access_key('key-name', 'key-id', 'access-key')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
@@ -612,7 +612,7 @@ class TestCredentials(TestCase):
         mock_config_parser = Mock()
         mock_config_parser.has_section.return_value = False
 
-        credentials._add_profile_credentials(mock_config_parser, 'test-profile', self.test_secrets)
+        key._add_profile_credentials(mock_config_parser, 'test-profile', self.test_secrets)
         self.assertEqual([call('test-profile')],
                          mock_config_parser.has_section.call_args_list)
         self.assertEqual([call('test-profile')],
@@ -626,7 +626,7 @@ class TestCredentials(TestCase):
         mock_config_parser = Mock()
         mock_config_parser.has_section.return_value = False
 
-        credentials._add_profile_config(mock_config_parser, 'test-profile', 'us-east-12')
+        key._add_profile_config(mock_config_parser, 'test-profile', 'us-east-12')
         self.assertEqual([call('profile test-profile')],
                          mock_config_parser.has_section.call_args_list)
         self.assertEqual([call('profile test-profile')],

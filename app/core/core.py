@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, List
 
-from app.aws import credentials, iam
+from app.aws import iam, key, credentials
 from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
@@ -9,7 +9,7 @@ from app.core.toggles import Toggles
 from app.gcp import login, config
 from app.shell import shell
 
-logger = logging.getLogger('logsmith')
+logger = logging.getLogger("logsmith")
 
 
 class Core:
@@ -20,14 +20,16 @@ class Core:
         self.toggles.initialize()
 
         self.active_profile_group: ProfileGroup = None
-        self.empty_profile_group: ProfileGroup = ProfileGroup('logout', {}, '', '', '')
+        self.empty_profile_group: ProfileGroup = ProfileGroup("logout", {}, "", "", "")
         self.region_override: str = None
-    
+
     ########################
     # ACCESS KEY LOGIN
-    def login_with_key(self, profile_group: ProfileGroup, mfa_token: Optional[str]) -> Result:
+    def login_with_key(
+        self, profile_group: ProfileGroup, mfa_token: Optional[str]
+    ) -> Result:
         result = Result()
-        logger.info(f'start key login {profile_group.name} with token {mfa_token}')
+        logger.info(f"start key login {profile_group.name} with token {mfa_token}")
         self.active_profile_group = profile_group
 
         cleanup_resul = credentials.cleanup()
@@ -39,7 +41,9 @@ class Core:
         if not access_key_result.was_success:
             return access_key_result
 
-        session_result = self._ensure_session(access_key=access_key, mfa_token=mfa_token)
+        session_result = self._ensure_session(
+            access_key=access_key, mfa_token=mfa_token
+        )
         if not session_result.was_success:
             return session_result
 
@@ -49,15 +53,17 @@ class Core:
             return role_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = credentials.fetch_key_service_profile(profile_group)
+            service_profile_result = credentials.fetch_key_service_profile(
+                profile_group
+            )
             if not service_profile_result.was_success:
                 return service_profile_result
-        
+
         set_region_result = self.set_region(self.region_override)
         if not set_region_result.was_success:
             return set_region_result
 
-        logger.info('key login success')
+        logger.info("key login success")
         self._handle_support_files(profile_group)
 
         if self.toggles.run_script:
@@ -67,32 +73,56 @@ class Core:
 
         result.set_success()
         return result
-    
+
     ########################
     # SSO LOGIN
     def login_with_sso(self, profile_group: ProfileGroup) -> Result:
         result = Result()
-        logger.info(f'start sso login {profile_group.name}')
+        logger.info(f"start sso login {profile_group.name}")
         self.active_profile_group = profile_group
-        
+
         cleanup_resul = credentials.cleanup()
         if not cleanup_resul.was_success:
             return cleanup_resul
- 
-        sso_result = credentials.fetch_sso_credentials(profile_group)
-        if not sso_result.was_success:
-            return sso_result
-        
-        if profile_group.service_profile is not None:
-            service_profile_result = credentials.fetch_sso_service_profile(profile_group)
-            if not service_profile_result.was_success:
-                return service_profile_result
+
+        sso_login_result = credentials.sso_login(profile_group)
+        if not sso_login_result.was_success:
+            return sso_login_result
+
+        if profile_group.write_mode == "sso":
+            logger.info("write mode: sso")
+            sso_credentiol_result = credentials.write_sso_credentials(profile_group)
+            if not sso_credentiol_result.was_success:
+                return sso_credentiol_result
+
+            if profile_group.service_profile is not None:
+                service_profile_result = credentials.write_sso_service_profile(
+                    profile_group
+                )
+                if not service_profile_result.was_success:
+                    return service_profile_result
+                
+        elif profile_group.write_mode == "key":
+            logger.info("write mode: key")
+            sso_credentiol_result = credentials.write_sso_as_key_credentials(profile_group)
+            if not sso_credentiol_result.was_success:
+                return sso_credentiol_result
+
+            # if profile_group.service_profile is not None:
+                # service_profile_result = credentials.write_sso_as_key_service_profile(
+                    # profile_group
+                # )
+                # if not service_profile_result.was_success:
+                    # return service_profile_result
+        else:
+            result.error("unkown write mode")
+            return result
 
         set_region_result = self.set_region(self.region_override)
         if not set_region_result.was_success:
             return set_region_result
 
-        logger.info('sso login success')
+        logger.info("sso login success")
         self._handle_support_files(profile_group)
 
         if self.toggles.run_script:
@@ -102,13 +132,13 @@ class Core:
 
         result.set_success()
         return result
-    
+
     ########################
     # GCP
     def login_gcp(self, profile_group: ProfileGroup) -> Result:
         result = Result()
         self.active_profile_group = profile_group
-        logger.info('gcp login detected')
+        logger.info("gcp login detected")
 
         # first login
         user_login_result = login.gcloud_auth_login()
@@ -129,13 +159,15 @@ class Core:
         config_region_result = config.set_default_region(region=profile_group.region)
         if not config_region_result.was_success:
             return config_region_result
-        
+
         # set quota-project
-        config_region_result = config.set_default_quota_project(project=profile_group.name)
+        config_region_result = config.set_default_quota_project(
+            project=profile_group.name
+        )
         if not config_region_result.was_success:
             return config_region_result
 
-        logger.info('login success')
+        logger.info("login success")
         self._handle_support_files(profile_group)
 
         run_script_result = self.run_script(profile_group)
@@ -149,19 +181,18 @@ class Core:
     # LOGOUT
     def logout(self) -> Result:
         result = Result()
-        logger.info(f'start logout')
+        logger.info(f"start logout")
         self.active_profile_group = None
 
-        cleanup_result = credentials.cleanup()
+        cleanup_result = key.cleanup()
         if not cleanup_result.was_success:
             return cleanup_result
-        
-        
-        sso_logout_result = credentials.sso_logout()
+
+        sso_logout_result = key.sso_logout()
         if not sso_logout_result.was_success:
             return sso_logout_result
 
-        logger.info('logout success')
+        logger.info("logout success")
         result.set_success()
         return result
 
@@ -171,7 +202,9 @@ class Core:
             result = Result()
             result.set_success()
             return result
-        return credentials.write_profile_config(self.active_profile_group, self.get_region())
+        return key.write_profile_config(
+            self.active_profile_group, self.get_region()
+        )
 
     def get_region(self) -> Optional[str]:
         if self.region_override:
@@ -188,35 +221,41 @@ class Core:
 
     def rotate_access_key(self, access_key: str, mfa_token: Optional[str]) -> Result:
         result = Result()
-        logger.info(f'initiate key rotation for {access_key} with token {mfa_token}')
+        logger.info(f"initiate key rotation for {access_key} with token {mfa_token}")
 
-        logger.info('logout before key rotation')
+        logger.info("logout before key rotation")
         self.logout()
 
-        access_key_result = credentials.check_access_key(access_key=access_key)
+        access_key_result = key.check_access_key(access_key=access_key)
         if not access_key_result.was_success:
             return access_key_result
 
-        session_result = self._ensure_session(access_key=access_key, mfa_token=mfa_token)
+        session_result = self._ensure_session(
+            access_key=access_key, mfa_token=mfa_token
+        )
         if not session_result.was_success:
             return session_result
 
-        logger.info('create key')
-        user = credentials.get_user_name(access_key)
+        logger.info("create key")
+        user = key.get_user_name(access_key)
         create_access_key_result = iam.create_access_key(user, access_key)
         if not create_access_key_result.was_success:
             return create_access_key_result
 
-        logger.info('delete key')
-        previous_access_key_id = credentials.get_access_key_id(access_key)
-        delete_access_key_result = iam.delete_iam_access_key(user, access_key, previous_access_key_id)
+        logger.info("delete key")
+        previous_access_key_id = key.get_access_key_id(access_key)
+        delete_access_key_result = iam.delete_iam_access_key(
+            user, access_key, previous_access_key_id
+        )
         if not delete_access_key_result.was_success:
             return delete_access_key_result
 
-        logger.info('save key')
-        credentials.set_access_key(key_name=access_key,
-                                   key_id=create_access_key_result.payload['AccessKeyId'],
-                                   key_secret=create_access_key_result.payload['SecretAccessKey'])
+        logger.info("save key")
+        key.set_access_key(
+            key_name=access_key,
+            key_id=create_access_key_result.payload["AccessKeyId"],
+            key_secret=create_access_key_result.payload["SecretAccessKey"],
+        )
 
         self.logout()
         result.set_success()
@@ -231,29 +270,34 @@ class Core:
             self.logout()
         except Exception as error:
             logger.error(str(error), exc_info=True)
-            result.error('could not save config or accounts')
+            result.error("could not save config or accounts")
             return result
         result.set_success()
         return result
 
     def set_service_role(self, profile_name: str, role_name: str) -> Result:
         result = Result()
-        logger.info('set service role')
-        self.config.save_selected_service_role(group_name=self.active_profile_group.name,
-                                               profile_name=profile_name,
-                                               role_name=role_name)
-        self.active_profile_group.set_service_role_profile(source_profile_name=profile_name,
-                                                           role_name=role_name)
+        logger.info("set service role")
+        self.config.save_selected_service_role(
+            group_name=self.active_profile_group.name,
+            profile_name=profile_name,
+            role_name=role_name,
+        )
+        self.active_profile_group.set_service_role_profile(
+            source_profile_name=profile_name, role_name=role_name
+        )
 
         result.set_success()
         return result
 
     def set_available_service_roles(self, profile, role_list: List[str]) -> Result:
         result = Result()
-        logger.info('set available service roles')
-        self.config.save_available_service_roles(group_name=self.active_profile_group.name,
-                                                 profile_name=profile,
-                                                 role_list=role_list)
+        logger.info("set available service roles")
+        self.config.save_available_service_roles(
+            group_name=self.active_profile_group.name,
+            profile_name=profile,
+            role_list=role_list,
+        )
         result.set_success()
         return result
 
@@ -266,15 +310,15 @@ class Core:
         script_path = profile_group.script
         script_path = files.replace_home_variable(script_path)
 
-        logger.info(f'run script: {script_path}')
+        logger.info(f"run script: {script_path}")
         if not files.file_exists(script_path):
-            result.error(f'{script_path} not found')
+            result.error(f"{script_path} not found")
             return result
 
         script_result = shell.run(command=script_path, timeout=60)
         if not script_result.was_success:
             return script_result
-        
+
         result.set_success()
         return result
 
@@ -282,11 +326,13 @@ class Core:
     def _ensure_session(access_key: str, mfa_token: Optional[str]) -> Result:
         result = Result()
 
-        session_check_result = credentials.check_session(access_key=access_key)
+        session_check_result = key.check_session(access_key=access_key)
         if not session_check_result.was_success and not mfa_token:
             return session_check_result
         if not session_check_result.was_success and mfa_token:
-            session_fetch_result = credentials.fetch_session_token(access_key=access_key, mfa_token=mfa_token)
+            session_fetch_result = key.fetch_session_token(
+                access_key=access_key, mfa_token=mfa_token
+            )
             if not session_fetch_result.was_success:
                 return session_fetch_result
 
@@ -295,24 +341,33 @@ class Core:
 
     @staticmethod
     def _handle_support_files(profile_group: ProfileGroup):
-        logger.info('handle support files')
+        logger.info("handle support files")
         files.write_active_group_file(profile_group.name)
 
     @staticmethod
     def set_access_key(key_name: str, key_id: str, key_secret: str) -> Result:
-        return credentials.set_access_key(key_name=key_name, key_id=key_id, key_secret=key_secret)
+        return key.set_access_key(
+            key_name=key_name, key_id=key_id, key_secret=key_secret
+        )
 
     @staticmethod
-    def set_sso_session(sso_name: str, sso_url: str, sso_region: str, sso_scopes: str) -> Result:
-        return credentials.set_sso_session(sso_name=sso_name, sso_url=sso_url, sso_region=sso_region, sso_scopes=sso_scopes)
+    def set_sso_session(
+        sso_name: str, sso_url: str, sso_region: str, sso_scopes: str
+    ) -> Result:
+        return key.set_sso_session(
+            sso_name=sso_name,
+            sso_url=sso_url,
+            sso_region=sso_region,
+            sso_scopes=sso_scopes,
+        )
 
     @staticmethod
     def get_access_key_list() -> list:
-        return credentials.get_access_key_list()
-    
+        return key.get_access_key_list()
+
     @staticmethod
     def get_sso_sessions_list() -> list:
-        return credentials.get_sso_sessions_list()
+        return key.get_sso_sessions_list()
 
     @staticmethod
     def check_name(prefix: str, name: str) -> Result:
@@ -320,7 +375,7 @@ class Core:
         if not name.startswith(prefix):
             result.error(f"'{name}' must start with {prefix}")
             return result
-        if ' ' in name:
+        if " " in name:
             result.error(f"'{name}' must not contain spaces")
             return result
         result.set_success()
