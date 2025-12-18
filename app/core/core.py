@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, List
 
-from app.aws import iam, key, credentials
+from app.aws import iam, key, credentials, sso
 from app.core import files
 from app.core.config import Config, ProfileGroup
 from app.core.result import Result
@@ -37,7 +37,7 @@ class Core:
             return cleanup_resul
 
         access_key = profile_group.get_access_key()
-        access_key_result = credentials.check_access_key(access_key=access_key)
+        access_key_result = key.check_access_key(access_key=access_key)
         if not access_key_result.was_success:
             return access_key_result
 
@@ -47,13 +47,13 @@ class Core:
         if not session_result.was_success:
             return session_result
 
-        user_name = credentials.get_user_name(access_key=access_key)
-        role_result = credentials.fetch_key_credentials(user_name, profile_group)
+        user_name = key.get_user_name(access_key=access_key)
+        role_result = key.fetch_key_credentials(user_name, profile_group)
         if not role_result.was_success:
             return role_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = credentials.fetch_key_service_profile(
+            service_profile_result = key.fetch_key_service_profile(
                 profile_group
             )
             if not service_profile_result.was_success:
@@ -85,18 +85,18 @@ class Core:
         if not cleanup_resul.was_success:
             return cleanup_resul
 
-        sso_login_result = credentials.sso_login(profile_group)
+        sso_login_result = sso.sso_login(profile_group)
         if not sso_login_result.was_success:
             return sso_login_result
 
         if profile_group.write_mode == "sso":
             logger.info("write mode: sso")
-            sso_credentiol_result = credentials.write_sso_credentials(profile_group)
+            sso_credentiol_result = sso.write_sso_credentials(profile_group)
             if not sso_credentiol_result.was_success:
                 return sso_credentiol_result
 
             if profile_group.service_profile is not None:
-                service_profile_result = credentials.write_sso_service_profile(
+                service_profile_result = sso.write_sso_service_profile(
                     profile_group
                 )
                 if not service_profile_result.was_success:
@@ -104,7 +104,7 @@ class Core:
                 
         elif profile_group.write_mode == "key":
             logger.info("write mode: key")
-            sso_credentiol_result = credentials.write_sso_as_key_credentials(profile_group)
+            sso_credentiol_result = sso.write_sso_as_key_credentials(profile_group)
             if not sso_credentiol_result.was_success:
                 return sso_credentiol_result
 
@@ -184,11 +184,11 @@ class Core:
         logger.info(f"start logout")
         self.active_profile_group = None
 
-        cleanup_result = key.cleanup()
+        cleanup_result = credentials.cleanup()
         if not cleanup_result.was_success:
             return cleanup_result
 
-        sso_logout_result = key.sso_logout()
+        sso_logout_result = sso.sso_logout()
         if not sso_logout_result.was_success:
             return sso_logout_result
 
@@ -202,7 +202,7 @@ class Core:
             result = Result()
             result.set_success()
             return result
-        return key.write_profile_config(
+        return credentials.write_profile_config(
             self.active_profile_group, self.get_region()
         )
 
@@ -354,7 +354,7 @@ class Core:
     def set_sso_session(
         sso_name: str, sso_url: str, sso_region: str, sso_scopes: str
     ) -> Result:
-        return key.set_sso_session(
+        return sso.set_sso_session(
             sso_name=sso_name,
             sso_url=sso_url,
             sso_region=sso_region,
@@ -367,7 +367,7 @@ class Core:
 
     @staticmethod
     def get_sso_sessions_list() -> list:
-        return key.get_sso_sessions_list()
+        return sso.get_sso_sessions_list()
 
     @staticmethod
     def check_name(prefix: str, name: str) -> Result:

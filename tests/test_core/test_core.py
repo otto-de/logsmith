@@ -4,12 +4,18 @@ from unittest.mock import call, Mock
 from app.core.config import Config
 from app.core.core import Core
 from app.core.result import Result
-from tests.test_data import test_accounts
-from tests.test_data.test_accounts import get_test_profile_group, \
-    get_default_test_accounts
+from tests.test_data.test_accounts import (
+    get_default_test_accounts,
+    get_test_profile_group,
+)
 from tests.test_data.test_config import get_test_config
-from tests.test_data.test_results import get_success_result, get_error_result, get_failed_result
+from tests.test_data.test_results import (
+    get_success_result,
+    get_error_result,
+    get_failed_result,
+)
 from tests.test_data.test_service_roles import get_test_service_roles
+from tests.test_data.test_toggles import get_test_toggles
 
 if 'unittest.util' in __import__('sys').modules:
     # Show full diff in self.assertEqual.
@@ -21,13 +27,15 @@ class TestCore(TestCase):
     def setUpClass(cls):
         cls.maxDiff = None
 
+    @mock.patch('app.core.config.files.load_toggles')
     @mock.patch('app.core.config.files.load_service_roles')
     @mock.patch('app.core.config.files.load_config')
     @mock.patch('app.core.config.files.load_accounts')
-    def setUp(self, mock_load_accounts, mock_load_config, mock_service_roles):
+    def setUp(self, mock_load_accounts, mock_load_config, mock_service_roles, mock_toggles):
         mock_load_accounts.return_value = get_default_test_accounts()
         mock_load_config.return_value = get_test_config()
         mock_service_roles.return_value = get_test_service_roles()
+        mock_toggles.return_value = get_test_toggles()
 
         self.core = Core()
         self.config = Config()
@@ -38,63 +46,65 @@ class TestCore(TestCase):
         self.fail_result = get_failed_result()
         self.error_result = get_error_result()
 
+    @mock.patch('app.core.core.sso')
     @mock.patch('app.core.core.credentials')
-    def test_logout(self, mock_credentials):
+    def test_logout(self, mock_credentials, mock_sso):
         mock_credentials.cleanup.return_value = self.success_result
-        mock_credentials.sso_logout.return_value = self.success_result
+        mock_sso.sso_logout.return_value = self.success_result
 
         result = self.core.logout()
 
-        expected = [call.cleanup(), call.sso_logout()]
-        self.assertEqual(expected, mock_credentials.mock_calls)
+        self.assertEqual([call.cleanup()], mock_credentials.mock_calls)
+        self.assertEqual([call.sso_logout()], mock_sso.mock_calls)
 
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
+    @mock.patch('app.core.core.sso')
     @mock.patch('app.core.core.credentials')
-    def test_logout__error_on_cleanup(self, mock_credentials):
+    def test_logout__error_on_cleanup(self, mock_credentials, mock_sso):
         mock_credentials.cleanup.return_value = self.error_result
 
         result = self.core.logout()
 
-        expected = [call.cleanup()]
-        self.assertEqual(expected, mock_credentials.mock_calls)
+        self.assertEqual([call.cleanup()], mock_credentials.mock_calls)
+        self.assertEqual([], mock_sso.mock_calls)
 
         self.assertEqual(self.error_result, result)
         
+    @mock.patch('app.core.core.sso')
     @mock.patch('app.core.core.credentials')
-    def test_logout__error_on_sso_logout(self, mock_credentials):
+    def test_logout__error_on_sso_logout(self, mock_credentials, mock_sso):
         mock_credentials.cleanup.return_value = self.success_result
-        mock_credentials.sso_logout.return_value = self.error_result
+        mock_sso.sso_logout.return_value = self.error_result
 
         result = self.core.logout()
 
-        expected = [call.cleanup(), call.sso_logout()]
-        self.assertEqual(expected, mock_credentials.mock_calls)
+        self.assertEqual([call.cleanup()], mock_credentials.mock_calls)
+        self.assertEqual([call.sso_logout()], mock_sso.mock_calls)
 
         self.assertEqual(self.error_result, result)
 
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.iam')
-    @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__no_access_key(self, mock_credentials, mock_iam, mock_logout, mock_ensure_session):
-        mock_credentials.check_access_key.return_value = self.fail_result
+    @mock.patch('app.core.core.key')
+    def test_rotate_access_key__no_access_key(self, mock_key, mock_iam, mock_logout, mock_ensure_session):
+        mock_key.check_access_key.return_value = self.fail_result
 
         result = self.core.rotate_access_key(access_key='rotate-this-key', mfa_token=None)
         self.assertEqual(self.fail_result, result)
 
         self.assertEqual(1, mock_logout.call_count)
-        expected_credential_calls = [call.check_access_key(access_key='rotate-this-key')]
-        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+        expected_key_calls = [call.check_access_key(access_key='rotate-this-key')]
+        self.assertEqual(expected_key_calls, mock_key.mock_calls)
 
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.iam')
-    @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__fetch_session_failure(self, mock_credentials, mock_iam, mock_logout,
-                                                      mock_ensure_session):
-        mock_credentials.check_access_key.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test_rotate_access_key__fetch_session_failure(self, mock_key, mock_iam, mock_logout, mock_ensure_session):
+        mock_key.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.fail_result
 
         result = self.core.rotate_access_key(access_key='rotate-this-key', mfa_token=None)
@@ -103,16 +113,15 @@ class TestCore(TestCase):
         self.assertEqual(1, mock_logout.call_count)
         expected_ensure_session_calls = [call(access_key='rotate-this-key', mfa_token=None)]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
-        expected_credential_calls = [call.check_access_key(access_key='rotate-this-key')]
-        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+        expected_key_calls = [call.check_access_key(access_key='rotate-this-key')]
+        self.assertEqual(expected_key_calls, mock_key.mock_calls)
 
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.iam')
-    @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__create_access_key_failure(self, mock_credentials, mock_iam, mock_logout,
-                                                          mock_ensure_session):
-        mock_credentials.check_access_key.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test_rotate_access_key__create_access_key_failure(self, mock_key, mock_iam, mock_logout, mock_ensure_session):
+        mock_key.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
         mock_iam.create_access_key.return_value = self.fail_result
 
@@ -122,21 +131,20 @@ class TestCore(TestCase):
         self.assertEqual(1, mock_logout.call_count)
         expected_ensure_session_calls = [call(access_key='rotate-this-key', mfa_token=None)]
         self.assertEqual(expected_ensure_session_calls, mock_ensure_session.mock_calls)
-        expected_credential_calls = [call.check_access_key(access_key='rotate-this-key'),
-                                     call.get_user_name('rotate-this-key')]
-        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+        expected_key_calls = [call.check_access_key(access_key='rotate-this-key'),
+                              call.get_user_name('rotate-this-key')]
+        self.assertEqual(expected_key_calls, mock_key.mock_calls)
 
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.iam')
-    @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__delete_iam_access_key_failure(self, mock_credentials, mock_iam, mock_logout,
-                                                              mock_ensure_session):
-        mock_credentials.check_access_key.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test_rotate_access_key__delete_iam_access_key_failure(self, mock_key, mock_iam, mock_logout, mock_ensure_session):
+        mock_key.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
-        mock_credentials.get_user_name.return_value = 'some-user'
+        mock_key.get_user_name.return_value = 'some-user'
         mock_iam.create_access_key.return_value = self.success_result
-        mock_credentials.get_access_key_id.return_value = 'some-old-access-key'
+        mock_key.get_access_key_id.return_value = 'some-old-access-key'
         mock_iam.delete_iam_access_key.return_value = self.fail_result
 
         result = self.core.rotate_access_key(access_key='rotate-this-key', mfa_token=None)
@@ -148,27 +156,26 @@ class TestCore(TestCase):
         expected_credential_calls = [call.create_access_key('some-user', 'rotate-this-key'),
                                      call.delete_iam_access_key('some-user', 'rotate-this-key', 'some-old-access-key')]
         self.assertEqual(expected_credential_calls, mock_iam.mock_calls)
-        expected_credential_calls = [call.check_access_key(access_key='rotate-this-key'),
-                                     call.get_user_name('rotate-this-key'),
-                                     call.get_access_key_id('rotate-this-key')]
-        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+        expected_key_calls = [call.check_access_key(access_key='rotate-this-key'),
+                              call.get_user_name('rotate-this-key'),
+                              call.get_access_key_id('rotate-this-key')]
+        self.assertEqual(expected_key_calls, mock_key.mock_calls)
 
     @mock.patch('app.core.core.Core._ensure_session')
     @mock.patch('app.core.core.Core.logout')
     @mock.patch('app.core.core.iam')
-    @mock.patch('app.core.core.credentials')
-    def test_rotate_access_key__successful_rotate(self, mock_credentials, mock_iam, mock_logout,
-                                                  mock_ensure_session):
-        mock_credentials.check_access_key.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test_rotate_access_key__successful_rotate(self, mock_key, mock_iam, mock_logout, mock_ensure_session):
+        mock_key.check_access_key.return_value = self.success_result
         mock_ensure_session.return_value = self.success_result
-        mock_credentials.get_user_name.return_value = 'some-user'
+        mock_key.get_user_name.return_value = 'some-user'
 
         create_access_key_result = Result()
         create_access_key_result.set_success()
         create_access_key_result.add_payload({'AccessKeyId': 'new-key', 'SecretAccessKey': '1234'})
         mock_iam.create_access_key.return_value = create_access_key_result
 
-        mock_credentials.get_access_key_id.return_value = 'some-old-access-key'
+        mock_key.get_access_key_id.return_value = 'some-old-access-key'
         mock_iam.delete_iam_access_key.return_value = self.success_result
 
         result = self.core.rotate_access_key(access_key='rotate-this-key', mfa_token='123456')
@@ -181,12 +188,12 @@ class TestCore(TestCase):
         expected_credential_calls = [call.create_access_key('some-user', 'rotate-this-key'),
                                      call.delete_iam_access_key('some-user', 'rotate-this-key', 'some-old-access-key')]
         self.assertEqual(expected_credential_calls, mock_iam.mock_calls)
-        expected_credential_calls = [call.check_access_key(access_key='rotate-this-key'),
-                                     call.get_user_name('rotate-this-key'),
-                                     call.get_access_key_id('rotate-this-key'),
-                                     call.set_access_key(key_name='rotate-this-key', key_id='new-key',
-                                                         key_secret='1234')]
-        self.assertEqual(expected_credential_calls, mock_credentials.mock_calls)
+        expected_key_calls = [call.check_access_key(access_key='rotate-this-key'),
+                              call.get_user_name('rotate-this-key'),
+                              call.get_access_key_id('rotate-this-key'),
+                              call.set_access_key(key_name='rotate-this-key', key_id='new-key',
+                                                  key_secret='1234')]
+        self.assertEqual(expected_key_calls, mock_key.mock_calls)
 
     def test_get_region__not_logged_in(self):
         region = self.core.get_region()
@@ -208,89 +215,89 @@ class TestCore(TestCase):
         region = self.core.get_region()
         self.assertEqual('europe-west1', region)
 
-    @mock.patch('app.core.core.credentials')
-    def test__ensure_session__valid_session_and_token(self, mock_credentials):
-        mock_credentials.check_session.return_value = self.success_result
-        mock_credentials.fetch_session_token.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test__ensure_session__valid_session_and_token(self, mock_key):
+        mock_key.check_session.return_value = self.success_result
+        mock_key.fetch_session_token.return_value = self.success_result
 
         result = self.core._ensure_session(access_key='access-key', mfa_token='123456')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
         expected_check_session_calls = [call(access_key='access-key')]
-        self.assertEqual(expected_check_session_calls, mock_credentials.check_session.mock_calls)
+        self.assertEqual(expected_check_session_calls, mock_key.check_session.mock_calls)
         expected_fetch_session_calls = []
-        self.assertEqual(expected_fetch_session_calls, mock_credentials.fetch_session_token.mock_calls)
+        self.assertEqual(expected_fetch_session_calls, mock_key.fetch_session_token.mock_calls)
 
-    @mock.patch('app.core.core.credentials')
-    def test__ensure_session__valid_session_and_no_token(self, mock_credentials):
-        mock_credentials.check_session.return_value = self.success_result
-        mock_credentials.fetch_session_token.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test__ensure_session__valid_session_and_no_token(self, mock_key):
+        mock_key.check_session.return_value = self.success_result
+        mock_key.fetch_session_token.return_value = self.success_result
 
         result = self.core._ensure_session(access_key='access-key', mfa_token=None)
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
         expected_check_session_calls = [call(access_key='access-key')]
-        self.assertEqual(expected_check_session_calls, mock_credentials.check_session.mock_calls)
+        self.assertEqual(expected_check_session_calls, mock_key.check_session.mock_calls)
         expected_fetch_session_calls = []
-        self.assertEqual(expected_fetch_session_calls, mock_credentials.fetch_session_token.mock_calls)
+        self.assertEqual(expected_fetch_session_calls, mock_key.fetch_session_token.mock_calls)
 
-    @mock.patch('app.core.core.credentials')
-    def test__ensure_session__invalid_session_and_token(self, mock_credentials):
-        mock_credentials.check_session.return_value = self.fail_result
-        mock_credentials.fetch_session_token.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test__ensure_session__invalid_session_and_token(self, mock_key):
+        mock_key.check_session.return_value = self.fail_result
+        mock_key.fetch_session_token.return_value = self.success_result
 
         result = self.core._ensure_session(access_key='access-key', mfa_token='123456')
         self.assertEqual(True, result.was_success)
         self.assertEqual(False, result.was_error)
 
         expected_check_session_calls = [call(access_key='access-key')]
-        self.assertEqual(expected_check_session_calls, mock_credentials.check_session.mock_calls)
+        self.assertEqual(expected_check_session_calls, mock_key.check_session.mock_calls)
         expected_fetch_session_calls = [call(access_key='access-key', mfa_token='123456')]
-        self.assertEqual(expected_fetch_session_calls, mock_credentials.fetch_session_token.mock_calls)
+        self.assertEqual(expected_fetch_session_calls, mock_key.fetch_session_token.mock_calls)
 
-    @mock.patch('app.core.core.credentials')
-    def test__ensure_session__invalid_session_and_no_token(self, mock_credentials):
-        mock_credentials.check_session.return_value = self.fail_result
-        mock_credentials.fetch_session_token.return_value = self.success_result
+    @mock.patch('app.core.core.key')
+    def test__ensure_session__invalid_session_and_no_token(self, mock_key):
+        mock_key.check_session.return_value = self.fail_result
+        mock_key.fetch_session_token.return_value = self.success_result
 
         result = self.core._ensure_session(access_key='access-key', mfa_token=None)
         self.assertEqual(False, result.was_success)
         self.assertEqual(False, result.was_error)
 
         expected_check_session_calls = [call(access_key='access-key')]
-        self.assertEqual(expected_check_session_calls, mock_credentials.check_session.mock_calls)
+        self.assertEqual(expected_check_session_calls, mock_key.check_session.mock_calls)
         expected_fetch_session_calls = []
-        self.assertEqual(expected_fetch_session_calls, mock_credentials.fetch_session_token.mock_calls)
+        self.assertEqual(expected_fetch_session_calls, mock_key.fetch_session_token.mock_calls)
 
-    @mock.patch('app.core.core.credentials')
-    def test__ensure_session__invalid_session_and_token_but_fetch_session_error(self, mock_credentials):
-        mock_credentials.check_session.return_value = self.fail_result
-        mock_credentials.fetch_session_token.return_value = self.error_result
-
-        result = self.core._ensure_session(access_key='access-key', mfa_token='123456')
-        self.assertEqual(False, result.was_success)
-        self.assertEqual(True, result.was_error)
-
-        expected_check_session_calls = [call(access_key='access-key')]
-        self.assertEqual(expected_check_session_calls, mock_credentials.check_session.mock_calls)
-        expected_fetch_session_calls = [call(access_key='access-key', mfa_token='123456')]
-        self.assertEqual(expected_fetch_session_calls, mock_credentials.fetch_session_token.mock_calls)
-
-    @mock.patch('app.core.core.credentials')
-    def test__ensure_session__error_session_check(self, mock_credentials):
-        mock_credentials.check_session.return_value = self.error_result
-        mock_credentials.fetch_session_token.return_value = self.error_result
+    @mock.patch('app.core.core.key')
+    def test__ensure_session__invalid_session_and_token_but_fetch_session_error(self, mock_key):
+        mock_key.check_session.return_value = self.fail_result
+        mock_key.fetch_session_token.return_value = self.error_result
 
         result = self.core._ensure_session(access_key='access-key', mfa_token='123456')
         self.assertEqual(False, result.was_success)
         self.assertEqual(True, result.was_error)
 
         expected_check_session_calls = [call(access_key='access-key')]
-        self.assertEqual(expected_check_session_calls, mock_credentials.check_session.mock_calls)
+        self.assertEqual(expected_check_session_calls, mock_key.check_session.mock_calls)
         expected_fetch_session_calls = [call(access_key='access-key', mfa_token='123456')]
-        self.assertEqual(expected_fetch_session_calls, mock_credentials.fetch_session_token.mock_calls)
+        self.assertEqual(expected_fetch_session_calls, mock_key.fetch_session_token.mock_calls)
+
+    @mock.patch('app.core.core.key')
+    def test__ensure_session__error_session_check(self, mock_key):
+        mock_key.check_session.return_value = self.error_result
+        mock_key.fetch_session_token.return_value = self.error_result
+
+        result = self.core._ensure_session(access_key='access-key', mfa_token='123456')
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+
+        expected_check_session_calls = [call(access_key='access-key')]
+        self.assertEqual(expected_check_session_calls, mock_key.check_session.mock_calls)
+        expected_fetch_session_calls = [call(access_key='access-key', mfa_token='123456')]
+        self.assertEqual(expected_fetch_session_calls, mock_key.fetch_session_token.mock_calls)
 
     @mock.patch('app.core.core.credentials')
     def test__set_region__not_logged_in(self, mock_credentials):

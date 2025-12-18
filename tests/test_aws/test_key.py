@@ -1,0 +1,453 @@
+import os
+from unittest import TestCase, mock
+from unittest.mock import Mock, call
+
+from botocore.exceptions import ClientError, EndpointConnectionError, NoCredentialsError, ParamValidationError, ReadTimeoutError
+
+from app.aws import key, credentials
+from app.core.profile_group import ProfileGroup
+from tests.test_data import test_accounts
+from tests.test_data.test_results import get_error_result, get_failed_result, get_success_result
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+
+class TestKey(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.test_credentials_file_path = f"{script_dir}/../test_resources/credential_file"
+        cls.test_credentials_file_path_without_keys = f"{script_dir}/../test_resources/credential_file_no_key"
+
+        parsed_response = {"Error": {"Code": "500", "Message": "Error"}}
+        cls.client_error = ClientError(parsed_response, "test")
+        cls.param_validation_error = ParamValidationError(report="test")
+        cls.no_credentials_error = NoCredentialsError()
+        cls.endpoint_error = EndpointConnectionError(endpoint_url="test")
+        cls.timeout_error = ReadTimeoutError(endpoint_url="test")
+
+        cls.test_secrets = {
+            "AccessKeyId": "test-key-id",
+            "SecretAccessKey": "test-access-key",
+            "SessionToken": "test-session-token",
+        }
+
+        cls.success_result = get_success_result()
+        cls.fail_result = get_failed_result()
+        cls.error_result = get_error_result()
+
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_has_access_key(self, mock_load_credentials):
+        mock_load_credentials.return_value = credentials._load_file(self.test_credentials_file_path)
+        result = key.has_access_key("access-key")
+
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_has_access_key__no_access_key(self, mock_load_credentials):
+        mock_load_credentials.return_value = credentials._load_file(self.test_credentials_file_path_without_keys)
+        result = key.has_access_key("access-key")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("could not find access-key 'access-key' in .aws/credentials", result.error_message)
+
+    @mock.patch("app.aws.key.credentials.get_client")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_check_session(self, mock_load_credentials, mock_get_client):
+        mock_load_credentials.return_value = credentials._load_file(self.test_credentials_file_path)
+
+        result = key.check_session("access-key")
+        expected_calls = [
+            call("session-token-access-key", "sts", timeout=2, retries=2),
+            call().get_caller_identity(),
+        ]
+        self.assertEqual(expected_calls, mock_get_client.mock_calls)
+
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+    @mock.patch("app.aws.key.credentials.get_client")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_check_session__invalid_session(self, mock_load_credentials, mock_get_client):
+        mock_load_credentials.return_value = credentials._load_file(self.test_credentials_file_path)
+        mock_client = Mock()
+        mock_client.get_caller_identity.side_effect = self.client_error
+        mock_get_client.return_value = mock_client
+
+        result = key.check_session("access-key")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+    @mock.patch("app.aws.key.credentials.get_client")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_check_session__connection_timeout(self, mock_load_credentials, mock_get_client):
+        mock_load_credentials.return_value = credentials._load_file(self.test_credentials_file_path)
+        mock_client = Mock()
+        mock_client.get_caller_identity.side_effect = self.timeout_error
+        mock_get_client.return_value = mock_client
+
+        result = key.check_session("access-key")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+
+    @mock.patch("app.aws.key._get_session_token")
+    @mock.patch("app.aws.key.credentials.add_profile_credentials")
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_session_token(
+        self, mock_load_credentials, mock_write, mock_add_profile, mock_session
+    ):
+        mock_session.return_value = self.test_secrets
+        mock_credentials_file = Mock()
+        mock_load_credentials.return_value = mock_credentials_file
+
+        result = key.fetch_session_token("some-access-key", "mfa-token")
+
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+        expected = call(mock_credentials_file, "session-token-some-access-key", self.test_secrets)
+        self.assertEqual(expected, mock_add_profile.call_args)
+
+        expected = call(mock_credentials_file)
+        self.assertEqual(expected, mock_write.call_args)
+
+    @mock.patch("app.aws.key._get_session_token")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_session_token__param_validation_error(self, _, mock_session):
+        mock_session.return_value = {}
+        mock_session.side_effect = self.client_error
+
+        result = key.fetch_session_token("some-access-key", "mfa-token")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("could not fetch session token", result.error_message)
+
+    @mock.patch("app.aws.key._get_session_token")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_session_token__client_error(self, _, mock_session):
+        mock_session.return_value = {}
+        mock_session.side_effect = self.param_validation_error
+
+        result = key.fetch_session_token("some-access-key", "mfa-token")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("invalid mfa token", result.error_message)
+
+    @mock.patch("app.aws.key._get_session_token")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_session_token__no_credentials_error(self, _, mock_session):
+        mock_session.return_value = {}
+        mock_session.side_effect = self.no_credentials_error
+
+        result = key.fetch_session_token("some-access-key", "mfa-token")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("access_key credentials invalid", result.error_message)
+
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.add_profile_credentials")
+    @mock.patch("app.aws.key.iam.assume_role")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_key_credentials(
+        self, mock_load_credentials, mock_assume, mock_add_profile, mock_write_credentials
+    ):
+        mock_config_parser = Mock()
+        mock_load_credentials.return_value = mock_config_parser
+        mock_assume.return_value = self.test_secrets
+
+        profile_group = ProfileGroup(
+            "test",
+            test_accounts.get_test_group(),
+            "default-access-key",
+            "default-sso-session",
+            "default-sso-interval",
+        )
+        result = key.fetch_key_credentials("test_user", profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_mock_assume_calls = [
+            call("session-token-default-access-key", "test_user", "123456789012", "developer"),
+            call("session-token-default-access-key", "test_user", "012345678901", "readonly"),
+        ]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                mock_config_parser,
+                "developer",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+            call(
+                mock_config_parser,
+                "readonly",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+            call(
+                mock_config_parser,
+                "default",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+
+        self.assertEqual(2, mock_write_credentials.call_count)
+
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.add_profile_credentials")
+    @mock.patch("app.aws.key.iam.assume_role")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_key_credentials_with_specific_access_key(
+        self, mock_load_credentials, mock_assume, mock_add_profile, mock_write_credentials
+    ):
+        mock_config_parser = Mock()
+        mock_load_credentials.return_value = mock_config_parser
+        mock_assume.return_value = self.test_secrets
+
+        profile_group = ProfileGroup(
+            "test",
+            test_accounts.get_test_group_with_specific_access_key(),
+            "default-access-key",
+            "default-sso-session",
+            "default-sso-interval",
+        )
+        result = key.fetch_key_credentials("test_user", profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_mock_assume_calls = [
+            call("session-token-specific-access-key", "test_user", "123456789012", "developer"),
+            call("session-token-specific-access-key", "test_user", "012345678901", "readonly"),
+        ]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                mock_config_parser,
+                "developer",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+            call(
+                mock_config_parser,
+                "readonly",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+            call(
+                mock_config_parser,
+                "default",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+
+        self.assertEqual(2, mock_write_credentials.call_count)
+
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.add_profile_credentials")
+    @mock.patch("app.aws.key.iam.assume_role")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_key_credentials__no_default(
+        self, mock_load_credentials, mock_assume, mock_add_profile, mock_write_credentials
+    ):
+        mock_config_parser = Mock()
+        mock_load_credentials.return_value = mock_config_parser
+        mock_assume.return_value = self.test_secrets
+
+        profile_group = ProfileGroup(
+            "test",
+            test_accounts.get_test_group_no_default(),
+            "default-access-key",
+            "default-sso-session",
+            "default-sso-interval",
+        )
+        result = key.fetch_key_credentials("test-user", profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_mock_assume_calls = [
+            call("session-token-default-access-key", "test-user", "123456789012", "developer"),
+            call("session-token-default-access-key", "test-user", "012345678901", "readonly"),
+        ]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                mock_config_parser,
+                "developer",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+            call(
+                mock_config_parser,
+                "readonly",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+
+        self.assertEqual(2, mock_write_credentials.call_count)
+
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.add_profile_credentials")
+    @mock.patch("app.aws.key.iam.assume_role")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_key_credentials__chain_assume(
+        self, mock_load_credentials, mock_assume, mock_add_profile, mock_write_credentials
+    ):
+        mock_config_parser = Mock()
+        mock_load_credentials.return_value = mock_config_parser
+        mock_assume.return_value = self.test_secrets
+
+        profile_group = ProfileGroup(
+            "test",
+            test_accounts.get_test_group_chain_assume(),
+            "default-access-key",
+            "default-sso-session",
+            "default-sso-interval",
+        )
+        result = key.fetch_key_credentials("test-user", profile_group)
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        expected_mock_assume_calls = [
+            call("session-token-default-access-key", "test-user", "123456789012", "developer"),
+            call("developer", "test-user", "012345678901", "service"),
+        ]
+        self.assertEqual(expected_mock_assume_calls, mock_assume.call_args_list)
+
+        expected_mock_add_profile_calls = [
+            call(
+                mock_config_parser,
+                "developer",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+            call(
+                mock_config_parser,
+                "service",
+                {
+                    "AccessKeyId": "test-key-id",
+                    "SecretAccessKey": "test-access-key",
+                    "SessionToken": "test-session-token",
+                },
+            ),
+        ]
+        self.assertEqual(expected_mock_add_profile_calls, mock_add_profile.call_args_list)
+
+        self.assertEqual(2, mock_write_credentials.call_count)
+
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.add_profile_credentials")
+    @mock.patch("app.aws.key.iam.assume_role")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_fetch_key_service_profile(
+        self, mock_load_credentials, mock_assume_role, mock_add_profile_credentials, mock_write_credentials_file
+    ):
+        mock_config_parser = Mock()
+        mock_load_credentials.return_value = mock_config_parser
+        mock_assume_role.return_value = "secrets"
+
+        profile_group = test_accounts.get_test_profile_group(include_service_role=True)
+        result = key.fetch_key_service_profile(profile_group)
+        self.assertEqual(True, result.was_success)
+
+        expected_assume_role_calls = [call("developer", "dummy", "123456789012", "dummy")]
+        self.assertEqual(expected_assume_role_calls, mock_assume_role.call_args_list)
+
+        expected_add_profile_credentialscalls = [call(mock_config_parser, "service", "secrets")]
+        self.assertEqual(expected_add_profile_credentialscalls, mock_add_profile_credentials.call_args_list)
+
+        expected_write_credentials_file_calls = [call(mock_config_parser)]
+        self.assertEqual(expected_write_credentials_file_calls, mock_write_credentials_file.call_args_list)
+
+    @mock.patch("app.aws.key.credentials.write_credentials_file")
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_set_access_key(self, mock_load_credentials_file, mock_write_credentials_file):
+        mock_config_parser = Mock()
+        mock_config_parser.has_section.return_value = False
+        mock_load_credentials_file.return_value = mock_config_parser
+
+        result = key.set_access_key("key-name", "key-id", "access-key")
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+
+        self.assertEqual([call("key-name")], mock_config_parser.has_section.call_args_list)
+        self.assertEqual([call("key-name")], mock_config_parser.add_section.call_args_list)
+        self.assertEqual(
+            [
+                call("key-name", "aws_access_key_id", "key-id"),
+                call("key-name", "aws_secret_access_key", "access-key"),
+            ],
+            mock_config_parser.set.call_args_list,
+        )
+        self.assertEqual([call(mock_config_parser)], mock_write_credentials_file.call_args_list)
+
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_get_access_key_list(self, mock_load_credentials_file):
+        mock_config_parser = Mock()
+        mock_config_parser.sections.return_value = ["access-key-1", "session-token", "access-key-2", "other"]
+        mock_load_credentials_file.return_value = mock_config_parser
+
+        result = key.get_access_key_list()
+
+        self.assertEqual(["access-key-1", "access-key-2"], result)
+
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_get_access_key_id(self, mock_load_credentials_file):
+        mock_config_parser = Mock()
+        mock_config_parser.get.return_value = "some-key-id"
+        mock_load_credentials_file.return_value = mock_config_parser
+
+        result = key.get_access_key_id("access-key")
+
+        self.assertEqual("some-key-id", result)
+        self.assertEqual([call("access-key", "aws_access_key_id")], mock_config_parser.get.call_args_list)
+
+    @mock.patch("app.aws.key.credentials.load_credentials_file")
+    def test_check_session__no_session_found(self, mock_load_credentials):
+        mock_load_credentials.return_value = credentials._load_file(self.test_credentials_file_path_without_keys)
+
+        result = key.check_session("access-key")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(False, result.was_error)
