@@ -95,6 +95,7 @@ productive:                     # profile group name (will be displayed)
   sso_session: 'sso-session'    # sso-session name that this group should use (optional)
   sso_interval: 'sso-interval'  # renewal interval for sso in hours (optional)
   auth_mode: key                # use either key or sso as auth modes
+  write_mode: key               # use either key as write mode to write sso credentials as  (optional, per default write_mode = auth_mode)
   profiles:
     - profile: nonlive          # local profile name
       account: '123456789123'   # account id
