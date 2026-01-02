@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from app import __version__
+from app import version
 
 
 def parse(args):
@@ -9,7 +9,7 @@ def parse(args):
                         choices=['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'],
                         help="set the loglevel")
     parser.add_argument('-v', '--version', action='version',
-                        version="{prog}s {version}".format(prog="%(prog)", version=__version__.__version_string__))
+                        version="{prog}s {version}".format(prog="%(prog)", version=version.version))
     parser.add_argument('--list', action='store_true',
                         help='lists profile groups')
     parser.add_argument('--login', metavar='GROUP',

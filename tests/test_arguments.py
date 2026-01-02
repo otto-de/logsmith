@@ -5,7 +5,7 @@ from unittest import TestCase
 import sys
 
 from app import arguments
-from app import __version__
+from app import version
 
 
 @contextlib.contextmanager
@@ -26,7 +26,7 @@ class Test(TestCase):
             arguments.parse(["-v"])
 
         self.assertEqual(err.getvalue(), '')
-        self.assertEqual(out.getvalue(), 'logsmith {0}\n'.format(__version__.__version_string__))
+        self.assertEqual(out.getvalue(), 'logsmith {0}\n'.format(version.version))
         self.assertEqual(cm.exception.code, 0)
 
     def test_version_long(self):
@@ -34,7 +34,7 @@ class Test(TestCase):
             arguments.parse(["--version"])
 
         self.assertEqual(err.getvalue(), '')
-        self.assertEqual(out.getvalue(), 'logsmith {0}\n'.format(__version__.__version_string__))
+        self.assertEqual(out.getvalue(), 'logsmith {0}\n'.format(version.version))
         self.assertEqual(cm.exception.code, 0)
 
     def test_help_short(self):
