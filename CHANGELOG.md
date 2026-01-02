@@ -19,6 +19,11 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## Pre-Release: 9.1.0-rc.2 - 2026-01-02
+
+### Fixed
+- service roles are now written correcly in the sso-key mode.
+
 ## Pre-Release: 9.1.0-rc.1 - 2026-01-02
 
 ### Added
