@@ -10,6 +10,10 @@ on:
       commit:
         description: Commit to be released
         required: false
+      beta:
+        type: boolean
+        description: Flags release as prerelase
+        required: false
 
 defaults:
   run:
@@ -21,6 +25,7 @@ concurrency:
 
 env:
   VERSION: "${{ github.event.inputs.version }}"
+  BETA: "${{ github.event.inputs.beta }}"
   COMMIT: "${{ github.event.inputs.commit }}"
 
 jobs:
@@ -101,14 +106,21 @@ jobs:
           else
             commit=${GITHUB_SHA}
           fi
-          
+
+          release_type_flag=""
+          if [ "${{ env.BETA }}" != "true" ]; then
+            release_type_flag="--prerelease"
+          else
+            release_type_flag="--latest"
+          fi
+
           pip install requests
-          ./ci/release.py \
+          ./ci/release.py ${release_type_flag} \
             --repository "${{ github.repository }}" \
             --version "${{ env.VERSION }}" \
             --commit "${commit}" \
             --token "${{ secrets.GITHUB_TOKEN }}" \
-            --asset "${{ env.PACKAGE_NAME }}"
+            --asset "${{ env.PACKAGE_NAME }}" 
 
   build-darwin:
     name: Darwin Release
@@ -145,6 +157,13 @@ jobs:
             commit=${{ env.COMMIT }}
           else
             commit=${GITHUB_SHA}
+          fi
+
+          release_type_flag=""
+          if [ "${{ env.BETA }}" != "true" ]; then
+            release_type_flag="--prerelease"
+          else
+            release_type_flag="--latest"
           fi
           
           pip install requests
