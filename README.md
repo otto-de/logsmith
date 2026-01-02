@@ -36,6 +36,8 @@ This includes potential **access-keys** (which are profiles as well). If you hav
 Logsmith identifies **access-keys** if their profile name starts with `access-key` (e.g. `access-key` or `access-key-foo`) in `.aws/credentials` and will not remove them.
 The same is true for **sso sessions**, which must start with `sso` in the `.aws/config` to not be removed.
 
+Because boto3 does not natively support SSO login, the user must have the AWS CLI installed.
+
 ### Run from source
 If you want to run logsmith from source, please use the following steps:
 
@@ -77,6 +79,20 @@ To start the login process, click on the cloud and select the profile group you 
 If an error occurs, the cloud icon will turn into a red bug. To see the error, click on the cloud and select "Show logs".
 
 Be advised that in some cases a dialog may be opened in the background and will not appear in the taskbar.
+
+### Homebrew
+To install the latest stable version via homebrew use:
+```
+brew tap redvox/logsmith
+brew install logsmith
+```
+
+Or install the latest beta version with:
+```
+brew install logsmith-beta
+```
+
+This will copy the binary into your Application folder. Start the application from there an follow the steps above from step 4.
 
 ## Configuration
 The configuration is a YAML file that contains any number of profile groups. Each profile group can contain any number of profiles which will be assumed when the profile group is selected.
@@ -297,7 +313,6 @@ To create a new release, please use the following steps:
 - update the CHANGELOG.md with the changes that will be in the release. Please use the provided format and categories to choose the new version number.
 - update the version number in `app/__version__.py`.
 - create a commit with the new version number as commit message which includes the changes mentioned above.
-- tag the commit with the new version number.
 - Use the github action to create a release.
 - Update the release description with the changes from the CHANGELOG.md.
 - Publish the release.
