@@ -1,5 +1,5 @@
-__version__ = (9, 0, 2)
-__prerelease__ = None
+__version__ = (9, 1, 0)
+__prerelease__ = 'rc.1'
 
 __version_string__ = '.'.join(str(i) for i in __version__)
 if __prerelease__:
