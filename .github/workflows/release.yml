@@ -167,7 +167,7 @@ jobs:
           fi
           
           pip install requests
-          ./ci/release.py \
+          ./ci/release.py ${release_type_flag} \
             --repository "${{ github.repository }}" \
             --version "${{ env.VERSION }}" \
             --commit "${commit}" \
