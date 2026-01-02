@@ -108,7 +108,7 @@ jobs:
           fi
 
           release_type_flag=""
-          if [ "${{ env.BETA }}" != "true" ]; then
+          if [ "${{ env.BETA }}" == "true" ]; then
             release_type_flag="--prerelease"
           else
             release_type_flag="--latest"
@@ -160,7 +160,7 @@ jobs:
           fi
 
           release_type_flag=""
-          if [ "${{ env.BETA }}" != "true" ]; then
+          if [ "${{ env.BETA }}" == "true" ]; then
             release_type_flag="--prerelease"
           else
             release_type_flag="--latest"
