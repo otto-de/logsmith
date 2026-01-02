@@ -108,12 +108,12 @@ class Core:
             if not sso_credentiol_result.was_success:
                 return sso_credentiol_result
 
-            # if profile_group.service_profile is not None:
-                # service_profile_result = credentials.write_sso_as_key_service_profile(
-                    # profile_group
-                # )
-                # if not service_profile_result.was_success:
-                    # return service_profile_result
+            if profile_group.service_profile is not None:
+                service_profile_result = sso.write_sso_service_profile_as_key_credentials(
+                    profile_group
+                )
+                if not service_profile_result.was_success:
+                    return service_profile_result
         else:
             result.error("unkown write mode")
             return result

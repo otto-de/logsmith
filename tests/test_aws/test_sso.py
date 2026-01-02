@@ -233,6 +233,50 @@ class TestSso(TestCase):
         expected_write_credentials_file_calls = [call("config-file")]
         self.assertEqual(expected_write_credentials_file_calls, mock_write_config_file.call_args_list)
 
+    @mock.patch("app.aws.sso.credentials.write_credentials_file")
+    @mock.patch("app.aws.sso.credentials.add_profile_credentials")
+    @mock.patch("app.aws.sso.iam.assume_role")
+    @mock.patch("app.aws.sso.credentials.load_credentials_file")
+    def test_write_sso_service_profile_as_key_credentials(
+        self,
+        mock_load_credentials,
+        mock_assume_role,
+        mock_add_profile,
+        mock_write_credentials,
+    ):
+        mock_load_credentials.return_value = "credentials-file"
+        mock_assume_role.return_value = self.test_secrets
+
+        profile_group = test_accounts.get_test_profile_group_sso(include_service_role=True)
+        result = sso.write_sso_service_profile_as_key_credentials(profile_group)
+
+        self.assertEqual(True, result.was_success)
+        self.assertEqual([call("developer", "dummy", "123456789012", "dummy")], mock_assume_role.call_args_list)
+        self.assertEqual([call("credentials-file", "service", self.test_secrets)], mock_add_profile.call_args_list)
+        self.assertEqual([call("credentials-file")], mock_write_credentials.call_args_list)
+
+    @mock.patch("app.aws.sso.credentials.write_credentials_file")
+    @mock.patch("app.aws.sso.credentials.add_profile_credentials")
+    @mock.patch("app.aws.sso.iam.assume_role")
+    @mock.patch("app.aws.sso.credentials.load_credentials_file")
+    def test_write_sso_service_profile_as_key_credentials__error(
+        self,
+        mock_load_credentials,
+        mock_assume_role,
+        mock_add_profile,
+        mock_write_credentials,
+    ):
+        mock_load_credentials.return_value = "credentials-file"
+        mock_assume_role.side_effect = Exception("boom")
+
+        profile_group = test_accounts.get_test_profile_group_sso(include_service_role=True)
+        result = sso.write_sso_service_profile_as_key_credentials(profile_group)
+
+        self.assertEqual(True, result.was_error)
+        self.assertEqual("error while fetching service role credentials", result.error_message)
+        self.assertEqual(0, mock_add_profile.call_count)
+        self.assertEqual(0, mock_write_credentials.call_count)
+
     @mock.patch("app.aws.sso.shell.run")
     def test_sso_login(self, mock_shell_run):
         mock_shell_run.return_value = self.success_result

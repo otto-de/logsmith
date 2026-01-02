@@ -92,7 +92,7 @@ def write_sso_service_profile(profile_group: ProfileGroup) -> Result:
 def write_sso_as_key_credentials(profile_group: ProfileGroup) -> Result:
     result = Result()
     credentials_file = credentials.load_credentials_file()
-    logger.info("fetch credentials")
+    logger.info("fetch credentials via sso (as key)")
 
     try:
         for profile in profile_group.get_profile_list():
@@ -114,6 +114,33 @@ def write_sso_as_key_credentials(profile_group: ProfileGroup) -> Result:
             credentials.write_credentials_file(credentials_file)
     except Exception:
         error_text = "error while fetching role credentials"
+        result.error(error_text)
+        logger.error(error_text, exc_info=True)
+        return result
+
+    result.set_success()
+    return result
+
+def write_sso_service_profile_as_key_credentials(profile_group: ProfileGroup) -> Result:
+    result = Result()
+    credentials_file = credentials.load_credentials_file()
+    logger.info("add service profile via sso (as key)")
+
+    service_profile = profile_group.service_profile
+
+    try:
+        logger.info(f"fetch {service_profile.profile}")
+        
+        secrets = iam.assume_role(service_profile.source, 
+                                  service_profile.role, 
+                                  service_profile.account, 
+                                  service_profile.role)           
+        credentials.add_profile_credentials(credentials_file, 
+                                            service_profile.profile, 
+                                            secrets)
+        credentials.write_credentials_file(credentials_file)
+    except Exception:
+        error_text = "error while fetching service role credentials"
         result.error(error_text)
         logger.error(error_text, exc_info=True)
         return result
