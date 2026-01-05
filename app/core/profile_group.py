@@ -125,7 +125,7 @@ class ProfileGroup:
             result_dict['access_key'] = self.access_key
         if self.sso_session and self.sso_session != self.default_sso_session:
             result_dict['sso_session'] = self.sso_session
-        if self.sso_interval and self.sso_interval != self.default_sso_interval:
+        if self.sso_interval is not None and self.sso_interval != self.default_sso_interval:
             result_dict['sso_interval'] = self.sso_interval
         if self.type != "aws":
             result_dict["type"] = self.type
