@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtWidgets import QApplication, QLabel, QPlainTextEdit, QPushButton, \
     QHBoxLayout, QVBoxLayout, QDialog, QLineEdit
 
-from app import __version__
+from app import version
 from app.core import files
 from app.core.config import Config
 from app.gui import styles
@@ -22,7 +22,7 @@ class ConfigDialog(QDialog):
         super(ConfigDialog, self).__init__(parent)
         self.gui: Gui = parent
 
-        self.setWindowTitle(f'Config - v{__version__.__version_string__}')
+        self.setWindowTitle(f'Config - v{version.version}')
         self.initial_width = 600
         self.initial_height = 600
         self.resize(self.initial_width, self.initial_height)
