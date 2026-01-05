@@ -71,7 +71,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         menu.addSeparator()
         # script checkbox
-        self.script_checkbox = menu.addAction("Run Script")
+        self.script_checkbox = menu.addAction("enable script")
         self.script_checkbox.setCheckable(True)
         self.script_checkbox.setChecked(self.toggles.run_script)
         self.script_checkbox.toggled.connect(self.toggles.toggle_run_script)
