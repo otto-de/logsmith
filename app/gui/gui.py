@@ -371,12 +371,14 @@ class Gui(QMainWindow):
 
     def _to_busy_state(self):
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_BUSY))
+        self.tray_icon.refresh_profile_status(None)
         self.tray_icon.disable_actions(True)
 
     def _to_reset_state(self):
         self.login_repeater.stop()
         self.verify_repeater.stop()
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_OUTLINE))
+        self.tray_icon.refresh_profile_status(None)
         self.tray_icon.disable_actions(False)
         self.tray_icon.update_last_login('never')
         self.tray_icon.set_service_role(None, None)

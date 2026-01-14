@@ -160,7 +160,7 @@ class SystemTrayIcon(QSystemTrayIcon):
             action.deleteLater()
         self.profile_status_list.clear()
 
-        if active_profile_group.type != "aws":
+        if active_profile_group is None or active_profile_group.type != "aws":
             return True
 
         all_connected = True
