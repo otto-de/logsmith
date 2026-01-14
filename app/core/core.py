@@ -184,7 +184,7 @@ class Core:
         logger.info("start vertfy profiles")
         result = Result()
         
-        for profile in profile_group.profiles:
+        for profile in profile_group.get_profile_list(include_service_profile=True):
             logger.info(f"verify {profile.profile}")
             profile.verified = iam.get_caller_identity(profile.profile)
             logger.info(f"  status {profile.verified}")

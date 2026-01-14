@@ -164,7 +164,7 @@ class SystemTrayIcon(QSystemTrayIcon):
             return True
 
         all_connected = True
-        for profile in active_profile_group.profiles:
+        for profile in active_profile_group.get_profile_list(include_service_profile=True):
             action = QAction(f'{profile.profile} ({profile.account})')
             action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
             action.setIconVisibleInMenu(True)
