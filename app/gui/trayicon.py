@@ -1,13 +1,14 @@
 from functools import partial
 from typing import List, TYPE_CHECKING
 
-from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
+from PyQt6.QtWidgets import QSystemTrayIcon, QMenu 
+from PyQt6.QtGui import QAction
 
 from app.version import version
 from app.aws import regions
 from app.core.profile_group import ProfileGroup
 from app.core.toggles import Toggles
-from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_GCP, ICON_STYLE_FULL
+from app.gui.assets import ICON_STYLE_OUTLINE, ICON_STYLE_GCP, ICON_STYLE_FULL, ICON_VALID, ICON_INVALID
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -19,6 +20,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.assets = assets
         self.toggles = toggles
 
+        self.menu = None
         self.script_checkbox = None
         self.log_action = None
         self.config_action = None
@@ -34,6 +36,8 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         self.actions = []
         self.all_actions = []
+        self.profile_status_list = []
+        self.profile_status_anchor = None
 
         QSystemTrayIcon.__init__(self, self.assets.standard, self.gui)
         self.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE))
@@ -41,6 +45,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def populate_context_menu(self, profile_list: List[ProfileGroup]):
         menu = QMenu(self.gui)
+        self.menu = menu
 
         self.actions = []
         for profile_group in profile_list:
@@ -110,6 +115,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.add_access_key_action.triggered.connect(self.gui.show_sso_session_dialog)
 
         menu.addSeparator()
+        
         # configuration
         self.config_action = menu.addAction('Edit config')
         self.config_action.triggered.connect(self.gui.show_config_dialog)
@@ -121,20 +127,21 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.last_login.setDisabled(True)
 
         menu.addSeparator()
+        self.copy_text = menu.addAction("Copy profile name:")
+        self.copy_text.setDisabled(True)
+        # profile status
+        self.profile_status_anchor = menu.addSeparator()
+        
         # copy
-        self.copy_name_menu = QMenu('Copy Profile Name', menu)
-        self.copy_name_menu.setDisabled(True)
-        menu.addMenu(self.copy_name_menu)
-
         self.copy_id_menu = QMenu('Copy Account Id', menu)
         self.copy_id_menu.setDisabled(True)
         menu.addMenu(self.copy_id_menu)
-
+        
         menu.addSeparator()
+        # version
         self.version_action = menu.addAction(f"Version: {version}")
         self.version_action.setDisabled(True)
 
-        # menu.addSeparator()
         # exit
         exit_action = menu.addAction("Exit")
         exit_action.triggered.connect(self.gui.stop_and_exit)
@@ -144,29 +151,53 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         self.all_actions = self.actions + [self.script_checkbox, self.service_role_action, self.region_menu,
                                            self.add_access_key_action, self.rotate_access_key_action,
-                                           self.copy_name_menu, self.copy_id_menu]
+                                        #    self.copy_name_menu, 
+                                           self.copy_id_menu]
+
+    def refresh_profile_status(self, active_profile_group: ProfileGroup) -> bool:
+        for action in self.profile_status_list:
+            self.menu.removeAction(action)
+            action.deleteLater()
+        self.profile_status_list.clear()
+
+        if active_profile_group.type != "aws":
+            return True
+
+        all_connected = True
+        for profile in active_profile_group.profiles:
+            action = QAction(f'{profile.profile} ({profile.account})')
+            action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
+            action.setIconVisibleInMenu(True)
+            if profile.verified:
+                action.setIcon(self.assets.get_icon(style=ICON_VALID))
+            else:
+                all_connected = False
+                action.setIcon(self.assets.get_icon(style=ICON_INVALID))
+            self.menu.insertAction(self.profile_status_anchor, action)
+            self.profile_status_list.append(action)
+        return all_connected
 
     def update_copy_menus(self, active_profile_group: ProfileGroup):
-        self.copy_name_menu.setDisabled(False)
-        self.copy_name_menu.clear()
+        # self.copy_name_menu.setDisabled(False)
+        # self.copy_name_menu.clear()
         self.copy_id_menu.setDisabled(False)
         self.copy_id_menu.clear()
 
         for profile in active_profile_group.get_profile_list():
-            copy_name_action = self.copy_name_menu.addAction(f'{profile.profile} ({profile.account})')
-            copy_name_action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
+            # copy_name_action = self.copy_name_menu.addAction(f'{profile.profile} ({profile.account})')
+            # copy_name_action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
             copy_id_action = self.copy_id_menu.addAction(f'{profile.account} ({profile.profile})')
             copy_id_action.triggered.connect(partial(self.copy_to_clipboard, text=str(profile.account)))
 
+
     def reset_copy_menus(self):
-        self.copy_name_menu.setDisabled(True)
-        self.copy_name_menu.clear()
+        # self.copy_name_menu.setDisabled(True)
+        # self.copy_name_menu.clear()
         self.copy_id_menu.setDisabled(True)
         self.copy_id_menu.clear()
 
     def disable_actions(self, state: bool):
         for action in self.all_actions:
-            action.setDisabled(state)
             action.setDisabled(state)
 
     def update_last_login(self, timestamp: str):

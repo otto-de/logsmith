@@ -7,6 +7,7 @@ class Profile:
         self.role = profile.get('role', None)
         self.default = profile.get('default', 'false') in ['True', 'true', True]
         self.source = profile.get('source', None)
+        self.verified = False
 
     def validate(self) -> (bool, str):
         if not self.profile:

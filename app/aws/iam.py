@@ -1,7 +1,8 @@
 import logging
 
 import boto3
-
+import botocore
+from botocore import exceptions
 from app.core.result import Result
 from app.util import util
 
@@ -103,3 +104,12 @@ def assume_role(profile: str, session_name: str, account_id: str, role: str) -> 
         RoleArn=f"arn:aws:iam::{account_id}:role/{role}", RoleSessionName=session_name
     )
     return response["Credentials"]
+
+def get_caller_identity(profile: str) -> bool:
+    try:
+        session = boto3.Session(profile_name=profile)
+        client = session.client("sts")
+        client.get_caller_identity()
+        return True
+    except Exception:
+        return False

@@ -14,8 +14,8 @@ from app.core.config import Config, ProfileGroup
 from app.core.core import Core
 from app.core.result import Result
 from app.gui.access_key_dialog import SetKeyDialog
-from app.gui.assets import Assets, ICON_STYLE_OUTLINE, ICON_STYLE_ERROR, ICON_STYLE_FULL, ICON_STYLE_GCP, \
-    ICON_STYLE_BUSY
+from app.gui.assets import ICON_DISCONNECTED, Assets, ICON_STYLE_OUTLINE, ICON_STYLE_ERROR, ICON_STYLE_FULL, ICON_STYLE_GCP, \
+    ICON_STYLE_BUSY, COLOR_RED
 from app.gui.background_task import BackgroundTask
 from app.gui.config_dialog import ConfigDialog
 from app.gui.key_rotation_dialog import RotateKeyDialog
@@ -38,6 +38,7 @@ class Gui(QMainWindow):
         self.assets: Assets = Assets()
         self.last_login: str = 'never'
         self.login_repeater = Repeater()
+        self.verify_repeater = Repeater()
         self.tray_icon = SystemTrayIcon(parent=self,
                                         assets=self.assets,
                                         toggles=self.core.toggles,
@@ -91,10 +92,11 @@ class Gui(QMainWindow):
                 logger.info('start sso repeater')
                 prepare_login = partial(self.login_sso, profile_group=self.core.active_profile_group)
                 self.login_repeater.start(task=prepare_login,
-                                        delay_seconds=int(repeater_interval) * 60 * 60)
+                                          delay_seconds=int(repeater_interval) * 60 * 60)
             else:
                 logger.info('sso repeater is disabled')
             self._to_login_state()
+        self.verify()
 
     def _on_login_sso_failure(self):
         logger.info('sso login failure')
@@ -126,6 +128,7 @@ class Gui(QMainWindow):
         self.login_repeater.start(task=prepare_login,
                                   delay_seconds=300)
         self._to_login_state()
+        self.verify()
 
     def _on_login_key_failure(self, profile_group: ProfileGroup):
         logger.info('key login failure')
@@ -159,6 +162,26 @@ class Gui(QMainWindow):
         self.login_repeater.start(task=prepare_login,
                                   delay_seconds=8 * 60 * 60)
         self._to_login_state()
+
+    ########################
+    # VERIFY
+    def verify(self):
+        self.verify_task = BackgroundTask(
+            func=self.core.verify,
+            func_kwargs={'profile_group': self.core.active_profile_group},
+            on_success=self._on_verify_success,
+            on_failure=self._on_error,
+            on_error=self._on_error
+        )
+        self.verify_task.start()
+
+    def _on_verify_success(self):
+        if self.core.active_profile_group:
+            all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group)
+            if not all_connected:
+                self._to_disconnect_state(color=self.core.active_profile_group.color)
+        self.login_repeater.start(task=self.verify,
+                                delay_seconds=300)
 
     ########################
     # LOGOUT
@@ -352,6 +375,7 @@ class Gui(QMainWindow):
 
     def _to_reset_state(self):
         self.login_repeater.stop()
+        self.verify_repeater.stop()
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_OUTLINE))
         self.tray_icon.disable_actions(False)
         self.tray_icon.update_last_login('never')
@@ -359,7 +383,10 @@ class Gui(QMainWindow):
 
     def _to_error_state(self):
         self._to_reset_state()
-        self.tray_icon.setIcon(self.assets.get_icon(style=ICON_STYLE_ERROR, color_code='#ff0000'))
+        self.tray_icon.setIcon(self.assets.get_icon(style=ICON_STYLE_ERROR, color_code=COLOR_RED))
+        
+    def _to_disconnect_state(self, color):
+        self.tray_icon.setIcon(self.assets.get_icon(style=ICON_DISCONNECTED, color_code=color))
 
     def _check_and_signal_error(self, result: Result):
         if result.was_error:

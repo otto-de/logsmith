@@ -177,6 +177,21 @@ class Core:
         result.set_success()
         return result
 
+
+    ########################
+    # VERIFY            
+    def verify(self, profile_group: ProfileGroup) -> Result:
+        logger.info("start vertfy profiles")
+        result = Result()
+        
+        for profile in profile_group.profiles:
+            logger.info(f"verify {profile.profile}")
+            profile.verified = iam.get_caller_identity(profile.profile)
+            logger.info(f"  status {profile.verified}")
+        
+        result.set_success()
+        return result
+
     ########################
     # LOGOUT
     def logout(self) -> Result:
