@@ -2,6 +2,50 @@
 
 The following document lists descriptions of features and changes that have been introduced to the application.
 
+
+### Profile verification
+
+***since 9.1.0-rc.3***
+
+After login, Logsmith verifies profiles every 5 minutes to ensure they remain valid and usable. The tray icon context
+menu shows an indicator for each profile (checkmark or X), and a new application state/tray icon appears if one or more
+profiles are invalid. 
+This is especially useful when `sso_interval` is set to 0 (disabled), since it highlights when your SSO session has expired and you need to log in again.
+
+
+### Write Mode
+
+***since 9.1.0-rc.2***
+
+SSO credentials can now be written as "credentials" by setting the config option `write_mode` to `keys`.
+This helps when a tool expects static access keys but you still want to use SSO login.
+
+Both `auth_modes` (`sso` and `key`) default to their respective mode, which is `sso` or `key`. But please note that aside from the default, the only real open is `auth_mode = sso` with `write_mode = key`.
+
+`auth_mode = key` with `write_mode = sso` is not available because SSO sessions cannot be synthesized from a access-key based authentication.
+
+### SSO Login Interval
+
+***since 9.1.0-rc.1***
+
+The validity of SSO sessions can be configured, so there is now the config option `sso_interval` to configurate how in which interval Logsmith should refresh the login.
+
+This can be set as a default or for every profile group.
+
+Also, because the SSO login will always open a browser windows, which takes away the focus and can be quite bothersome, the refresh can be disabled entirely by setting the interval to 0.
+
+### Auth Mode (AWS SSO Login)
+
+***since 9.0.0***
+
+Each profile group can now configure an `auth_mode` to control how login is performed. The options are `sso` and `key`.
+Use `sso` to authenticate via AWS SSO sessions, or `key` to use access-key based login for that profile group.
+
+To use the new `sso` mode, you must add at least one SSO session, which works similar to `access-keys`. Also `sso-session` must start with `sso`.
+This is so that logsmith does not remove them when doing a cleanup.
+
+As of now, Logsmith uses the `aws cli` to do the SSO Login, because boto3 does not support the login (yet).
+
 ### Script Toggle
 
 ***since 8.3.0***
@@ -108,4 +152,3 @@ of the current profile group with one click.
 
 All operations are now done in the background, and do not block the UI anymore.
 There is also a "busy" icon now, telling you that an operation is underway.
-
