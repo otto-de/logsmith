@@ -19,7 +19,22 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## Pre-Release: 9.1.0-rc.3 - 2026-01-15
+
+### Changed
+- added new icons for error and the new "disconnect" stage.
+
+### Added
+- After login and every 5 minutes, each profile will be checked if its still valid.
+- All profiles and their status (valid / invalid) will be shown in the context menu.
+
+### Fixed
+- service role display is now updated correctly.
+
 ## Pre-Release: 9.1.0-rc.2 - 2026-01-02
+
+### Added
+- add write_mode. SSO credentials can now be written as keys.
 
 ### Fixed
 - service roles are now written correcly in the sso-key mode.

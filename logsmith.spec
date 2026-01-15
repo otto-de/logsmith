@@ -10,10 +10,14 @@ block_cipher = None
 assets = [
     ('./app/assets/app_icon.icns', './assets'),
     ('./app/assets/app_icon.png', './assets'),
-    ('./app/assets/cloud.svg', './assets'),
-    ('./app/assets/cloud-outline.svg', './assets'),
-    ('./app/assets/cloud-busy.svg', './assets'),
+    ('./app/assets/full.svg', './assets'),
+    ('./app/assets/outline.svg', './assets'),
+    ('./app/assets/busy.svg', './assets'),
     ('./app/assets/bug.svg', './assets'),
+    ('./app/assets/error.svg', './assets'),
+    ('./app/assets/valid.svg', './assets'),
+    ('./app/assets/invalid.svg', './assets'),
+    ('./app/assets/issues.svg', './assets'),
 ]
 
 app_name = 'logsmith'
