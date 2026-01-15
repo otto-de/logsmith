@@ -36,24 +36,24 @@ Logsmith is a desktop trayicon to:
 ## Application States
 
 <div style="display: flex; gap: 16px;">
-<div style="text-align: center;">
-    <span aria-label="Issues icon" role="img" style="display: inline-block; width: 64px; height: 64px; background: #FFFFFF; -webkit-mask: url('./app/assets/issues.svg') no-repeat center / contain; mask: url('./app/assets/outline.svg') no-repeat center / contain;"></span>
+  <div style="text-align: center;">
+    <img src="./docs/state-idle.svg" alt="Idle state icon" width="64" />
     <div>Idle</div>
   </div>
   <div style="text-align: center;">
-    <span aria-label="Busy icon" role="img" style="display: inline-block; width: 64px; height: 64px; background: #FFFFFF; -webkit-mask: url('./app/assets/busy.svg') no-repeat center / contain; mask: url('./app/assets/busy.svg') no-repeat center / contain;"></span>
+    <img src="./docs/state-busy.svg" alt="Busy state icon" width="64" />
     <div>Busy</div>
   </div>
   <div style="text-align: center;">
-    <span aria-label="Issues icon" role="img" style="display: inline-block; width: 64px; height: 64px; background: #673AB7; -webkit-mask: url('./app/assets/issues.svg') no-repeat center / contain; mask: url('./app/assets/full.svg') no-repeat center / contain;"></span>
+    <img src="./docs/state-ready.svg" alt="Ready state icon" width="64" />
     <div>Ready</div>
   </div>
   <div style="text-align: center;">
-    <span aria-label="Issues icon" role="img" style="display: inline-block; width: 64px; height: 64px; background: #673AB7; -webkit-mask: url('./app/assets/issues.svg') no-repeat center / contain; mask: url('./app/assets/issues.svg') no-repeat center / contain;"></span>
+    <img src="./docs/state-impaired.svg" alt="Impaired state icon" width="64" />
     <div>Impaired</div>
   </div>
   <div style="text-align: center;">
-    <span aria-label="Error icon" role="img" style="display: inline-block; width: 64px; height: 64px; background: #E74C3C; -webkit-mask: url('./app/assets/error.svg') no-repeat center / contain; mask: url('./app/assets/error.svg') no-repeat center / contain;"></span>
+    <img src="./docs/state-error.svg" alt="Error state icon" width="64" />
     <div>Error</div>
   </div>
 </div>
