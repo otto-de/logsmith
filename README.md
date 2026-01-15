@@ -15,7 +15,6 @@ Logsmith is a desktop trayicon to:
 ```
 
 
-
 ## What does logsmith do?
 
 ![](./docs/example.png)
@@ -35,43 +34,23 @@ Logsmith is a desktop trayicon to:
 
 ## Application States
 
-<div style="display: flex; gap: 16px;">
-  <div style="text-align: center;">
-    <img src="./docs/state-idle.svg" alt="Idle state icon" width="64" />
-    <div>Idle</div>
-  </div>
-  <div style="text-align: center;">
-    <img src="./docs/state-busy.svg" alt="Busy state icon" width="64" />
-    <div>Busy</div>
-  </div>
-  <div style="text-align: center;">
-    <img src="./docs/state-ready.svg" alt="Ready state icon" width="64" />
-    <div>Ready</div>
-  </div>
-  <div style="text-align: center;">
-    <img src="./docs/state-impaired.svg" alt="Impaired state icon" width="64" />
-    <div>Impaired</div>
-  </div>
-  <div style="text-align: center;">
-    <img src="./docs/state-error.svg" alt="Error state icon" width="64" />
-    <div>Error</div>
-  </div>
-</div>
-
-
-**Idle**: you are logged out.
-
-**Busy**: Logsmith works.
-
-**Ready**: Logsmith works.
+<img src="./docs/state-idle.svg" alt="Idle state icon" width="64" />
 
 **Idle:** The app is running but no profile group is logged in yet. You can open the tray menu and trigger actions like login or configuration.
 
+<img src="./docs/state-busy.svg" alt="Busy state icon" width="64" />
+
 **Busy:** The app is performing a background task (login, refresh, script run). Inputs are temporarily disabled to avoid conflicting actions.
+
+<img src="./docs/state-ready.svg" alt="Ready state icon" width="64" />
 
 **Ready:** Login completed successfully and credentials are active. The cloud icon switches to the profile group’s configured color to show it’s ready to use.
 
+<img src="./docs/state-impaired.svg" alt="Impaired state icon" width="64" />
+
 **Impaired:** One or more profiles failed verification, so only part of the profile group is usable. The context menu lists which profiles are valid or invalid.
+
+<img src="./docs/state-error.svg" alt="Error state icon" width="64" />
 
 **Error:** A failure occurred (for example, invalid access-key or script error). Check the logs from the tray menu for the exact reason.
 
