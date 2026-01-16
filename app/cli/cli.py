@@ -65,7 +65,7 @@ class Cli:
         self._info('login successful')
 
         if oneshot:
-            return
+            sys.exit(0)
 
         seconds = 300
         self._info(f'start timer for {seconds}')
@@ -83,7 +83,7 @@ class Cli:
         self._info('login successful')
 
         if oneshot:
-            return
+            sys.exit(0)
 
         seconds = 28800
         self._info(f'start timer for {seconds}')
