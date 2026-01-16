@@ -20,9 +20,19 @@ This is especially useful when `sso_interval` is set to 0 (disabled), since it h
 SSO credentials can now be written as "credentials" by setting the config option `write_mode` to `keys`.
 This helps when a tool expects static access keys but you still want to use SSO login.
 
-Both `auth_modes` (`sso` and `key`) default to their respective mode, which is `sso` or `key`. But please note that aside from the default, the only real open is `auth_mode = sso` with `write_mode = key`.
+Both `auth_modes` (`sso` and `key`) default to their respective mode, which is `sso` or `key`. 
 
-`auth_mode = key` with `write_mode = sso` is not available because SSO sessions cannot be synthesized from a access-key based authentication.
+`auth_mode = key` will use a `access-keys` to authenticate the user.
+
+`write_mode = key` will fetch and write the credentials of each profile as write them as raw credentials into `~/.aws/credentials`.
+
+`auth_mode = sso` will use a `sso-session` to authenticate the user.
+
+`auth_mode = sso` will not fetch any credentials and just write the profiles into `~/.aws/config`, as the credentials itself are hidden and will be handled by the aws cli or sdk respectifly.
+
+As of now, the only real option is not configureing `write_mode` or set `auth_mode = sso` with `write_mode = key`, so that you authenticate with sso, but fetch and write the profiles as key credentials.
+
+Please not that `auth_mode = key` with `write_mode = sso` is not available because SSO sessions cannot be synthesized from a access-key based authentication.
 
 ### SSO Login Interval
 

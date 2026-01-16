@@ -57,8 +57,8 @@ Logsmith is a desktop trayicon to:
 ## Getting started
 
 ![](./docs/warning.svg)
-**Warning**: logsmith will write in your `.aws/credentials` and `./aws/config` files and it will remove unused profiles, this is a feature to "logout" the user.
-This includes potential **access-keys** (which are profiles as well). If you have data in there that must not be lost, please back up the data beforehand.
+**Warning**: logsmith will write in your `.aws/credentials` and `./aws/config` files and it will remove unused profiles. This is a feature to "logout" the user.
+This includes potential **access-keys** or **sso-sessions** (which are profiles as well). If you have data in there that must not be lost, please back up the data beforehand.
 
 Logsmith identifies **access-keys** if their profile name starts with `access-key` (e.g. `access-key` or `access-key-foo`) in `.aws/credentials` and will not remove them.
 The same is true for **sso sessions**, which must start with `sso` in the `.aws/config` to not be removed.
@@ -192,6 +192,24 @@ If you have multiple browser profiles, please select the correct active browser.
 The login flow will be automatically stopped after 60 seconds of inactivity or not completion.
 
 It will trigger the login flow again after 8 hours.
+
+### AWS auth_mode and write_mode
+
+Each AWS profile group can have a `auth_mode` and `write_mode` configured, both with either `sso` or `key` as values (default is `key`).
+
+If no `write_mode` is configured, it will default to the value of `auth_mode`.
+
+`auth_mode = key` will use a `access-keys` to authenticate the user.
+
+`write_mode = key` will fetch and write the credentials of each profile as write them as raw credentials into `~/.aws/credentials`.
+
+`auth_mode = sso` will use a `sso-session` to authenticate the user.
+
+`auth_mode = sso` will not fetch any credentials and just write the profiles into `~/.aws/config`, as the credentials itself are hidden and will be handled by the aws cli or sdk respectifly.
+
+As of now, the only real option is not configureing `write_mode` or set `auth_mode = sso` with `write_mode = key`, so that you authenticate with sso, but fetch and write the profiles as key credentials.
+
+Please not that `auth_mode = key` with `write_mode = sso` is not available because SSO sessions cannot be synthesized from a access-key based authentication.
 
 ### AWS Chain Assume
 
