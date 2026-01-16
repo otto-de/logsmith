@@ -2,6 +2,31 @@
 
 The following document lists descriptions of features and changes that have been introduced to the application.
 
+### New Icon Set
+
+***since 10.0.0***
+
+There's a new icon set designed to unify the design. In addition, there's a new application state called "impaired".
+
+<img src="./docs/state-idle.svg" alt="Idle state icon" width="64" />
+
+**Idle:** The app is running but no profile group is logged in yet. You can open the tray menu and trigger actions like login or configuration.
+
+<img src="./docs/state-busy.svg" alt="Busy state icon" width="64" />
+
+**Busy:** The app is performing a background task (login, refresh, script run). Inputs are temporarily disabled to avoid conflicting actions.
+
+<img src="./docs/state-ready.svg" alt="Ready state icon" width="64" />
+
+**Ready:** Login completed successfully and credentials are active. The cloud icon switches to the profile group’s configured color to show it’s ready to use.
+
+<img src="./docs/state-impaired.svg" alt="Impaired state icon" width="64" />
+
+**Impaired:** One or more profiles failed verification, so only part of the profile group is usable. The context menu lists which profiles are valid or invalid.
+
+<img src="./docs/state-error.svg" alt="Error state icon" width="64" />
+
+**Error:** A failure occurred (for example, invalid access-key or script error). Check the logs from the tray menu for the exact reason.
 
 ### Profile verification
 
@@ -12,6 +37,13 @@ menu shows an indicator for each profile (checkmark or X), and a new application
 profiles are invalid. 
 This is especially useful when `sso_interval` is set to 0 (disabled), since it highlights when your SSO session has expired and you need to log in again.
 
+### Shell Path Extension
+
+***since 10.0.0***
+
+By default, shells started by Logsmith inherit the environment from your configured standard shell. In some special cases this still doesn’t include certain binaries (for example the AWS CLI). 
+
+You can now configure a PATH extension in the config dialog, which is appended to the PATH of any shell started by Logsmith so those tools are found reliably.
 
 ### Write Mode
 

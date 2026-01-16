@@ -22,7 +22,7 @@ Release dates will be in YYYY-MM-DD format.
 ## 10.0.0 - 2026-01-16
 
 ### Changed
-- added new icons for error and the new "disconnect" stage.
+- added new icons for error and the new "impaired" application state.
 
 ### Added
 - After login and every 5 minutes, each profile will be checked if its still valid.
