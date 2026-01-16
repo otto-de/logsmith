@@ -19,7 +19,7 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
-## Pre-Release: 9.1.0-rc.3 - 2026-01-15
+## 10.0.0 - 2026-01-16
 
 ### Changed
 - added new icons for error and the new "disconnect" stage.
@@ -27,24 +27,14 @@ Release dates will be in YYYY-MM-DD format.
 ### Added
 - After login and every 5 minutes, each profile will be checked if its still valid.
 - All profiles and their status (valid / invalid) will be shown in the context menu.
-
-### Fixed
-- service role display is now updated correctly.
-
-## Pre-Release: 9.1.0-rc.2 - 2026-01-02
-
-### Added
 - add write_mode. SSO credentials can now be written as keys.
-
-### Fixed
-- service roles are now written correcly in the sso-key mode.
-
-## Pre-Release: 9.1.0-rc.1 - 2026-01-02
-
-### Added
 - log stderr when running scripts (thanks @MarcellSchmenkel).
 - read shell output as stream to get all output while the command runs.
 - sso renewal interval can now be set in hours or disabled entirely.
+
+### Fixed
+- service role display is now updated correctly.
+- service roles are now written correcly in the sso-key mode.
 
 ## 9.0.2 - 2025-11-18
 

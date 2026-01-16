@@ -5,7 +5,7 @@ The following document lists descriptions of features and changes that have been
 
 ### Profile verification
 
-***since 9.1.0-rc.3***
+***since 10.0.0***
 
 After login, Logsmith verifies profiles every 5 minutes to ensure they remain valid and usable. The tray icon context
 menu shows an indicator for each profile (checkmark or X), and a new application state/tray icon appears if one or more
@@ -15,7 +15,7 @@ This is especially useful when `sso_interval` is set to 0 (disabled), since it h
 
 ### Write Mode
 
-***since 9.1.0-rc.2***
+***since 10.0.0***
 
 SSO credentials can now be written as "credentials" by setting the config option `write_mode` to `keys`.
 This helps when a tool expects static access keys but you still want to use SSO login.
@@ -26,7 +26,7 @@ Both `auth_modes` (`sso` and `key`) default to their respective mode, which is `
 
 ### SSO Login Interval
 
-***since 9.1.0-rc.1***
+***since 10.0.0***
 
 The validity of SSO sessions can be configured, so there is now the config option `sso_interval` to configurate how in which interval Logsmith should refresh the login.
 
