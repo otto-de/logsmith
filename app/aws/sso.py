@@ -3,6 +3,7 @@ import logging
 import boto3
 from app.aws import iam, credentials
 from app.core import files
+from app.core.profile import Profile
 from app.shell import shell
 
 from app.core.profile_group import ProfileGroup

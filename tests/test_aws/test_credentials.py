@@ -164,3 +164,93 @@ class TestCredentials(TestCase):
             ],
             mock_config_parser.set.call_args_list,
         )
+
+    @mock.patch("app.aws.credentials.write_config_file")
+    @mock.patch("app.aws.credentials.write_credentials_file")
+    @mock.patch("app.aws.credentials.replace_profile")
+    @mock.patch("app.aws.credentials.load_config_file")
+    @mock.patch("app.aws.credentials.load_credentials_file")
+    def test_set_as_default_profile(
+        self,
+        mock_load_credentials_file,
+        mock_load_config_file,
+        mock_replace_profile,
+        mock_write_credentials_file,
+        mock_write_config_file,
+    ):
+        mock_credentials = Mock()
+        mock_config = Mock()
+        mock_load_credentials_file.return_value = mock_credentials
+        mock_load_config_file.return_value = mock_config
+
+        result = credentials.set_as_default_profile("developer")
+
+        self.assertEqual(True, result.was_success)
+        self.assertEqual(False, result.was_error)
+        self.assertEqual(
+            [
+                call(mock_credentials, "developer", "default"),
+                call(mock_config, "profile developer", "profile default"),
+            ],
+            mock_replace_profile.call_args_list,
+        )
+        self.assertEqual([call(mock_credentials)], mock_write_credentials_file.call_args_list)
+        self.assertEqual([call(mock_config)], mock_write_config_file.call_args_list)
+
+    @mock.patch("app.aws.credentials.write_config_file")
+    @mock.patch("app.aws.credentials.write_credentials_file")
+    @mock.patch("app.aws.credentials.replace_profile")
+    @mock.patch("app.aws.credentials.load_config_file")
+    @mock.patch("app.aws.credentials.load_credentials_file")
+    def test_set_as_default_profile__error(
+        self,
+        mock_load_credentials_file,
+        mock_load_config_file,
+        mock_replace_profile,
+        mock_write_credentials_file,
+        mock_write_config_file,
+    ):
+        mock_load_credentials_file.return_value = Mock()
+        mock_load_config_file.return_value = Mock()
+        mock_replace_profile.side_effect = Exception("boom")
+
+        result = credentials.set_as_default_profile("developer")
+
+        self.assertEqual(False, result.was_success)
+        self.assertEqual(True, result.was_error)
+        self.assertEqual([], mock_write_credentials_file.call_args_list)
+        self.assertEqual([], mock_write_config_file.call_args_list)
+
+    def test_replace_profile(self):
+        config = credentials.ConfigParser()
+        config.add_section("source")
+        config.set("source", "region", "us-east-1")
+        config.set("source", "output", "json")
+        config.add_section("target")
+        config.set("target", "region", "eu-west-1")
+
+        credentials.replace_profile(config, "source", "target")
+
+        self.assertEqual(True, config.has_section("target"))
+        self.assertEqual("us-east-1", config.get("target", "region"))
+        self.assertEqual("json", config.get("target", "output"))
+
+    def test_replace_profile__missing_source(self):
+        config = credentials.ConfigParser()
+        config.add_section("target")
+        config.set("target", "region", "eu-west-1")
+
+        credentials.replace_profile(config, "missing", "target")
+
+        self.assertEqual(True, config.has_section("target"))
+        self.assertEqual("eu-west-1", config.get("target", "region"))
+
+    def test_replace_profile__same_name(self):
+        config = credentials.ConfigParser()
+        config.add_section("same")
+        config.set("same", "region", "us-east-1")
+
+        credentials.replace_profile(config, "same", "same")
+
+        self.assertEqual(True, config.has_section("same"))
+        self.assertEqual("us-east-1", config.get("same", "region"))

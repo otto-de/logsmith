@@ -183,3 +183,37 @@ def add_sso_chain_profile(
     config_file.set(config_name, "source_profile", source_profile)
     config_file.set(config_name, "region", region)
     config_file.set(config_name, "output", "json")
+
+
+def set_as_default_profile(source_profile_name: str):
+    result = Result()
+    credentials_file = load_credentials_file()
+    config_file = load_config_file()
+    
+    try:    
+        replace_profile(credentials_file, source_profile_name, "default")
+        replace_profile(config_file, f"profile {source_profile_name}", f"profile default")
+        
+        write_credentials_file(credentials_file)
+        write_config_file(config_file)
+    except:
+        error_text = "could not set default profile"
+        result.error(error_text)
+        logger.error(error_text, exc_info=True)
+        return result
+    
+    result.set_success()
+    return result
+
+def replace_profile(config: ConfigParser, source_profile_name: str, target_profile_name: str):
+    if source_profile_name == target_profile_name:
+        return
+    if not config.has_section(source_profile_name):
+        return
+    
+    if config.has_section(target_profile_name):
+        config.remove_section(target_profile_name)
+    config.add_section(target_profile_name)
+    for option, value in config.items(source_profile_name, raw=True):
+        config.set(target_profile_name, option, value)
+    return config

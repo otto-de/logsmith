@@ -4,6 +4,7 @@ from typing import Optional, List
 from app.aws import iam, key, credentials, sso
 from app.core import files
 from app.core.config import Config, ProfileGroup
+from app.core.profile import Profile
 from app.core.result import Result
 from app.core.toggles import Toggles
 from app.gcp import login, config
@@ -177,7 +178,6 @@ class Core:
         result.set_success()
         return result
 
-
     ########################
     # VERIFY            
     def verify(self, profile_group: ProfileGroup) -> Result:
@@ -189,6 +189,18 @@ class Core:
             profile.verified = iam.get_caller_identity(profile.profile)
             logger.info(f"  status {profile.verified}")
         
+        result.set_success()
+        return result
+
+    ########################
+    # SET DEFAULT PROFILE   
+    def set_default_profile(self, profile_name):
+        result = Result()
+        logger.info(f"set default profile to {profile_name}")
+        set_default_result = credentials.set_as_default_profile(profile_name)
+        if not set_default_result.was_success:
+            return set_default_result
+
         result.set_success()
         return result
 

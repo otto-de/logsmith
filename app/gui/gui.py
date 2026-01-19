@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import QMainWindow
+from app.core.profile import Profile
 from app.util import util
 from core.core import Core
 from gui.mfa_dialog import MfaDialog
@@ -184,6 +185,23 @@ class Gui(QMainWindow):
                 self._to_disconnect_state(color=self.core.active_profile_group.color)
         self.login_repeater.start(task=self.verify,
                                 delay_seconds=300)
+
+    ########################
+    # SET DEFAULT PROFILE   
+    def set_default(self, profile_name: str):
+        self.task = BackgroundTask(
+            func=self.core.set_default_profile,
+            func_kwargs={'profile_name': profile_name},
+            on_success=partial(self._on_set_default_success, default_profile_name=profile_name),
+            on_failure=self._on_error,
+            on_error=self._on_error
+        )
+        self.task.start()
+
+    def _on_set_default_success(self, default_profile_name):
+        logger.info('set default profile success')
+        if self.core.active_profile_group:
+            self.tray_icon.refresh_profile_status(self.core.active_profile_group, default_profile_name)
 
     ########################
     # LOGOUT

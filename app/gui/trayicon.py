@@ -127,12 +127,16 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.last_login.setDisabled(True)
 
         menu.addSeparator()
-        self.copy_text = menu.addAction("Copy profile name:")
+        self.copy_text = menu.addAction("Set default profile ( ➤ ):")
         self.copy_text.setDisabled(True)
         # profile status
         self.profile_status_anchor = menu.addSeparator()
         
         # copy
+        self.copy_name_menu = QMenu('Copy Profile Name', menu)
+        self.copy_name_menu.setDisabled(True)
+        menu.addMenu(self.copy_name_menu)
+
         self.copy_id_menu = QMenu('Copy Account Id', menu)
         self.copy_id_menu.setDisabled(True)
         menu.addMenu(self.copy_id_menu)
@@ -154,7 +158,7 @@ class SystemTrayIcon(QSystemTrayIcon):
                                         #    self.copy_name_menu, 
                                            self.copy_id_menu]
 
-    def refresh_profile_status(self, active_profile_group: ProfileGroup) -> bool:
+    def refresh_profile_status(self, active_profile_group: ProfileGroup, default_profile_name: str|None = None) -> bool:
         for action in self.profile_status_list:
             self.menu.removeAction(action)
             action.deleteLater()
@@ -163,10 +167,18 @@ class SystemTrayIcon(QSystemTrayIcon):
         if active_profile_group is None or active_profile_group.type != "aws":
             return True
 
+        configured_default_profile = active_profile_group.get_default_profile()
+        if not default_profile_name and configured_default_profile is not None: 
+            default_profile_name = configured_default_profile.profile
+        
         all_connected = True
         for profile in active_profile_group.get_profile_list(include_service_profile=True):
-            action = QAction(f'{profile.profile} ({profile.account})')
-            action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
+            display_profile_name = profile.profile
+            if display_profile_name == default_profile_name:
+                display_profile_name = f'➤ {display_profile_name}'
+            
+            action = QAction(f'{display_profile_name} ({profile.account})')
+            action.triggered.connect(partial(self.gui.set_default, profile_name=profile.profile))
             action.setIconVisibleInMenu(True)
             if profile.verified:
                 action.setIcon(self.assets.get_icon(style=ICON_VALID))
@@ -178,21 +190,21 @@ class SystemTrayIcon(QSystemTrayIcon):
         return all_connected
 
     def update_copy_menus(self, active_profile_group: ProfileGroup):
-        # self.copy_name_menu.setDisabled(False)
-        # self.copy_name_menu.clear()
+        self.copy_name_menu.setDisabled(False)
+        self.copy_name_menu.clear()
         self.copy_id_menu.setDisabled(False)
         self.copy_id_menu.clear()
 
         for profile in active_profile_group.get_profile_list():
-            # copy_name_action = self.copy_name_menu.addAction(f'{profile.profile} ({profile.account})')
-            # copy_name_action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
+            copy_name_action = self.copy_name_menu.addAction(f'{profile.profile} ({profile.account})')
+            copy_name_action.triggered.connect(partial(self.copy_to_clipboard, text=profile.profile))
             copy_id_action = self.copy_id_menu.addAction(f'{profile.account} ({profile.profile})')
             copy_id_action.triggered.connect(partial(self.copy_to_clipboard, text=str(profile.account)))
 
 
     def reset_copy_menus(self):
-        # self.copy_name_menu.setDisabled(True)
-        # self.copy_name_menu.clear()
+        self.copy_name_menu.setDisabled(True)
+        self.copy_name_menu.clear()
         self.copy_id_menu.setDisabled(True)
         self.copy_id_menu.clear()
 
