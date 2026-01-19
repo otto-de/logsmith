@@ -204,7 +204,6 @@ class Gui(QMainWindow):
     ########################
     # REGION
     def set_region(self, region: str) -> None:
-        self._to_busy_state()
         self.task = BackgroundTask(
             func=self.core.set_region,
             func_kwargs={'region': region},
