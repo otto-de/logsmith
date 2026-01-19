@@ -19,6 +19,14 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## Prerelease: 10.1.0-rc.1 - 2026-01-19
+
+### Added
+- switch default profiles in context menu.
+
+### Fixed
+- profile status will not be wiped anymore when changing regions.
+
 ## 10.0.0 - 2026-01-16
 
 ### Changed
