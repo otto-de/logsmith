@@ -180,7 +180,7 @@ class Gui(QMainWindow):
     def _on_verify_success(self):
         logger.info('verify profiles success')
         if self.core.active_profile_group:
-            all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group)
+            all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group, self.core.default_profile_override)
             if not all_connected:
                 self._to_disconnect_state(color=self.core.active_profile_group.color)
         self.login_repeater.start(task=self.verify,

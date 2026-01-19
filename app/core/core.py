@@ -21,6 +21,7 @@ class Core:
         self.toggles.initialize()
 
         self.active_profile_group: ProfileGroup = None
+        self.default_profile_override: str | None = None 
         self.empty_profile_group: ProfileGroup = ProfileGroup("logout", {}, "", "", "")
         self.region_override: str = None
 
@@ -197,6 +198,7 @@ class Core:
     def set_default_profile(self, profile_name):
         result = Result()
         logger.info(f"set default profile to {profile_name}")
+        self.default_profile_override = profile_name
         set_default_result = credentials.set_as_default_profile(profile_name)
         if not set_default_result.was_success:
             return set_default_result
@@ -210,6 +212,7 @@ class Core:
         result = Result()
         logger.info(f"start logout")
         self.active_profile_group = None
+        self.default_profile_override = None
 
         cleanup_result = credentials.cleanup()
         if not cleanup_result.was_success:
