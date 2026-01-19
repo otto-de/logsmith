@@ -157,6 +157,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_login_gcp_success(self):
+        logger.info('gcp login success')
         logger.info('start repeater to remind login in 8 hours')
         prepare_login = partial(self.login_gcp, profile_group=self.core.active_profile_group)
         self.login_repeater.start(task=prepare_login,
@@ -176,6 +177,7 @@ class Gui(QMainWindow):
         self.verify_task.start()
 
     def _on_verify_success(self):
+        logger.info('verify profiles success')
         if self.core.active_profile_group:
             all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group)
             if not all_connected:
@@ -197,6 +199,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_logout_success(self):
+        logger.info('logout success')
         self._to_reset_state()
         self.tray_icon.update_region_text('not logged in')
         self.tray_icon.reset_copy_menus()
@@ -214,6 +217,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_set_region_success(self) -> None:
+        logger.info('set region success')
         region = self.core.get_region()
         if not region:
             region = 'not logged in'
@@ -234,6 +238,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_edit_config_success(self):
+        logger.info('edit config success')
         self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
 
@@ -252,7 +257,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_set_access_key_success(self):
-        logger.info('access key set')
+        logger.info('access key set success')
         self._signal('Success', 'access key set')
         self._to_login_state()
 
@@ -269,7 +274,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_rotate_access_key_success(self):
-        logger.info('key was rotated')
+        logger.info('key was rotation success')
         self._signal('Success', 'key was rotated')
         self._to_login_state()
 
@@ -299,7 +304,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_set_sso_session_success(self):
-        logger.info('sso session set')
+        logger.info('set sso session success')
         self._signal('Success', 'sso session set')
         self._to_login_state()
 
@@ -315,7 +320,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_set_service_role_success(self):
-        logger.info('service role was set')
+        logger.info('set service role success')
         self.login(profile_group=self.core.active_profile_group)
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
@@ -329,7 +334,7 @@ class Gui(QMainWindow):
         self.task.start()
 
     def _on_set_assumable_roles_success(self):
-        logger.info('assumable roles were set')
+        logger.info('ser assumable roles success')
         self._signal('Success', 'available role list was set')
 
     def _on_error(self, error_message):
