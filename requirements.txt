@@ -1,5 +1,0 @@
-boto3==1.35.31
-PyQt6==6.7.1
-PyInstaller==6.10.0
-ruamel.yaml==0.18.6
-nose==1.3.7
