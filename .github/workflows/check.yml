@@ -16,12 +16,6 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Cache uv
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-python-uv-${{ hashFiles('pyproject.toml') }}
-
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
 
