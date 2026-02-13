@@ -12,3 +12,4 @@ legacy
 .vscode
 .clj-kondo
 .lsp
+tmp
