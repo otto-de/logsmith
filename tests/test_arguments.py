@@ -1,78 +1,74 @@
-import contextlib
-import io
-from unittest import TestCase
-
-import sys
+import pytest
 
 from app import arguments
 from app import version
 
 
-@contextlib.contextmanager
-def captured_output():
-    new_out, new_err = io.StringIO(), io.StringIO()
-    old_out, old_err = sys.stdout, sys.stderr
-    try:
-        sys.stdout, sys.stderr = new_out, new_err
-        yield sys.stdout, sys.stderr
-    finally:
-        sys.stdout, sys.stderr = old_out, old_err
+def test_version_short(capsys):
+    with pytest.raises(SystemExit) as exc:
+        arguments.parse(["-v"])
+
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out == f"logsmith {version.version}\n"
+    assert exc.value.code == 0
 
 
-class Test(TestCase):
+def test_version_long(capsys):
+    with pytest.raises(SystemExit) as exc:
+        arguments.parse(["--version"])
 
-    def test_version_short(self):
-        with self.assertRaises(SystemExit) as cm, captured_output() as (out, err):
-            arguments.parse(["-v"])
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out == f"logsmith {version.version}\n"
+    assert exc.value.code == 0
 
-        self.assertEqual(err.getvalue(), '')
-        self.assertEqual(out.getvalue(), 'logsmith {0}\n'.format(version.version))
-        self.assertEqual(cm.exception.code, 0)
 
-    def test_version_long(self):
-        with self.assertRaises(SystemExit) as cm, captured_output() as (out, err):
-            arguments.parse(["--version"])
+def test_help_short(capsys):
+    with pytest.raises(SystemExit) as exc:
+        arguments.parse(["-h"])
 
-        self.assertEqual(err.getvalue(), '')
-        self.assertEqual(out.getvalue(), 'logsmith {0}\n'.format(version.version))
-        self.assertEqual(cm.exception.code, 0)
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out.startswith("usage: logsmith [-h]")
+    assert exc.value.code == 0
 
-    def test_help_short(self):
-        with self.assertRaises(SystemExit) as cm, captured_output() as (out, err):
-            arguments.parse(["-h"])
 
-        self.assertEqual(err.getvalue(), '')
-        self.assertRegex(out.getvalue(), "^usage: logsmith \\[-h\\].*")
-        self.assertEqual(cm.exception.code, 0)
+def test_help_long(capsys):
+    with pytest.raises(SystemExit) as exc:
+        arguments.parse(["--help"])
 
-    def test_help_long(self):
-        with self.assertRaises(SystemExit) as cm, captured_output() as (out, err):
-            arguments.parse(["--help"])
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out.startswith("usage: logsmith [-h]")
+    assert exc.value.code == 0
 
-        self.assertEqual(err.getvalue(), '')
-        self.assertRegex(out.getvalue(), "^usage: logsmith \\[-h\\].*")
-        self.assertEqual(cm.exception.code, 0)
 
-    def test_loglevel_default(self):
-        args = arguments.parse([])
-        self.assertEqual(args.loglevel, 'WARN')
+def test_loglevel_default():
+    args = arguments.parse([])
+    assert args.loglevel == "WARN"
 
-    def test_loglevel_valid(self):
-        args = arguments.parse(['-l', 'INFO'])
-        self.assertEqual(args.loglevel, 'INFO')
 
-    def test_loglevel_invalid(self):
-        with self.assertRaises(SystemExit) as cm, captured_output() as (out, err):
-            arguments.parse(['-l', 'LOTS'])
+def test_loglevel_valid():
+    args = arguments.parse(["-l", "INFO"])
+    assert args.loglevel == "INFO"
 
-        self.assertRegex(err.getvalue(), "logsmith: error: argument -l/--loglevel: invalid choice")
-        self.assertEqual(out.getvalue(), '')
-        self.assertNotEqual(cm.exception.code, 0)
 
-    def test_unknown_parameter(self):
-        with self.assertRaises(SystemExit) as cm, captured_output() as (out, err):
-            arguments.parse(['--foobar'])
+def test_loglevel_invalid(capsys):
+    with pytest.raises(SystemExit) as exc:
+        arguments.parse(["-l", "LOTS"])
 
-        self.assertRegex(err.getvalue(), "logsmith: error: unrecognized arguments: --foobar")
-        self.assertEqual(out.getvalue(), '')
-        self.assertNotEqual(cm.exception.code, 0)
+    captured = capsys.readouterr()
+    assert "logsmith: error: argument -l/--loglevel: invalid choice" in captured.err
+    assert captured.out == ""
+    assert exc.value.code != 0
+
+
+def test_unknown_parameter(capsys):
+    with pytest.raises(SystemExit) as exc:
+        arguments.parse(["--foobar"])
+
+    captured = capsys.readouterr()
+    assert "logsmith: error: unrecognized arguments: --foobar" in captured.err
+    assert captured.out == ""
+    assert exc.value.code != 0

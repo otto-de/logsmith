@@ -3,76 +3,81 @@ from unittest.mock import Mock, call
 
 from app.core.result import Result
 from app.yubico import mfa
+from app.shell import shell
 
 
 
-class TestStart(TestCase):
-
-    @mock.patch('app.yubico.mfa.shell.run')
-    def test_fetch_mfa_token_from_shell__command_failes(self, mock_run):
-        result = Result()
-        result.error('')
-        mock_run.return_value = result
-
-        self.assertEqual(None, mfa.fetch_mfa_token_from_shell('fail_command'))
-
-        expected = [call('fail_command')]
-        self.assertEqual(expected, mock_run.mock_calls)
-
-    @mock.patch('app.yubico.mfa.shell.run')
-    def test_fetch_mfa_token_from_shell(self, mock_run):
-        result = Result()
-        result.set_success()
-        result.add_payload('123456')
-        mock_run.return_value = result
+def test_fetch_mfa_token_from_shell__command_failes(mocker):
+    mock_run = mocker.patch.object(shell, "run")
     
-        self.assertEqual('123456', mfa.fetch_mfa_token_from_shell('success_command'))
+    result = Result()
+    result.error('')
+    mock_run.return_value = result
 
-        expected = [call('success_command')]
-        self.assertEqual(expected, mock_run.mock_calls)
+    assert None == mfa.fetch_mfa_token_from_shell('fail_command')
 
-    @mock.patch('app.yubico.mfa.shell.run')
-    def test_fetch_mfa_token_from_shell__command_succeedes_but_None_instead_of_token(self, mock_run):
-        result = Result()
-        result.set_success()
-        mock_run.return_value = result
+    expected = [call('fail_command')]
+    assert expected == mock_run.mock_calls
 
-        self.assertEqual(None, mfa.fetch_mfa_token_from_shell('success_command'))
+def test_fetch_mfa_token_from_shell(mocker):
+    mock_run = mocker.patch.object(shell, "run")
+    
+    result = Result()
+    result.set_success()
+    result.add_payload('123456')
+    mock_run.return_value = result
 
-        expected = [call('success_command')]
-        self.assertEqual(expected, mock_run.mock_calls)
+    assert '123456' == mfa.fetch_mfa_token_from_shell('success_command')
 
-    @mock.patch('app.yubico.mfa.shell.run')
-    def test_fetch_mfa_token_from_shell__command_succeedes_but_no_valid_token(self, mock_run):
-        result = Result()
-        result.set_success()
-        result.add_payload('Some Token 123456')
-        mock_run.return_value = result
-        
-        self.assertEqual(None, mfa.fetch_mfa_token_from_shell('success_command'))
+    expected = [call('success_command')]
+    assert expected == mock_run.mock_calls
 
-        expected = [call('success_command')]
-        self.assertEqual(expected, mock_run.mock_calls)
+def test_fetch_mfa_token_from_shell__command_succeedes_but_None_instead_of_token(mocker):
+    mock_run = mocker.patch.object(shell, "run")
+    
+    result = Result()
+    result.set_success()
+    mock_run.return_value = result
 
-    @mock.patch('app.yubico.mfa.shell.run')
-    def test_fetch_mfa_token_from_shell__command_succeedes_token_has_spaces(self, mock_run):
-        result = Result()
-        result.set_success()
-        result.add_payload(' 123456 ')
-        mock_run.return_value = result
+    assert None == mfa.fetch_mfa_token_from_shell('success_command')
 
-        self.assertEqual('123456', mfa.fetch_mfa_token_from_shell('success_command'))
+    expected = [call('success_command')]
+    assert expected == mock_run.mock_calls
 
-        expected = [call('success_command')]
-        self.assertEqual(expected, mock_run.mock_calls)
+def test_fetch_mfa_token_from_shell__command_succeedes_but_no_valid_token(mocker):
+    mock_run = mocker.patch.object(shell, "run")
+    
+    result = Result()
+    result.set_success()
+    result.add_payload('Some Token 123456')
+    mock_run.return_value = result
+    
+    assert None == mfa.fetch_mfa_token_from_shell('success_command')
 
-    @mock.patch('app.yubico.mfa.shell.run')
-    def test_fetch_mfa_token_from_shell__no_command(self, mock_run):
-        result = Result()
-        result.set_success()
-        mock_run.return_value = result
-        
-        self.assertEqual(None, mfa.fetch_mfa_token_from_shell(''))
+    expected = [call('success_command')]
+    assert expected == mock_run.mock_calls
 
-        expected = []
-        self.assertEqual(expected, mock_run.mock_calls)
+def test_fetch_mfa_token_from_shell__command_succeedes_token_has_spaces(mocker):
+    mock_run = mocker.patch.object(shell, "run")
+    
+    result = Result()
+    result.set_success()
+    result.add_payload(' 123456 ')
+    mock_run.return_value = result
+
+    assert '123456' == mfa.fetch_mfa_token_from_shell('success_command')
+
+    expected = [call('success_command')]
+    assert expected == mock_run.mock_calls
+
+def test_fetch_mfa_token_from_shell__no_command(mocker):
+    mock_run = mocker.patch.object(shell, "run")
+    
+    result = Result()
+    result.set_success()
+    mock_run.return_value = result
+    
+    assert None == mfa.fetch_mfa_token_from_shell('')
+
+    expected = []
+    assert expected == mock_run.mock_calls
