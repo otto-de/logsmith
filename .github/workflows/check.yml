@@ -1,6 +1,15 @@
 name: Check
 
-on: [workflow_dispatch, push, pull_request]
+on: 
+  workflow_dispatch:
+  push:
+    paths:
+      - "**/*.py"
+      - "**/*.toml"
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "**/*.toml"
 
 jobs:
   build:
