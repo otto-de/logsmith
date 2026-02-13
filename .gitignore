@@ -13,3 +13,5 @@ legacy
 .clj-kondo
 .lsp
 tmp
+__pycache__
+.pytest_cache
