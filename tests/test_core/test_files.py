@@ -179,6 +179,9 @@ def test_save_service_roles_file(mocker):
     assert expected == mock_write.mock_calls
 
 
+def test_path_exist():
+    assert files.path_exist(test_file)
+
 def test_file_exists():
     assert files.file_exists(test_file)
 
@@ -186,9 +189,8 @@ def test_file_exists():
 def test_file_exists__files_does_not_exist():
     assert not files.file_exists(non_existing_test_file)
 
-# @mock.patch('app.core.files.os.path.exists', return_value=True)
 def test_file_exists__script_path_without_arguments(mocker):
-    mock_os_path_exists = mocker.patch.object(files, "_path_exist", return_value=True)
+    mock_os_path_exists = mocker.patch.object(files, "path_exist")
 
     files.file_exists(test_file)
     expected = [call(test_file)]
@@ -196,7 +198,7 @@ def test_file_exists__script_path_without_arguments(mocker):
 
 
 def test_file_exists__script_path_with_arguments(mocker):
-    mock_os_path_exists = mocker.patch.object(files, "_path_exist", return_value=True)
+    mock_os_path_exists = mocker.patch.object(files, "path_exist")
 
     files.file_exists(f'{test_file} argument1 argument2')
     expected = [call(test_file)]

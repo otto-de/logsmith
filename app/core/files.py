@@ -73,14 +73,14 @@ def dump_yaml(d: dict) -> str:
 
 
 def _load_file(path) -> str:
-    if os.path.exists(path):
+    if path_exist(path):
         with open(path, 'r') as file:
             return file.read()
     return ''
 
 
 def _load_file_window(path, position) -> (str, int):
-    if os.path.exists(path):
+    if path_exist(path):
         with open(path, 'r') as file:
             file.seek(position)
             content = file.read()
@@ -95,7 +95,7 @@ def _write_file(path, content) -> None:
 
 
 def remove_file(path) -> None:
-    if os.path.exists(path):
+    if path_exist(path):
         os.remove(path)
 
 
@@ -103,8 +103,10 @@ def file_exists(file_path) -> bool:
     file_path = file_path.strip()
     if ' ' in file_path:
         file_path = file_path.split(' ')[0]
-    return os.path.exists(file_path)
+    return path_exist(file_path)
 
+def path_exist(path):
+    return os.path.exists(path)
 
 def load_config() -> dict:
     return parse_yaml(_load_file(get_config_path()))
