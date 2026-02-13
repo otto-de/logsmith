@@ -58,7 +58,7 @@ def test_login_sso__cleanup_error(ctx, mocker):
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
     assert ctx.error_result == result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
+    assert [call.cleanup()] == mock_credentials.mock_calls
     mock_sso.assert_not_called()
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
@@ -78,8 +78,8 @@ def test_login_sso__sso_login_failure(ctx, mocker):
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
     assert ctx.fail_result == result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
-    mock_sso.assert_has_calls([call.sso_login(ctx.sso_profile_group)])
+    assert [call.cleanup()] == mock_credentials.mock_calls
+    assert [call.sso_login(ctx.sso_profile_group)] == mock_sso.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -99,12 +99,12 @@ def test_login_sso__write_sso_credentials_failure(ctx, mocker):
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
     assert ctx.fail_result == result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_credentials.cleanup.assert_called_once_with()
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
         call.write_sso_credentials(ctx.sso_profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -127,12 +127,12 @@ def test_login_sso__write_sso_as_key_credentials_failure(ctx, mocker):
     result = ctx.core.login_with_sso(profile_group)
     assert ctx.fail_result == result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_credentials.cleanup.assert_called_once_with()
     expected_sso_calls = [
         call.sso_login(profile_group),
         call.write_sso_as_key_credentials(profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -153,13 +153,13 @@ def test_login_sso__set_region_failure(ctx, mocker):
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
     assert ctx.fail_result == result
 
-    mock_set_region.assert_has_calls([call(None)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_set_region.assert_called_once_with(None)
+    assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
         call.write_sso_credentials(ctx.sso_profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
 
@@ -180,15 +180,15 @@ def test_login_sso__run_script_failure(ctx, mocker):
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
     assert ctx.fail_result == result
 
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(ctx.sso_profile_group)])
-    mock_run_script.assert_has_calls([call(ctx.sso_profile_group)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_set_region.assert_called_once_with(None)
+    assert [call(ctx.sso_profile_group)] == mock_handle_support_files.mock_calls
+    assert [call(ctx.sso_profile_group)] == mock_run_script.mock_calls
+    assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
         call.write_sso_credentials(ctx.sso_profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls
 
 
 def test_login_sso__successful_login_with_run_script_disabled(ctx, mocker):
@@ -209,15 +209,15 @@ def test_login_sso__successful_login_with_run_script_disabled(ctx, mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(ctx.sso_profile_group)])
+    mock_set_region.assert_called_once_with(None)
+    assert [call(ctx.sso_profile_group)] == mock_handle_support_files.mock_calls
     assert 0 == mock_run_script.call_count
-    mock_credentials.assert_has_calls([call.cleanup()])
+    assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
         call.write_sso_credentials(ctx.sso_profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls
 
 
 def test_login_sso__successful_login(ctx, mocker):
@@ -237,15 +237,15 @@ def test_login_sso__successful_login(ctx, mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(ctx.sso_profile_group)])
-    mock_run_script.assert_has_calls([call(ctx.sso_profile_group)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_set_region.assert_called_once_with(None)
+    mock_handle_support_files.assert_called_once_with(ctx.sso_profile_group)
+    mock_run_script.assert_called_once_with(ctx.sso_profile_group)
+    assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
         call.write_sso_credentials(ctx.sso_profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls
 
 
 def test_login_sso__successful_login_with_region_overwrite(ctx, mocker):
@@ -265,7 +265,7 @@ def test_login_sso__successful_login_with_region_overwrite(ctx, mocker):
 
     ctx.core.login_with_sso(ctx.sso_profile_group)
 
-    mock_set_region.assert_has_calls([call("eu-north-1")])
+    mock_set_region.assert_called_once_with("eu-north-1")
 
 
 def test_login_sso__fetch_service_role_failure(ctx, mocker):
@@ -289,8 +289,8 @@ def test_login_sso__fetch_service_role_failure(ctx, mocker):
         call.write_sso_credentials(profile_group),
         call.write_sso_service_profile(profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
-    mock_credentials.assert_has_calls([call.cleanup()])
+    assert expected_sso_calls == mock_sso.mock_calls
+    assert [call.cleanup()] == mock_credentials.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -315,13 +315,13 @@ def test_login_sso__successfull_login_with_service_role(ctx, mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(profile_group)])
-    mock_run_script.assert_has_calls([call(profile_group)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_set_region.assert_called_once_with(None)
+    mock_handle_support_files.assert_called_once_with(profile_group)
+    mock_run_script.assert_called_once_with(profile_group)
+    assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(profile_group),
         call.write_sso_credentials(profile_group),
         call.write_sso_service_profile(profile_group),
     ]
-    mock_sso.assert_has_calls(expected_sso_calls)
+    assert expected_sso_calls == mock_sso.mock_calls

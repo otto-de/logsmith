@@ -56,7 +56,7 @@ def test_login_key__cleanup_error(ctx, mocker):
     result = ctx.core.login_with_key(ctx.key_profile_group, None)
     assert ctx.error_result == result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_credentials.cleanup.assert_called_once_with()
     mock_ensure_session.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -78,8 +78,8 @@ def test_login_key__no_access_key(ctx, mocker):
     result = ctx.core.login_with_key(ctx.key_profile_group, None)
     assert ctx.error_result == result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
-    mock_key.assert_has_calls([call.check_access_key(access_key="some-access-key")])
+    mock_credentials.cleanup.assert_called_once_with()
+    assert [call.check_access_key(access_key="some-access-key")] == mock_key.mock_calls
     mock_set_region.assert_not_called()
     mock_ensure_session.assert_not_called()
     mock_handle_support_files.assert_not_called()
@@ -101,9 +101,9 @@ def test_login_key__fetch_session_failure(ctx, mocker):
     result = ctx.core.login_with_key(get_test_profile_group(), None)
     assert ctx.fail_result == result
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token=None)])
-    mock_credentials.assert_has_calls([call.cleanup()])
-    mock_key.assert_has_calls([call.check_access_key(access_key="some-access-key")])
+    assert [call(access_key="some-access-key", mfa_token=None)] == mock_ensure_session.mock_calls
+    mock_credentials.cleanup.assert_called_once_with()
+    assert [call.check_access_key(access_key="some-access-key")] == mock_key.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -127,14 +127,14 @@ def test_login_key__fetch_key_credentials_failure(ctx, mocker):
     result = ctx.core.login_with_key(profile_group, None)
     assert ctx.fail_result == result
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token=None)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    assert [call(access_key="some-access-key", mfa_token=None)] == mock_ensure_session.mock_calls
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -159,15 +159,15 @@ def test_login_key__set_region_failure(ctx, mocker):
     result = ctx.core.login_with_key(profile_group, None)
     assert ctx.fail_result == result
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token=None)])
-    mock_set_region.assert_has_calls([call(None)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_ensure_session.assert_called_once_with(access_key="some-access-key", mfa_token=None)
+    mock_set_region.assert_called_once_with(None)
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
 
@@ -193,17 +193,17 @@ def test_login_key__run_script_failure(ctx, mocker):
     result = ctx.core.login_with_key(profile_group, None)
     assert ctx.fail_result == result
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token=None)])
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(profile_group)])
-    mock_run_script.assert_has_calls([call(profile_group)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_ensure_session.assert_called_once_with(access_key="some-access-key", mfa_token=None)
+    mock_set_region.assert_called_once_with(None)
+    mock_handle_support_files.assert_called_once_with(profile_group)
+    mock_run_script.assert_called_once_with(profile_group)
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls
 
 
 def test_login_key__successful_login_with_run_script_disabled(ctx, mocker):
@@ -229,17 +229,17 @@ def test_login_key__successful_login_with_run_script_disabled(ctx, mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token="123456")])
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(profile_group)])
+    mock_ensure_session.assert_called_once_with(access_key="some-access-key", mfa_token="123456")
+    mock_set_region.assert_called_once_with(None)
+    mock_handle_support_files.assert_called_once_with(profile_group)
     assert 0 == mock_run_script.call_count
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls
 
 
 def test_login_key__successful_login(ctx, mocker):
@@ -263,17 +263,17 @@ def test_login_key__successful_login(ctx, mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token="123456")])
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(profile_group)])
-    mock_run_script.assert_has_calls([call(profile_group)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_ensure_session.assert_called_once_with(access_key="some-access-key", mfa_token="123456")
+    mock_set_region.assert_called_once_with(None)
+    mock_handle_support_files.assert_called_once_with(profile_group)
+    mock_run_script.assert_called_once_with(profile_group)
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls
 
 
 def test_login_key__successful_login_with_region_overwrite(ctx, mocker):
@@ -297,7 +297,7 @@ def test_login_key__successful_login_with_region_overwrite(ctx, mocker):
     profile_group = get_test_profile_group()
     ctx.core.login_with_key(profile_group, None)
 
-    mock_set_region.assert_has_calls([call("eu-north-1")])
+    mock_set_region.assert_called_once_with("eu-north-1")
 
 
 def test_login_key__fetch_service_role_failure(ctx, mocker):
@@ -321,14 +321,14 @@ def test_login_key__fetch_service_role_failure(ctx, mocker):
     result = ctx.core.login_with_key(profile_group, "123456")
     assert result == ctx.fail_result
 
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
         call.fetch_key_service_profile(profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls
 
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
@@ -357,15 +357,15 @@ def test_login_key__successfull_login_with_service_role(ctx, mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_ensure_session.assert_has_calls([call(access_key="some-access-key", mfa_token="123456")])
-    mock_set_region.assert_has_calls([call(None)])
-    mock_handle_support_files.assert_has_calls([call(profile_group)])
-    mock_run_script.assert_has_calls([call(profile_group)])
-    mock_credentials.assert_has_calls([call.cleanup()])
+    mock_ensure_session.assert_called_once_with(access_key="some-access-key", mfa_token="123456")
+    mock_set_region.assert_called_once_with(None)
+    mock_handle_support_files.assert_called_once_with(profile_group)
+    mock_run_script.assert_called_once_with(profile_group)
+    mock_credentials.cleanup.assert_called_once_with()
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
         call.fetch_key_credentials("user", profile_group),
         call.fetch_key_service_profile(profile_group),
     ]
-    mock_key.assert_has_calls(expected_key_calls)
+    assert expected_key_calls == mock_key.mock_calls

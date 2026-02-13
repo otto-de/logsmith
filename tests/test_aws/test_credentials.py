@@ -46,7 +46,7 @@ def test__cleanup_profiles(mocker):
     credentials._cleanup_profiles(mock_config_parser)
 
     expected = [call("developer"), call("unused-profile")]
-    mock_config_parser.remove_section.assert_has_calls(expected)
+    assert expected == mock_config_parser.remove_section.mock_calls
 
 
 def test_write_profile_config(mocker):
@@ -74,7 +74,7 @@ def test_write_profile_config(mocker):
         call(mock_config_parser, "readonly", "us-east-12"),
         call(mock_config_parser, "default", "us-east-12"),
     ]
-    mock_add_profile.assert_has_calls(add_profile_calls)
+    assert add_profile_calls == mock_add_profile.mock_calls
     mock_write_config_file.assert_called_once_with(mock_config_parser)
 
 
@@ -101,7 +101,7 @@ def test_write_profile_config__no_default_region(mocker):
         call(mock_config_parser, "developer", "us-east-12"),
         call(mock_config_parser, "readonly", "us-east-12"),
     ]
-    mock_add_profile.assert_has_calls(expected)
+    assert expected == mock_add_profile.mock_calls
     mock_write_config_file.assert_called_once_with(mock_config_parser)
 
 
@@ -124,7 +124,7 @@ def test__cleanup_configs(mocker):
         call("profile access-key"),
         call("profile session-token"),
     ]
-    mock_config_parser.remove_section.assert_has_calls(expected)
+    assert expected == mock_config_parser.remove_section.mock_calls
 
 
 def test__add_profile_credentials(mocker):
@@ -139,7 +139,7 @@ def test__add_profile_credentials(mocker):
         call("test-profile", "aws_access_key_id", "test-key-id"),
         call("test-profile", "aws_secret_access_key", "test-access-key"),
         call("test-profile", "aws_session_token", "test-session-token")]
-    mock_config_parser.set.assert_has_calls(expected_calls)
+    assert expected_calls == mock_config_parser.set.mock_calls
 
 
 def test__add_profile_config(mocker):
@@ -153,7 +153,7 @@ def test__add_profile_config(mocker):
     expected_calls = [
         call("profile test-profile", "region", "us-east-12"),
         call("profile test-profile", "output", "json")]
-    mock_config_parser.set.assert_has_calls(expected_calls)
+    assert expected_calls == mock_config_parser.set.mock_calls
 
 
 def test_set_as_default_profile(mocker):
@@ -172,10 +172,10 @@ def test_set_as_default_profile(mocker):
 
     assert result.was_success
     assert not result.was_error
-    mock_replace_profile.assert_has_calls([call(mock_credentials, "developer", "default"),
-                                           call(mock_config, "profile developer", "profile default")])
-    mock_write_credentials_file.assert_has_calls([call(mock_credentials)])
-    mock_write_config_file.assert_has_calls([call(mock_config)])
+    assert [call(mock_credentials, "developer", "default"),
+            call(mock_config, "profile developer", "profile default")] == mock_replace_profile.mock_calls
+    assert [call(mock_credentials)] == mock_write_credentials_file.mock_calls
+    assert [call(mock_config)] == mock_write_config_file.mock_calls
 
 
 def test_set_as_default_profile__error(mocker):

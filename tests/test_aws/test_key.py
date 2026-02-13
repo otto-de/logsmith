@@ -66,7 +66,7 @@ def test_check_session(mocker):
         call("session-token-access-key", "sts", timeout=2, retries=2),
         call().get_caller_identity(),
     ]
-    mock_get_client.assert_has_calls(expected_calls)
+    assert expected_calls == mock_get_client.mock_calls
 
     assert result.was_success
     assert not result.was_error
@@ -184,7 +184,7 @@ def test_fetch_key_credentials(mocker):
         call("session-token-default-access-key", "test_user", "123456789012", "developer"),
         call("session-token-default-access-key", "test_user", "012345678901", "readonly"),
     ]
-    mock_assume.assert_has_calls(expected_mock_assume_calls)
+    assert expected_mock_assume_calls == mock_assume.mock_calls
 
     expected_mock_add_profile_calls = [
         call(
@@ -215,7 +215,7 @@ def test_fetch_key_credentials(mocker):
             },
         ),
     ]
-    mock_add_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
 
     assert 2 == mock_write_credentials.call_count
 
@@ -245,7 +245,7 @@ def test_fetch_key_credentials_with_specific_access_key(mocker):
         call("session-token-specific-access-key", "test_user", "123456789012", "developer"),
         call("session-token-specific-access-key", "test_user", "012345678901", "readonly"),
     ]
-    mock_assume.assert_has_calls(expected_mock_assume_calls)
+    assert expected_mock_assume_calls == mock_assume.mock_calls
 
     expected_mock_add_profile_calls = [
         call(
@@ -276,7 +276,7 @@ def test_fetch_key_credentials_with_specific_access_key(mocker):
             },
         ),
     ]
-    mock_add_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
 
     assert 2 == mock_write_credentials.call_count
 
@@ -306,7 +306,7 @@ def test_fetch_key_credentials__no_default(mocker):
         call("session-token-default-access-key", "test-user", "123456789012", "developer"),
         call("session-token-default-access-key", "test-user", "012345678901", "readonly"),
     ]
-    mock_assume.assert_has_calls(expected_mock_assume_calls)
+    assert expected_mock_assume_calls == mock_assume.mock_calls
 
     expected_mock_add_profile_calls = [
         call(
@@ -328,7 +328,7 @@ def test_fetch_key_credentials__no_default(mocker):
             },
         ),
     ]
-    mock_add_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
 
     assert 2 == mock_write_credentials.call_count
 
@@ -358,7 +358,7 @@ def test_fetch_key_credentials__chain_assume(mocker):
         call("session-token-default-access-key", "test-user", "123456789012", "developer"),
         call("developer", "test-user", "012345678901", "service"),
     ]
-    mock_assume.assert_has_calls(expected_mock_assume_calls)
+    assert expected_mock_assume_calls == mock_assume.mock_calls
 
     expected_mock_add_profile_calls = [
         call(
@@ -380,7 +380,7 @@ def test_fetch_key_credentials__chain_assume(mocker):
             },
         ),
     ]
-    mock_add_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
 
     assert 2 == mock_write_credentials.call_count
 
@@ -400,13 +400,13 @@ def test_fetch_key_service_profile(mocker):
     assert result.was_success
 
     expected_assume_role_calls = [call("developer", "dummy", "123456789012", "dummy")]
-    mock_assume.assert_has_calls(expected_assume_role_calls)
+    assert expected_assume_role_calls == mock_assume.mock_calls
 
     expected_add_profile_credentialscalls = [call(mock_config_parser, "service", "secrets")]
-    mock_add_profile.assert_has_calls(expected_add_profile_credentialscalls)
+    assert expected_add_profile_credentialscalls == mock_add_profile.mock_calls
 
     expected_write_credentials_file_calls = [call(mock_config_parser)]
-    mock_write_credentials.assert_has_calls(expected_write_credentials_file_calls)
+    assert expected_write_credentials_file_calls == mock_write_credentials.mock_calls
 
 
 def test_set_access_key(mocker):
@@ -421,11 +421,11 @@ def test_set_access_key(mocker):
     assert result.was_success
     assert not result.was_error
 
-    mock_config_parser.has_section.assert_has_calls([call("key-name")])
-    mock_config_parser.add_section.assert_has_calls([call("key-name")])
-    mock_config_parser.set.assert_has_calls([call("key-name", "aws_access_key_id", "key-id"),
-                                             call("key-name", "aws_secret_access_key", "access-key")])
-    mock_write_credentials.assert_has_calls([call(mock_config_parser)])
+    mock_config_parser.has_section.assert_called_once_with("key-name")
+    mock_config_parser.add_section.assert_called_once_with("key-name")
+    assert [call("key-name", "aws_access_key_id", "key-id"),
+            call("key-name", "aws_secret_access_key", "access-key")] == mock_config_parser.set.mock_calls
+    mock_write_credentials.assert_called_once_with(mock_config_parser)
 
 
 def test_get_access_key_list(mocker):
@@ -450,7 +450,7 @@ def test_get_access_key_id(mocker):
     result = key.get_access_key_id("access-key")
 
     assert "some-key-id" == result
-    mock_config_parser.get.assert_has_calls([call("access-key", "aws_access_key_id")])
+    mock_config_parser.get.assert_called_once_with("access-key", "aws_access_key_id")
 
 
 def test_check_session__no_session_found(mocker):

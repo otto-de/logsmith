@@ -85,9 +85,9 @@ def test_write_sso_credentials(mocker):
             region="us-east-1",
         ),
     ]
-    mock_add_sso_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_sso_profile.mock_calls
     mock_add_sso_chain.assert_not_called()
-    mock_write_config.assert_has_calls([call(mock_config_parser), call(mock_config_parser)])
+    assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
 
 
 def test_write_sso_credentials__no_default(mocker):
@@ -128,9 +128,9 @@ def test_write_sso_credentials__no_default(mocker):
             region="us-east-1",
         ),
     ]
-    mock_add_sso_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_sso_profile.mock_calls
     mock_add_sso_chain.assert_not_called()
-    mock_write_config.assert_has_calls([call(mock_config_parser), call(mock_config_parser)])
+    assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
 
 
 def test_write_sso_credentials__chain_assume(mocker):
@@ -163,7 +163,7 @@ def test_write_sso_credentials__chain_assume(mocker):
             region="us-east-1",
         ),
     ]
-    mock_add_sso_profile.assert_has_calls(expected_mock_add_profile_calls)
+    assert expected_mock_add_profile_calls == mock_add_sso_profile.mock_calls
 
     expected_mock_chain_profile_calls = [
         call(
@@ -174,8 +174,8 @@ def test_write_sso_credentials__chain_assume(mocker):
             region="us-east-1",
         ),
     ]
-    mock_add_sso_chain.assert_has_calls(expected_mock_chain_profile_calls)
-    mock_write_config.assert_has_calls([call(mock_config_parser), call(mock_config_parser)])
+    assert expected_mock_chain_profile_calls == mock_add_sso_chain.mock_calls
+    assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
 
 
 def test_write_sso_credentials__source_profile_missing(mocker):
@@ -226,13 +226,13 @@ def test_write_sso_service_profile(mocker):
     result = sso.write_sso_service_profile(profile_group)
     assert result.was_success
 
-    mock_fetch_role_arn.assert_has_calls([call(profile="developer", role_name="dummy")])
+    mock_fetch_role_arn.assert_called_once_with(profile="developer", role_name="dummy")
     expected_add_profile_credentialscalls = [
         call(config_file="config-file", profile="service", role_arn="some-arn",
              source_profile="developer", region="us-east-1")
     ]
-    mock_add_sso_chain.assert_has_calls(expected_add_profile_credentialscalls)
-    mock_write_config.assert_has_calls([call("config-file")])
+    assert expected_add_profile_credentialscalls == mock_add_sso_chain.mock_calls
+    mock_write_config.assert_called_once_with("config-file")
 
 
 def test_write_sso_service_profile_as_key_credentials(mocker):
@@ -248,9 +248,9 @@ def test_write_sso_service_profile_as_key_credentials(mocker):
     result = sso.write_sso_service_profile_as_key_credentials(profile_group)
 
     assert result.was_success
-    mock_assume_role.assert_has_calls([call("developer", "dummy", "123456789012", "dummy")])
-    mock_add_profile.assert_has_calls([call("credentials-file", "service", test_secrets)])
-    mock_write_credentials.assert_has_calls([call("credentials-file")])
+    mock_assume_role.assert_called_once_with("developer", "dummy", "123456789012", "dummy")
+    mock_add_profile.assert_called_once_with("credentials-file", "service", test_secrets)
+    mock_write_credentials.assert_called_once_with("credentials-file")
 
 
 def test_write_sso_service_profile_as_key_credentials__error(mocker):
@@ -288,7 +288,7 @@ def test_sso_login(mocker):
     expected_command = (
         "unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso login --sso-session specific-sso-session"
     )
-    mock_shell_run.assert_has_calls([call(command=expected_command, timeout=600)])
+    mock_shell_run.assert_called_once_with(command=expected_command, timeout=600)
     assert result.was_success
 
 
@@ -298,7 +298,7 @@ def test_sso_logout(mocker):
     result = sso.sso_logout()
 
     expected_command = "unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso logout"
-    mock_shell_run.assert_has_calls([call(command=expected_command, timeout=600)])
+    mock_shell_run.assert_called_once_with(command=expected_command, timeout=600)
     assert result.was_success
 
 
@@ -333,7 +333,7 @@ def test_write_sso_as_key_credentials(mocker):
         call(account_id="123456789012", region="us-east-1", role_name="developer"),
         call(account_id="012345678901", region="us-east-1", role_name="readonly"),
     ]
-    mock_fetch_role.assert_has_calls(expected_fetch_calls)
+    assert expected_fetch_calls == mock_fetch_role.mock_calls
     mock_assume_role.assert_not_called()
 
     expected_add_calls = [
@@ -341,7 +341,7 @@ def test_write_sso_as_key_credentials(mocker):
         call(mock_credentials_file, "readonly", test_secrets),
         call(mock_credentials_file, "default", test_secrets),
     ]
-    mock_add_profile.assert_has_calls(expected_add_calls)
+    assert expected_add_calls == mock_add_profile.mock_calls
     assert 2 == mock_write_credentials.call_count
 
 
@@ -370,20 +370,14 @@ def test_write_sso_as_key_credentials__chain_assume(mocker):
     result = sso.write_sso_as_key_credentials(profile_group)
     assert result.was_success
 
-    expected_fetch_calls = [
-        call(account_id="123456789012", region="us-east-1", role_name="developer"),
-    ]
-    mock_fetch_role.assert_has_calls(expected_fetch_calls)
-    expected_assume_calls = [
-        call("developer", "service", "012345678901", "service"),
-    ]
-    mock_assume_role.assert_has_calls(expected_assume_calls)
+    mock_fetch_role.assert_called_once_with(account_id="123456789012", region="us-east-1", role_name="developer")
+    mock_assume_role.assert_called_once_with("developer", "service", "012345678901", "service")
 
     expected_add_calls = [
         call(mock_credentials_file, "developer", test_secrets),
         call(mock_credentials_file, "service", test_secrets),
     ]
-    mock_add_profile.assert_has_calls(expected_add_calls)
+    assert expected_add_calls == mock_add_profile.mock_calls
     assert 2 == mock_write_credentials.call_count
 
 
@@ -436,7 +430,7 @@ def test_fetch_role_credentials_via_sso(mocker):
         call(accessToken="token-a", accountId="123", roleName="role-name"),
         call(accessToken="token-b", accountId="123", roleName="role-name"),
     ]
-    mock_sso.get_role_credentials.assert_has_calls(expected_calls)
+    assert expected_calls == mock_sso.get_role_credentials.mock_calls
     assert result.was_success
     assert {"AccessKeyId": "key-id", "SecretAccessKey": "secret", "SessionToken": "token"} == result.payload
 
@@ -481,10 +475,11 @@ def test_set_sso_session(mocker):
     result = sso.set_sso_session("sso-session", "https://url", "us-east-1", "scope")
     assert result.was_success
 
-    mock_config_parser.has_section.assert_has_calls([call("sso-session sso-session")])
-    mock_config_parser.add_section.assert_has_calls([call("sso-session sso-session")])
-    mock_config_parser.set.assert_has_calls([call("sso-session sso-session", "sso_start_url", "https://url"),
-                                             call("sso-session sso-session", "sso_region", "us-east-1"),
-                                             call("sso-session sso-session", "sso_registration_scopes", "scope"),
-                                             ])
-    mock_write_config_file.assert_has_calls([call(mock_config_parser)])
+    mock_config_parser.has_section.assert_called_once_with("sso-session sso-session")
+    mock_config_parser.add_section.assert_called_once_with("sso-session sso-session")
+
+    parser_calls = [call("sso-session sso-session", "sso_start_url", "https://url"),
+                    call("sso-session sso-session", "sso_region", "us-east-1"),
+                    call("sso-session sso-session", "sso_registration_scopes", "scope")]
+    assert parser_calls == mock_config_parser.set.mock_calls
+    mock_write_config_file.assert_called_once_with(mock_config_parser)
