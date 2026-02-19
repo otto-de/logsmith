@@ -17,7 +17,7 @@ from app.core.result import Result
 from app.gui.access_key_dialog import SetKeyDialog
 from app.gui.assets import ICON_DISCONNECTED, Assets, ICON_STYLE_OUTLINE, ICON_STYLE_ERROR, ICON_STYLE_FULL, ICON_STYLE_GCP, \
     ICON_STYLE_BUSY, COLOR_RED
-from app.gui.background_task import BackgroundTask
+from app.gui.background_task import BackgroundTask, Task
 from app.gui.config_dialog import ConfigDialog
 from app.gui.key_rotation_dialog import RotateKeyDialog
 from app.gui.log_dialog import LogDialog
@@ -61,28 +61,31 @@ class Gui(QMainWindow):
             self.login_key(profile_group=profile_group)
         if profile_group.auth_mode == "sso":
             self.login_sso(profile_group=profile_group)
-    
+
     ########################
     # SSO LOGIN
     def login_sso(self, profile_group: ProfileGroup):
-        self._to_busy_state()    
+        self._to_busy_state()
         self.task = BackgroundTask(
-            func=self.core.login_with_sso,
-            func_kwargs={'profile_group': profile_group},
+            task=[
+                Task(self.core.login_with_sso, profile_group=profile_group),
+                Task(self.core.verify),
+            ],
             on_success=self._on_login_sso_success,
             on_failure=self._on_login_sso_failure,
             on_error=self._on_error
         )
         self.task.start()
-            
+
     def _on_login_sso_success(self):
         logger.info('sso login success')
+
         if self.core.active_profile_group.service_profile:
             self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
-        
+
         repeater_interval = self.core.active_profile_group.get_sso_interval()
         if not util.is_positive_int(repeater_interval):
             logger.info(f'sso interval was {repeater_interval} and not a positive integer or 0')
@@ -97,7 +100,10 @@ class Gui(QMainWindow):
             else:
                 logger.info('sso repeater is disabled')
             self._to_login_state()
-        self.verify()
+
+        self._to_login_state()
+        self._check_connection_status()
+        # self.start_login_repeater()
 
     def _on_login_sso_failure(self):
         logger.info('sso login failure')
@@ -106,10 +112,12 @@ class Gui(QMainWindow):
     ########################
     # ACCESS KEY LOGIN
     def login_key(self, profile_group: ProfileGroup, mfa_token: Optional[str] = None):
-        self._to_busy_state()    
+        self._to_busy_state()
         self.task = BackgroundTask(
-            func=self.core.login_with_key,
-            func_kwargs={'profile_group': profile_group, 'mfa_token': mfa_token},
+            task=[
+                Task(self.core.login_with_key, profile_group=profile_group, mfa_token=mfa_token),
+                Task(self.core.verify),
+            ],
             on_success=self._on_login_key_success,
             on_failure=partial(self._on_login_key_failure, profile_group=profile_group),
             on_error=self._on_error
@@ -129,7 +137,8 @@ class Gui(QMainWindow):
         self.login_repeater.start(task=prepare_login,
                                   delay_seconds=300)
         self._to_login_state()
-        self.verify()
+        self._check_connection_status()
+        # self.start_login_repeater()
 
     def _on_login_key_failure(self, profile_group: ProfileGroup):
         logger.info('key login failure')
@@ -149,8 +158,7 @@ class Gui(QMainWindow):
     def login_gcp(self, profile_group: ProfileGroup):
         self._to_busy_state()
         self.task = BackgroundTask(
-            func=self.core.login_gcp,
-            func_kwargs={'profile_group': profile_group},
+            task=Task(self.core.login_with_sso, profile_group=profile_group),
             on_success=self._on_login_gcp_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -187,11 +195,10 @@ class Gui(QMainWindow):
                                 delay_seconds=300)
 
     ########################
-    # SET DEFAULT PROFILE   
+    # SET DEFAULT PROFILE
     def set_default(self, profile_name: str):
         self.task = BackgroundTask(
-            func=self.core.set_default_profile,
-            func_kwargs={'profile_name': profile_name},
+            task=Task(self.core.set_default_profile, profile_name=profile_name),
             on_success=partial(self._on_set_default_success, default_profile_name=profile_name),
             on_failure=self._on_error,
             on_error=self._on_error
@@ -208,8 +215,7 @@ class Gui(QMainWindow):
     def logout(self):
         self._to_busy_state()
         self.task = BackgroundTask(
-            func=self.core.logout,
-            func_kwargs={},
+            task=Task(self.core.logout),
             on_success=self._on_logout_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -226,8 +232,7 @@ class Gui(QMainWindow):
     # REGION
     def set_region(self, region: str) -> None:
         self.task = BackgroundTask(
-            func=self.core.set_region,
-            func_kwargs={'region': region},
+            task=Task(self.core.set_region, region=region),
             on_success=self._on_set_region_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -247,8 +252,7 @@ class Gui(QMainWindow):
     def edit_config(self, config: Config):
         self._to_busy_state()
         self.task = BackgroundTask(
-            func=self.core.edit_config,
-            func_kwargs={'new_config': config},
+            task=Task(self.core.edit_config, new_config=config),
             on_success=self._on_edit_config_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -266,8 +270,7 @@ class Gui(QMainWindow):
         self._to_busy_state()
         logger.info('initiate set key')
         self.task = BackgroundTask(
-            func=self.core.set_access_key,
-            func_kwargs={'key_name': key_name, 'key_id': key_id, 'key_secret': key_secret},
+            task=Task(self.core.set_access_key, key_name=key_name, key_id=key_id, key_secret=key_secret),
             on_success=self._on_set_access_key_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -283,8 +286,7 @@ class Gui(QMainWindow):
         self._to_busy_state()
         logger.info('initiate key rotation')
         self.task = BackgroundTask(
-            func=self.core.rotate_access_key,
-            func_kwargs={'access_key': key_name, 'mfa_token': mfa_token},
+            task=Task(self.core.rotate_access_key, access_key=key_name, mfa_token=mfa_token),
             on_success=self._on_rotate_access_key_success,
             on_failure=partial(self._on_rotate_access_key_failure, key_name=key_name),
             on_error=self._on_error
@@ -313,8 +315,8 @@ class Gui(QMainWindow):
         self._to_busy_state()
         logger.info('initiate set sso session')
         self.task = BackgroundTask(
-            func=self.core.set_sso_session,
-            func_kwargs={'sso_name': sso_name, 'sso_url': sso_url, 'sso_region': sso_region, 'sso_scopes': sso_scopes},
+            task=Task(self.core.set_sso_session, sso_name=sso_name, sso_url=sso_url,
+                      sso_region=sso_region, sso_scopes=sso_scopes),
             on_success=self._on_set_sso_session_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -329,8 +331,7 @@ class Gui(QMainWindow):
     def set_service_role(self, profile: str, role: str):
         self._to_busy_state()
         self.task = BackgroundTask(
-            func=self.core.set_service_role,
-            func_kwargs={'profile_name': profile, 'role_name': role},
+            task=Task(self.core.set_service_role, profile_name=profile, role_name=role),
             on_success=self._on_set_service_role_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -343,8 +344,7 @@ class Gui(QMainWindow):
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
         self.task = BackgroundTask(
-            func=self.core.set_available_service_roles,
-            func_kwargs={'profile': profile, 'role_list': role_list},
+            task=Task(self.core.set_available_service_roles, profile=profile, role_list=role_list),
             on_success=self._on_set_assumable_roles_success,
             on_failure=self._on_error,
             on_error=self._on_error
@@ -410,7 +410,14 @@ class Gui(QMainWindow):
     def _to_error_state(self):
         self._to_reset_state()
         self.tray_icon.setIcon(self.assets.get_icon(style=ICON_STYLE_ERROR, color_code=COLOR_RED))
-        
+
+    def _check_connection_status(self):
+        if self.core.active_profile_group:
+            all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group,
+                                                                  self.core.default_profile_override)
+            if not all_connected:
+                self._to_disconnect_state(color=self.core.active_profile_group.color)
+
     def _to_disconnect_state(self, color):
         self.tray_icon.setIcon(self.assets.get_icon(style=ICON_DISCONNECTED, color_code=color))
 

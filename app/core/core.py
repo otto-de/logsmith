@@ -21,7 +21,7 @@ class Core:
         self.toggles.initialize()
 
         self.active_profile_group: ProfileGroup = None
-        self.default_profile_override: str | None = None 
+        self.default_profile_override: str | None = None
         self.empty_profile_group: ProfileGroup = ProfileGroup("logout", {}, "", "", "")
         self.region_override: str = None
 
@@ -103,7 +103,7 @@ class Core:
                 )
                 if not service_profile_result.was_success:
                     return service_profile_result
-                
+
         elif profile_group.write_mode == "key":
             logger.info("write mode: key")
             sso_credentiol_result = sso.write_sso_as_key_credentials(profile_group)
@@ -180,21 +180,21 @@ class Core:
         return result
 
     ########################
-    # VERIFY            
-    def verify(self, profile_group: ProfileGroup) -> Result:
+    # VERIFY
+    def verify(self) -> Result:
         logger.info("start vertfy profiles")
         result = Result()
-        
-        for profile in profile_group.get_profile_list(include_service_profile=True):
+
+        for profile in self.active_profile_group.get_profile_list(include_service_profile=True):
             logger.info(f"verify {profile.profile}")
             profile.verified = iam.get_caller_identity(profile.profile)
-            logger.info(f"  status {profile.verified}")
-        
+            logger.info(f"  status {profile.verified}")    
+
         result.set_success()
         return result
 
     ########################
-    # SET DEFAULT PROFILE   
+    # SET DEFAULT PROFILE
     def set_default_profile(self, profile_name):
         result = Result()
         logger.info(f"set default profile to {profile_name}")
