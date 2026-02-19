@@ -158,20 +158,19 @@ class SystemTrayIcon(QSystemTrayIcon):
                                         #    self.copy_name_menu, 
                                            self.copy_id_menu]
 
-    def refresh_profile_status(self, active_profile_group: ProfileGroup, default_profile_name: str|None = None) -> bool:
+    def refresh_profile_status(self, active_profile_group: ProfileGroup, default_profile_name: str|None = None):
         for action in self.profile_status_list:
             self.menu.removeAction(action)
             action.deleteLater()
         self.profile_status_list.clear()
 
         if active_profile_group is None or active_profile_group.type != "aws":
-            return True
+            return
 
         configured_default_profile = active_profile_group.get_default_profile()
         if not default_profile_name and configured_default_profile is not None: 
             default_profile_name = configured_default_profile.profile
         
-        all_connected = True
         for profile in active_profile_group.get_profile_list(include_service_profile=True):
             display_profile_name = profile.profile
             if display_profile_name == default_profile_name:
@@ -183,11 +182,9 @@ class SystemTrayIcon(QSystemTrayIcon):
             if profile.verified:
                 action.setIcon(self.assets.get_icon(style=ICON_VALID))
             else:
-                all_connected = False
                 action.setIcon(self.assets.get_icon(style=ICON_INVALID))
             self.menu.insertAction(self.profile_status_anchor, action)
             self.profile_status_list.append(action)
-        return all_connected
 
     def update_copy_menus(self, active_profile_group: ProfileGroup):
         self.copy_name_menu.setDisabled(False)

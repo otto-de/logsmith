@@ -14,7 +14,6 @@ logger = logging.getLogger("logsmith")
 def write_sso_credentials(profile_group: ProfileGroup) -> Result:
     result = Result()
     config_file = credentials.load_config_file()
-    logger.info("initiate sso login")
     sso_session = profile_group.get_sso_session()
 
     try:
@@ -179,7 +178,6 @@ def get_sso_sessions_list() -> list:
     return session_name_list
 
 def sso_login(profile_group: ProfileGroup) -> Result:
-    logger.info("initiate sso login")
     sso_session_name = profile_group.get_sso_session()
 
     # boto3 does not support login at the moment
@@ -192,7 +190,6 @@ def sso_login(profile_group: ProfileGroup) -> Result:
 
 
 def sso_logout() -> Result:
-    logger.info("initiate sso logout")
     return shell.run(
         command=f"unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso logout",
         timeout=600,

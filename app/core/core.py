@@ -92,30 +92,14 @@ class Core:
             return sso_login_result
 
         if profile_group.write_mode == "sso":
-            logger.info("write mode: sso")
-            sso_credentiol_result = sso.write_sso_credentials(profile_group)
-            if not sso_credentiol_result.was_success:
-                return sso_credentiol_result
-
-            if profile_group.service_profile is not None:
-                service_profile_result = sso.write_sso_service_profile(
-                    profile_group
-                )
-                if not service_profile_result.was_success:
-                    return service_profile_result
+            write_result = self.login_with_sso__write_sso(profile_group)
+            if not write_result.was_success:
+                return write_result
 
         elif profile_group.write_mode == "key":
-            logger.info("write mode: key")
-            sso_credentiol_result = sso.write_sso_as_key_credentials(profile_group)
-            if not sso_credentiol_result.was_success:
-                return sso_credentiol_result
-
-            if profile_group.service_profile is not None:
-                service_profile_result = sso.write_sso_service_profile_as_key_credentials(
-                    profile_group
-                )
-                if not service_profile_result.was_success:
-                    return service_profile_result
+            write_result = self.login_with_sso_write_key(profile_group)
+            if not write_result.was_success:
+                return write_result
         else:
             result.error("unkown write mode")
             return result
@@ -133,7 +117,42 @@ class Core:
                 return run_script_result
 
         result.set_success()
-        return result
+        return result       
+    
+    def login_with_sso__write_sso(self, profile_group: ProfileGroup) -> Result:
+        result = Result()
+        logger.info("write mode: sso")
+        sso_credentiol_result = sso.write_sso_credentials(profile_group)
+        if not sso_credentiol_result.was_success:
+            return sso_credentiol_result
+
+        if profile_group.service_profile is not None:
+            service_profile_result = sso.write_sso_service_profile(
+                profile_group
+            )
+            if not service_profile_result.was_success:
+                return service_profile_result
+
+        result.set_success()
+        return result    
+
+    def login_with_sso_write_key(self, profile_group: ProfileGroup) -> Result:
+        result = Result()
+        logger.info("write mode: key")
+        sso_credentiol_result = sso.write_sso_as_key_credentials(profile_group)
+        if not sso_credentiol_result.was_success:
+            return sso_credentiol_result
+
+        if profile_group.service_profile is not None:
+            service_profile_result = sso.write_sso_service_profile_as_key_credentials(
+                profile_group
+            )
+            if not service_profile_result.was_success:
+                return service_profile_result
+        
+        result.set_success()
+        return result  
+           
 
     ########################
     # GCP
@@ -182,16 +201,23 @@ class Core:
     ########################
     # VERIFY
     def verify(self) -> Result:
-        logger.info("start vertfy profiles")
-        result = Result()
+        try:
+            logger.info("start verify profiles")
+            result = Result()
 
-        for profile in self.active_profile_group.get_profile_list(include_service_profile=True):
-            logger.info(f"verify {profile.profile}")
-            profile.verified = iam.get_caller_identity(profile.profile)
-            logger.info(f"  status {profile.verified}")    
+            for profile in self.active_profile_group.get_profile_list(include_service_profile=True):
+                logger.info(f"verify {profile.profile}")
+                profile.verified = iam.get_caller_identity(profile.profile)
+                # profile.verified = True
+                logger.info(f"  status {profile.verified}")    
 
-        result.set_success()
-        return result
+            result.set_success()
+            return result
+        except Exception as err:
+            logger.error(err)
+            result = Result()
+            result.error(str(err))
+            return result
 
     ########################
     # SET DEFAULT PROFILE

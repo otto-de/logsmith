@@ -2,6 +2,8 @@ import logging
 from datetime import datetime
 from functools import partial
 from typing import List, Optional
+from datetime import timezone
+from datetime import datetime
 
 from PyQt6.QtCore import QCoreApplication
 from PyQt6.QtWidgets import QMainWindow
@@ -37,9 +39,9 @@ class Gui(QMainWindow):
         self.app = app
         self.core = Core()
         self.assets: Assets = Assets()
-        self.last_login: str = 'never'
+        self.last_login: None | datetime = None
+        self.last_login_text: str = 'never'
         self.login_repeater = Repeater()
-        self.verify_repeater = Repeater()
         self.tray_icon = SystemTrayIcon(parent=self,
                                         assets=self.assets,
                                         toggles=self.core.toggles,
@@ -53,65 +55,80 @@ class Gui(QMainWindow):
 
         # This is needed to keep the task alive, otherwise it crashes the application
         self.task: Optional[BackgroundTask] = None
+        self._active_tasks: set[BackgroundTask] = set()
 
         self.tray_icon.show()
 
     def login(self, profile_group: ProfileGroup):
-        if profile_group.auth_mode == "key":
+        if profile_group.type == "aws" and profile_group.auth_mode == "key":
             self.login_key(profile_group=profile_group)
-        if profile_group.auth_mode == "sso":
+        elif profile_group.type == "aws" and profile_group.auth_mode == "sso":
             self.login_sso(profile_group=profile_group)
+        elif profile_group.type == "gcp":
+            self.login_gcp(profile_group=profile_group)
+
+    def _start_task(self, task: BackgroundTask):
+        self._active_tasks.add(task)
+        task.finished.connect(partial(self._on_task_finished, task))
+        task.start()
+
+    def _on_task_finished(self, task: BackgroundTask):
+        self._active_tasks.discard(task)
+        task.deleteLater()
 
     ########################
     # SSO LOGIN
     def login_sso(self, profile_group: ProfileGroup):
+        logger.info('-- sso login --')
+        self.login_repeater.stop()
         self._to_busy_state()
+        tasks = []
+
+        sso_interval = profile_group.get_sso_interval()
+        if not util.is_positive_int(sso_interval):
+            logger.info(f'sso interval was {sso_interval} and not a positive integer or 0')
+            self._to_error_state()
+            return
+
+        elapsed_seconds = self.elapsed_seconds_since_login()
+        if self.should_login(elapsed_seconds, sso_interval):
+            logger.info("trigger full login")
+            tasks.append(Task(self.core.login_with_sso, profile_group=profile_group))
+        else:
+            logger.info("trigger refresh login")
+            tasks.append(Task(self.core.login_with_sso_write_key, profile_group=profile_group))
+        tasks.append(Task(self.core.verify))
+
         self.task = BackgroundTask(
-            task=[
-                Task(self.core.login_with_sso, profile_group=profile_group),
-                Task(self.core.verify),
-            ],
+            task=tasks,
             on_success=self._on_login_sso_success,
             on_failure=self._on_login_sso_failure,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_login_sso_success(self):
-        logger.info('sso login success')
+    def _on_login_sso_success(self, _payload=None):
+        self.save_login_datetime()
+        logger.info('-- sso login success --')
 
         if self.core.active_profile_group.service_profile:
             self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
-
-        repeater_interval = self.core.active_profile_group.get_sso_interval()
-        if not util.is_positive_int(repeater_interval):
-            logger.info(f'sso interval was {repeater_interval} and not a positive integer or 0')
-            self._to_error_state()
-        else:
-            repeater_interval_int = int(repeater_interval)
-            if repeater_interval_int != 0:
-                logger.info('start sso repeater')
-                prepare_login = partial(self.login_sso, profile_group=self.core.active_profile_group)
-                self.login_repeater.start(task=prepare_login,
-                                          delay_seconds=int(repeater_interval) * 60 * 60)
-            else:
-                logger.info('sso repeater is disabled')
-            self._to_login_state()
+        self.tray_icon.refresh_profile_status(self.core.active_profile_group)
 
         self._to_login_state()
-        self._check_connection_status()
-        # self.start_login_repeater()
+        self.start_login_repeater(300)
 
-    def _on_login_sso_failure(self):
-        logger.info('sso login failure')
+    def _on_login_sso_failure(self, _payload=None):
+        logger.info('-- sso login failure --')
         self._to_error_state()
 
     ########################
     # ACCESS KEY LOGIN
     def login_key(self, profile_group: ProfileGroup, mfa_token: Optional[str] = None):
+        self.login_repeater.stop()
         self._to_busy_state()
         self.task = BackgroundTask(
             task=[
@@ -122,26 +139,24 @@ class Gui(QMainWindow):
             on_failure=partial(self._on_login_key_failure, profile_group=profile_group),
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_login_key_success(self):
-        logger.info('key login success')
+    def _on_login_key_success(self, _payload=None):
+        self.save_login_datetime()
+        logger.info('-- key login success --')
+
         if self.core.active_profile_group.service_profile:
             self.tray_icon.set_service_role(profile_name=self.core.active_profile_group.service_profile.source,
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
+        self.tray_icon.refresh_profile_status(self.core.active_profile_group)
 
-        logger.info('start key repeater')
-        prepare_login = partial(self.login_key, profile_group=self.core.active_profile_group)
-        self.login_repeater.start(task=prepare_login,
-                                  delay_seconds=300)
         self._to_login_state()
-        self._check_connection_status()
-        # self.start_login_repeater()
+        self.start_login_repeater(300)
 
-    def _on_login_key_failure(self, profile_group: ProfileGroup):
-        logger.info('key login failure')
+    def _on_login_key_failure(self, profile_group: ProfileGroup, _payload=None):
+        logger.info('-- key login failure --')
 
         mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
         if not mfa_token:
@@ -156,6 +171,7 @@ class Gui(QMainWindow):
     ########################
     # GCP
     def login_gcp(self, profile_group: ProfileGroup):
+        self.login_repeater.stop()
         self._to_busy_state()
         self.task = BackgroundTask(
             task=Task(self.core.login_with_sso, profile_group=profile_group),
@@ -163,36 +179,44 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_login_gcp_success(self):
-        logger.info('gcp login success')
-        logger.info('start repeater to remind login in 8 hours')
-        prepare_login = partial(self.login_gcp, profile_group=self.core.active_profile_group)
-        self.login_repeater.start(task=prepare_login,
-                                  delay_seconds=8 * 60 * 60)
+    def _on_login_gcp_success(self, _payload=None):
+        self.save_login_datetime()
+        logger.info('-- gcp login success --')
+
         self._to_login_state()
+        self.start_login_repeater(8 * 60 * 60)
 
     ########################
-    # VERIFY
-    def verify(self):
-        self.verify_task = BackgroundTask(
-            func=self.core.verify,
-            func_kwargs={'profile_group': self.core.active_profile_group},
-            on_success=self._on_verify_success,
-            on_failure=self._on_error,
-            on_error=self._on_error
-        )
-        self.verify_task.start()
+    # REPEATER
+    def start_login_repeater(self, delay_seconds):
+        prepared_login = partial(self.login, profile_group=self.core.active_profile_group)
+        self.login_repeater.start(task=prepared_login,
+                                  delay_seconds=delay_seconds)
 
-    def _on_verify_success(self):
-        logger.info('verify profiles success')
-        if self.core.active_profile_group:
-            all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group, self.core.default_profile_override)
-            if not all_connected:
-                self._to_disconnect_state(color=self.core.active_profile_group.color)
-        self.login_repeater.start(task=self.verify,
-                                delay_seconds=300)
+    def save_login_datetime(self):
+        self.last_login = datetime.now(timezone.utc)
+
+    def elapsed_seconds_since_login(self) -> int | None:
+        if self.last_login is None:
+            return None
+        return int((datetime.now(timezone.utc) - self.last_login).total_seconds())
+
+    def should_login(self, elapsed: int | None, threshold: int | str | None) -> bool:
+        logger.info(f'elapsed {elapsed}')
+        logger.info(f'threshold {threshold}')
+        if elapsed is None:
+            return True
+
+        if threshold is None or threshold == 0 or threshold == "0":
+            return False
+
+        elapsed_seconds = int(elapsed)
+        threshold_seconds = int(threshold)
+        if elapsed_seconds >= threshold_seconds:
+            return True
+        return False
 
     ########################
     # SET DEFAULT PROFILE
@@ -203,10 +227,10 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_set_default_success(self, default_profile_name):
-        logger.info('set default profile success')
+    def _on_set_default_success(self, default_profile_name, _payload=None):
+        logger.info('-- set default profile success --')
         if self.core.active_profile_group:
             self.tray_icon.refresh_profile_status(self.core.active_profile_group, default_profile_name)
 
@@ -220,9 +244,9 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_logout_success(self):
+    def _on_logout_success(self, _payload=None):
         logger.info('logout success')
         self._to_reset_state()
         self.tray_icon.update_region_text('not logged in')
@@ -237,10 +261,10 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_set_region_success(self) -> None:
-        logger.info('set region success')
+    def _on_set_region_success(self, _payload=None) -> None:
+        logger.info('-- set region success --')
         region = self.core.get_region()
         if not region:
             region = 'not logged in'
@@ -257,10 +281,10 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_edit_config_success(self):
-        logger.info('edit config success')
+    def _on_edit_config_success(self, _payload=None):
+        logger.info('-- edit config success --')
         self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
 
@@ -268,38 +292,38 @@ class Gui(QMainWindow):
     # MANAGE ACCESS KEY
     def set_access_key(self, key_name, key_id, key_secret):
         self._to_busy_state()
-        logger.info('initiate set key')
+        logger.info('-- initiate set key --')
         self.task = BackgroundTask(
             task=Task(self.core.set_access_key, key_name=key_name, key_id=key_id, key_secret=key_secret),
             on_success=self._on_set_access_key_success,
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_set_access_key_success(self):
-        logger.info('access key set success')
+    def _on_set_access_key_success(self, _payload=None):
+        logger.info('-- access key set success --')
         self._signal('Success', 'access key set')
         self._to_login_state()
 
     def rotate_access_key(self, key_name: str, mfa_token: Optional[str] = None):
         self._to_busy_state()
-        logger.info('initiate key rotation')
+        logger.info('-- initiate key rotation --')
         self.task = BackgroundTask(
             task=Task(self.core.rotate_access_key, access_key=key_name, mfa_token=mfa_token),
             on_success=self._on_rotate_access_key_success,
             on_failure=partial(self._on_rotate_access_key_failure, key_name=key_name),
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_rotate_access_key_success(self):
-        logger.info('key was rotation success')
+    def _on_rotate_access_key_success(self, _payload=None):
+        logger.info('-- key was rotation success --')
         self._signal('Success', 'key was rotated')
         self._to_login_state()
 
-    def _on_rotate_access_key_failure(self, key_name: str):
-        logger.info('rotation failure')
+    def _on_rotate_access_key_failure(self, key_name: str, _payload=None):
+        logger.info('-- rotation failure --')
 
         mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
         if not mfa_token:
@@ -313,7 +337,7 @@ class Gui(QMainWindow):
 
     def set_sso_session(self, sso_name, sso_url, sso_region, sso_scopes):
         self._to_busy_state()
-        logger.info('initiate set sso session')
+        logger.info('-- initiate set sso session --')
         self.task = BackgroundTask(
             task=Task(self.core.set_sso_session, sso_name=sso_name, sso_url=sso_url,
                       sso_region=sso_region, sso_scopes=sso_scopes),
@@ -321,10 +345,10 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_set_sso_session_success(self):
-        logger.info('set sso session success')
+    def _on_set_sso_session_success(self, _payload=None):
+        logger.info('-- set sso session success --')
         self._signal('Success', 'sso session set')
         self._to_login_state()
 
@@ -336,10 +360,10 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_set_service_role_success(self):
-        logger.info('set service role success')
+    def _on_set_service_role_success(self, _payload=None):
+        logger.info('-- set service role success --')
         self.login(profile_group=self.core.active_profile_group)
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
@@ -349,10 +373,10 @@ class Gui(QMainWindow):
             on_failure=self._on_error,
             on_error=self._on_error
         )
-        self.task.start()
+        self._start_task(self.task)
 
-    def _on_set_assumable_roles_success(self):
-        logger.info('ser assumable roles success')
+    def _on_set_assumable_roles_success(self, _payload=None):
+        logger.info('-- set assumable roles success --')
         self._signal('Success', 'available role list was set')
 
     def _on_error(self, error_message):
@@ -385,7 +409,11 @@ class Gui(QMainWindow):
     def _to_login_state(self):
         if self.core.active_profile_group:
             style = ICON_STYLE_FULL if self.core.active_profile_group.type == "aws" else ICON_STYLE_GCP
-            self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=self.core.get_active_profile_color()))
+            color = self.core.get_active_profile_color()
+            if all(profile.verified for profile in self.core.active_profile_group.get_profile_list(include_service_profile=True)):
+                self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=color))
+            else:
+                self.tray_icon.setIcon(self.assets.get_icon(style=ICON_DISCONNECTED, color_code=color))
             self.tray_icon.disable_actions(False)
             self.tray_icon.update_last_login(self.get_timestamp())
         else:
@@ -399,7 +427,6 @@ class Gui(QMainWindow):
 
     def _to_reset_state(self):
         self.login_repeater.stop()
-        self.verify_repeater.stop()
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_OUTLINE))
         self.tray_icon.set_service_role(None, None)
         self.tray_icon.refresh_profile_status(None)
@@ -410,16 +437,6 @@ class Gui(QMainWindow):
     def _to_error_state(self):
         self._to_reset_state()
         self.tray_icon.setIcon(self.assets.get_icon(style=ICON_STYLE_ERROR, color_code=COLOR_RED))
-
-    def _check_connection_status(self):
-        if self.core.active_profile_group:
-            all_connected = self.tray_icon.refresh_profile_status(self.core.active_profile_group,
-                                                                  self.core.default_profile_override)
-            if not all_connected:
-                self._to_disconnect_state(color=self.core.active_profile_group.color)
-
-    def _to_disconnect_state(self, color):
-        self.tray_icon.setIcon(self.assets.get_icon(style=ICON_DISCONNECTED, color_code=color))
 
     def _check_and_signal_error(self, result: Result):
         if result.was_error:

@@ -93,7 +93,7 @@ class ProfileGroup:
         return self.default_sso_session    
 
     def get_sso_interval(self) -> str:
-        if self.sso_interval:
+        if self.sso_interval is not None:
             return self.sso_interval
         return self.default_sso_interval
 

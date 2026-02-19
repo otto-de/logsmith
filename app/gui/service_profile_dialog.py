@@ -8,7 +8,7 @@ from app.aws import iam
 from app.core.config import Config
 from app.core.core import Core
 from app.gui import styles
-from app.gui.background_task import BackgroundTask
+from app.gui.background_task import BackgroundTask, Task
 
 if TYPE_CHECKING:
     from gui.gui import Gui
@@ -136,11 +136,10 @@ class ServiceProfileDialog(QDialog):
             self.available_role_selection.clear()
             self.fetch_button.setText('fetching roles... Please wait.')
             self.fetch_roles_task = BackgroundTask(
-                func=iam.list_assumable_roles,
+                task=Task(iam.list_assumable_roles, source_profile=self.selected_source_profile),
                 on_success=self.on_fetch_roles_success,
                 on_failure=self.on_fetch_roles_error,
-                on_error=self.on_fetch_roles_error,
-                func_kwargs={'source_profile': self.selected_source_profile})
+                on_error=self.on_fetch_roles_error)
             self.fetch_roles_task.start()
             self.set_error_text('')
 

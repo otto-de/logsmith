@@ -38,13 +38,13 @@ class BackgroundTask(QThread):
         self.error_channel.connect(on_error)
 
     def run(self):
+        last_payload = None
         try:
-            last_payload = None
 
-            for task in self.task_list:
+            for index, task in enumerate(self.task_list):
                 func: Callable = task.func
                 kwargs = dict(task.kwargs or {})
-                if 'payload' in kwargs:
+                if index > 0 and 'payload' in kwargs:
                     kwargs['payload'] = last_payload
 
                 result = func(**kwargs)
@@ -52,11 +52,13 @@ class BackgroundTask(QThread):
 
                 if result.was_error:
                     self.error_channel.emit(result.error_message)
+                    return
                 elif not result.was_success:
                     self.failure_channel.emit(result.payload)
-                else:
-                    self.success_channel.emit(last_payload)
+                    return
 
         except Exception as e:
             logging.error('unexpected error while executing background task', exc_info=True)
             self.error_channel.emit(str(e))
+        
+        self.success_channel.emit(last_payload)

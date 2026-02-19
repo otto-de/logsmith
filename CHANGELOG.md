@@ -19,6 +19,11 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Changed
+- background tasks are now chained together and run in the same background thread, avoiding multiple threads and helping make the app state more consistent.
+- Repeater is simplified to one unified loop.
+- Credentials that were written with in sso-key mode get refreshed every 5 minutes, because chain-assume and service profiles can have a much shorter expiration time than sso sessions.
+
 ## Prerelease: 10.1.0-rc.1 - 2026-01-19
 
 ### Added
