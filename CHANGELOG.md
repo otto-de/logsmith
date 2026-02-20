@@ -19,6 +19,8 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## Prerelease: 11.0.0-rc.1 - 2026-02-20
+
 ### Changed
 - background tasks are now chained together and run in the same background thread, avoiding multiple threads and helping make the app state more consistent.
 - Repeater is simplified to one unified loop.
