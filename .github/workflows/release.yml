@@ -95,6 +95,7 @@ jobs:
       - name: Bundle
         run: |
           uv run --frozen -m PyInstaller ./logsmith.spec
+          ls -la ./dist
           zip -r "${{ env.PACKAGE_NAME }}" ./dist/logsmith
 
       - name: Release
@@ -150,7 +151,8 @@ jobs:
       - name: Bundle
         run: |
           uv run --frozen -m PyInstaller ./logsmith.spec
-          zip -r "${{ env.PACKAGE_NAME }}" ./dist/logsmith
+          ls -la ./dist
+          zip -r "${{ env.PACKAGE_NAME }}" ./dist/logsmith.app
 
       - name: Release
         run: |
