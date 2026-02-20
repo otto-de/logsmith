@@ -176,7 +176,7 @@ def test_fetch_key_credentials(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = key.fetch_key_credentials("test_user", profile_group)
+    result = key.fetch_key_credentials("test_user", profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -216,7 +216,66 @@ def test_fetch_key_credentials(mocker):
         ),
     ]
     assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
+    assert 2 == mock_write_credentials.call_count
 
+def test_fetch_key_credentials__with_default_overwrite(mocker):
+    mock_load_credentials = mocker.patch.object(credentials, "load_credentials_file")
+    mock_add_profile = mocker.patch.object(credentials, "add_profile_credentials")
+    mock_write_credentials = mocker.patch.object(credentials, "write_credentials_file")
+    mock_assume = mocker.patch.object(key.iam, "assume_role")
+
+    mock_config_parser = mocker.Mock()
+    mock_load_credentials.return_value = mock_config_parser
+    mock_assume.return_value = test_secrets
+
+    profile_group = ProfileGroup(
+        "test",
+        test_accounts.get_test_group(),
+        "default-access-key",
+        "default-sso-session",
+        "default-sso-interval",
+    )
+    result = key.fetch_key_credentials("test_user", profile_group, "developer")
+    assert result.was_success
+    assert not result.was_error
+
+    expected_mock_assume_calls = [
+        call("session-token-default-access-key", "test_user", "123456789012", "developer"),
+        call("session-token-default-access-key", "test_user", "012345678901", "readonly"),
+    ]
+    assert expected_mock_assume_calls == mock_assume.mock_calls
+
+    expected_mock_add_profile_calls = [
+        call(
+            mock_config_parser,
+            "developer",
+            {
+                "AccessKeyId": "test-key-id",
+                "SecretAccessKey": "test-access-key",
+                "SessionToken": "test-session-token",
+            },
+        ),
+        call(
+            mock_config_parser,
+            "default",
+            {
+                "AccessKeyId": "test-key-id",
+                "SecretAccessKey": "test-access-key",
+                "SessionToken": "test-session-token",
+            },
+        ),
+        call(
+            mock_config_parser,
+            "readonly",
+            {
+                "AccessKeyId": "test-key-id",
+                "SecretAccessKey": "test-access-key",
+                "SessionToken": "test-session-token",
+            },
+        ),
+        
+    ]
+    assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
     assert 2 == mock_write_credentials.call_count
 
 
@@ -237,7 +296,7 @@ def test_fetch_key_credentials_with_specific_access_key(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = key.fetch_key_credentials("test_user", profile_group)
+    result = key.fetch_key_credentials("test_user", profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -277,7 +336,6 @@ def test_fetch_key_credentials_with_specific_access_key(mocker):
         ),
     ]
     assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
-
     assert 2 == mock_write_credentials.call_count
 
 
@@ -298,7 +356,7 @@ def test_fetch_key_credentials__no_default(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = key.fetch_key_credentials("test-user", profile_group)
+    result = key.fetch_key_credentials("test-user", profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -332,6 +390,65 @@ def test_fetch_key_credentials__no_default(mocker):
 
     assert 2 == mock_write_credentials.call_count
 
+def test_fetch_key_credentials__no_default__with_default_overwrite(mocker):
+    mock_load_credentials = mocker.patch.object(credentials, "load_credentials_file")
+    mock_add_profile = mocker.patch.object(credentials, "add_profile_credentials")
+    mock_write_credentials = mocker.patch.object(credentials, "write_credentials_file")
+    mock_assume = mocker.patch.object(key.iam, "assume_role")
+
+    mock_config_parser = mocker.Mock()
+    mock_load_credentials.return_value = mock_config_parser
+    mock_assume.return_value = test_secrets
+
+    profile_group = ProfileGroup(
+        "test",
+        test_accounts.get_test_group_no_default(),
+        "default-access-key",
+        "default-sso-session",
+        "default-sso-interval",
+    )
+    result = key.fetch_key_credentials("test-user", profile_group, "developer")
+    assert result.was_success
+    assert not result.was_error
+
+    expected_mock_assume_calls = [
+        call("session-token-default-access-key", "test-user", "123456789012", "developer"),
+        call("session-token-default-access-key", "test-user", "012345678901", "readonly"),
+    ]
+    assert expected_mock_assume_calls == mock_assume.mock_calls
+
+    expected_mock_add_profile_calls = [
+        call(
+            mock_config_parser,
+            "developer",
+            {
+                "AccessKeyId": "test-key-id",
+                "SecretAccessKey": "test-access-key",
+                "SessionToken": "test-session-token",
+            },
+        ),
+        call(
+            mock_config_parser,
+            "default",
+            {
+                "AccessKeyId": "test-key-id",
+                "SecretAccessKey": "test-access-key",
+                "SessionToken": "test-session-token",
+            },
+        ),
+        call(
+            mock_config_parser,
+            "readonly",
+            {
+                "AccessKeyId": "test-key-id",
+                "SecretAccessKey": "test-access-key",
+                "SessionToken": "test-session-token",
+            },
+        ),
+    ]
+    assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
+    assert 2 == mock_write_credentials.call_count
+
 
 def test_fetch_key_credentials__chain_assume(mocker):
     mock_load_credentials = mocker.patch.object(credentials, "load_credentials_file")
@@ -350,7 +467,7 @@ def test_fetch_key_credentials__chain_assume(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = key.fetch_key_credentials("test-user", profile_group)
+    result = key.fetch_key_credentials("test-user", profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -381,7 +498,6 @@ def test_fetch_key_credentials__chain_assume(mocker):
         ),
     ]
     assert expected_mock_add_profile_calls == mock_add_profile.mock_calls
-
     assert 2 == mock_write_credentials.call_count
 
 
@@ -396,7 +512,7 @@ def test_fetch_key_service_profile(mocker):
     mock_assume.return_value = "secrets"
 
     profile_group = test_accounts.get_test_profile_group(include_service_role=True)
-    result = key.fetch_key_service_profile(profile_group)
+    result = key.fetch_key_service_profile(profile_group, None)
     assert result.was_success
 
     expected_assume_role_calls = [call("developer", "dummy", "123456789012", "dummy")]

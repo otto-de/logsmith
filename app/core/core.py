@@ -20,10 +20,10 @@ class Core:
         self.toggles: Toggles = Toggles()
         self.toggles.initialize()
 
-        self.active_profile_group: ProfileGroup = None
+        self.active_profile_group: ProfileGroup | None = None
         self.default_profile_override: str | None = None
         self.empty_profile_group: ProfileGroup = ProfileGroup("logout", {}, "", "", "")
-        self.region_override: str = None
+        self.region_override: str | None = None
 
     ########################
     # ACCESS KEY LOGIN
@@ -50,14 +50,12 @@ class Core:
             return session_result
 
         user_name = key.get_user_name(access_key=access_key)
-        role_result = key.fetch_key_credentials(user_name, profile_group)
+        role_result = key.fetch_key_credentials(user_name, profile_group, self.default_profile_override)
         if not role_result.was_success:
             return role_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = key.fetch_key_service_profile(
-                profile_group
-            )
+            service_profile_result = key.fetch_key_service_profile(profile_group, self.default_profile_override)
             if not service_profile_result.was_success:
                 return service_profile_result
 
@@ -117,42 +115,37 @@ class Core:
                 return run_script_result
 
         result.set_success()
-        return result       
-    
+        return result
+
     def login_with_sso__write_sso(self, profile_group: ProfileGroup) -> Result:
         result = Result()
         logger.info("write mode: sso")
-        sso_credentiol_result = sso.write_sso_credentials(profile_group)
+        sso_credentiol_result = sso.write_sso_credentials(profile_group, self.default_profile_override)
         if not sso_credentiol_result.was_success:
             return sso_credentiol_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = sso.write_sso_service_profile(
-                profile_group
-            )
+            service_profile_result = sso.write_sso_service_profile(profile_group, self.default_profile_override)
             if not service_profile_result.was_success:
                 return service_profile_result
 
         result.set_success()
-        return result    
+        return result
 
     def login_with_sso_write_key(self, profile_group: ProfileGroup) -> Result:
         result = Result()
         logger.info("write mode: key")
-        sso_credentiol_result = sso.write_sso_as_key_credentials(profile_group)
+        sso_credentiol_result = sso.write_sso_as_key_credentials(profile_group, self.default_profile_override)
         if not sso_credentiol_result.was_success:
             return sso_credentiol_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = sso.write_sso_service_profile_as_key_credentials(
-                profile_group
-            )
+            service_profile_result = sso.write_sso_service_profile_as_key_credentials(profile_group, self.default_profile_override )
             if not service_profile_result.was_success:
                 return service_profile_result
-        
+
         result.set_success()
-        return result  
-           
+        return result
 
     ########################
     # GCP
@@ -209,7 +202,7 @@ class Core:
                 logger.info(f"verify {profile.profile}")
                 profile.verified = iam.get_caller_identity(profile.profile)
                 # profile.verified = True
-                logger.info(f"  status {profile.verified}")    
+                logger.info(f"  status {profile.verified}")
 
             result.set_success()
             return result
@@ -334,14 +327,15 @@ class Core:
     def set_service_role(self, profile_name: str, role_name: str) -> Result:
         result = Result()
         logger.info("set service role")
-        self.config.save_selected_service_role(
-            group_name=self.active_profile_group.name,
-            profile_name=profile_name,
-            role_name=role_name,
-        )
-        self.active_profile_group.set_service_role_profile(
-            source_profile_name=profile_name, role_name=role_name
-        )
+        if self.active_profile_group:
+            self.config.save_selected_service_role(
+                group_name=self.active_profile_group.name,
+                profile_name=profile_name,
+                role_name=role_name,
+            )
+            self.active_profile_group.set_service_role_profile(
+                source_profile_name=profile_name, role_name=role_name
+            )
 
         result.set_success()
         return result

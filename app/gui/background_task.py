@@ -14,8 +14,8 @@ class Task:
 
 
 class BackgroundTask(QThread):
-    success_channel = pyqtSignal(object)
-    failure_channel = pyqtSignal(object)
+    success_channel = pyqtSignal()
+    failure_channel = pyqtSignal()
     error_channel = pyqtSignal(str)
 
     def __init__(
@@ -25,7 +25,6 @@ class BackgroundTask(QThread):
             on_failure,
             on_error):
         super().__init__()
-        self.setObjectName("Worker")
         if task is None:
             raise ValueError('BackgroundTask requires `task`')
 
@@ -38,27 +37,23 @@ class BackgroundTask(QThread):
         self.error_channel.connect(on_error)
 
     def run(self):
-        last_payload = None
         try:
 
-            for index, task in enumerate(self.task_list):
+            for task in self.task_list:
                 func: Callable = task.func
                 kwargs = dict(task.kwargs or {})
-                if index > 0 and 'payload' in kwargs:
-                    kwargs['payload'] = last_payload
-
+                
                 result = func(**kwargs)
-                last_payload = result.payload
 
                 if result.was_error:
                     self.error_channel.emit(result.error_message)
                     return
                 elif not result.was_success:
-                    self.failure_channel.emit(result.payload)
+                    self.failure_channel.emit()
                     return
 
         except Exception as e:
             logging.error('unexpected error while executing background task', exc_info=True)
             self.error_channel.emit(str(e))
         
-        self.success_channel.emit(last_payload)
+        self.success_channel.emit()

@@ -31,6 +31,7 @@ from app.gui.trayicon import SystemTrayIcon
 from app.yubico import mfa
 
 logger = logging.getLogger('logsmith')
+STANDARD_LOGIN_REPEATER_INTERVAL = 600
 
 
 class Gui(QMainWindow):
@@ -59,11 +60,13 @@ class Gui(QMainWindow):
 
         self.tray_icon.show()
 
-    def login(self, profile_group: ProfileGroup):
+    def login(self, profile_group: ProfileGroup, force: bool= False):
         if profile_group.type == "aws" and profile_group.auth_mode == "key":
             self.login_key(profile_group=profile_group)
-        elif profile_group.type == "aws" and profile_group.auth_mode == "sso":
-            self.login_sso(profile_group=profile_group)
+        elif profile_group.type == "aws" and profile_group.auth_mode == "sso" and profile_group.write_mode == "sso":
+            self.login_sso(profile_group=profile_group, force=force)
+        elif profile_group.type == "aws" and profile_group.auth_mode == "sso" and profile_group.write_mode == "key":
+            self.login_sso_as_key(profile_group=profile_group, force=force)
         elif profile_group.type == "gcp":
             self.login_gcp(profile_group=profile_group)
 
@@ -78,7 +81,7 @@ class Gui(QMainWindow):
 
     ########################
     # SSO LOGIN
-    def login_sso(self, profile_group: ProfileGroup):
+    def login_sso(self, profile_group: ProfileGroup, force: bool):
         logger.info('-- sso login --')
         self.login_repeater.stop()
         self._to_busy_state()
@@ -86,12 +89,39 @@ class Gui(QMainWindow):
 
         sso_interval = profile_group.get_sso_interval()
         if not util.is_positive_int(sso_interval):
-            logger.info(f'sso interval was {sso_interval} and not a positive integer or 0')
+            logger.info(f'sso interval was {sso_interval}, but must be a positive integer or 0 (disabled)')
             self._to_error_state()
             return
 
         elapsed_seconds = self.elapsed_seconds_since_login()
-        if self.should_login(elapsed_seconds, sso_interval):
+        if force or self.should_login(elapsed_seconds, sso_interval):
+            tasks.append(Task(self.core.login_with_sso, profile_group=profile_group))
+        tasks.append(Task(self.core.verify))
+
+        self.task = BackgroundTask(
+            task=tasks,
+            on_success=self._on_login_sso_success,
+            on_failure=self._on_login_sso_failure,
+            on_error=self._on_error
+        )
+        self._start_task(self.task)
+
+    ########################
+    # SSO-KEY LOGIN
+    def login_sso_as_key(self, profile_group: ProfileGroup, force: bool):
+        logger.info('-- sso-key login --')
+        self.login_repeater.stop()
+        self._to_busy_state()
+        tasks = []
+
+        sso_interval = profile_group.get_sso_interval()
+        if not util.is_positive_int(sso_interval):
+            logger.info(f'sso interval was {sso_interval}, but must be a positive integer or 0 (disabled)')
+            self._to_error_state()
+            return
+
+        elapsed_seconds = self.elapsed_seconds_since_login()
+        if force or self.should_login(elapsed_seconds, sso_interval):
             logger.info("trigger full login")
             tasks.append(Task(self.core.login_with_sso, profile_group=profile_group))
         else:
@@ -107,7 +137,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_login_sso_success(self, _payload=None):
+    def _on_login_sso_success(self):
         self.save_login_datetime()
         logger.info('-- sso login success --')
 
@@ -116,12 +146,12 @@ class Gui(QMainWindow):
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
-        self.tray_icon.refresh_profile_status(self.core.active_profile_group)
+        self.tray_icon.refresh_profile_status(self.core.active_profile_group, self.core.default_profile_override)
 
         self._to_login_state()
-        self.start_login_repeater(300)
+        self.start_login_repeater(STANDARD_LOGIN_REPEATER_INTERVAL)
 
-    def _on_login_sso_failure(self, _payload=None):
+    def _on_login_sso_failure(self):
         logger.info('-- sso login failure --')
         self._to_error_state()
 
@@ -141,7 +171,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_login_key_success(self, _payload=None):
+    def _on_login_key_success(self):
         self.save_login_datetime()
         logger.info('-- key login success --')
 
@@ -150,12 +180,12 @@ class Gui(QMainWindow):
                                             role_name=self.core.active_profile_group.service_profile.role)
         self.tray_icon.update_region_text(self.core.get_region())
         self.tray_icon.update_copy_menus(self.core.active_profile_group)
-        self.tray_icon.refresh_profile_status(self.core.active_profile_group)
+        self.tray_icon.refresh_profile_status(self.core.active_profile_group, self.core.default_profile_override)
 
         self._to_login_state()
-        self.start_login_repeater(300)
+        self.start_login_repeater(STANDARD_LOGIN_REPEATER_INTERVAL)
 
-    def _on_login_key_failure(self, profile_group: ProfileGroup, _payload=None):
+    def _on_login_key_failure(self, profile_group: ProfileGroup):
         logger.info('-- key login failure --')
 
         mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
@@ -181,7 +211,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_login_gcp_success(self, _payload=None):
+    def _on_login_gcp_success(self):
         self.save_login_datetime()
         logger.info('-- gcp login success --')
 
@@ -204,8 +234,7 @@ class Gui(QMainWindow):
         return int((datetime.now(timezone.utc) - self.last_login).total_seconds())
 
     def should_login(self, elapsed: int | None, threshold: int | str | None) -> bool:
-        logger.info(f'elapsed {elapsed}')
-        logger.info(f'threshold {threshold}')
+        logger.info(f'elapsed {elapsed}s / {threshold}s since login')
         if elapsed is None:
             return True
 
@@ -229,7 +258,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_set_default_success(self, default_profile_name, _payload=None):
+    def _on_set_default_success(self, default_profile_name):
         logger.info('-- set default profile success --')
         if self.core.active_profile_group:
             self.tray_icon.refresh_profile_status(self.core.active_profile_group, default_profile_name)
@@ -246,7 +275,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_logout_success(self, _payload=None):
+    def _on_logout_success(self):
         logger.info('logout success')
         self._to_reset_state()
         self.tray_icon.update_region_text('not logged in')
@@ -263,7 +292,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_set_region_success(self, _payload=None) -> None:
+    def _on_set_region_success(self) -> None:
         logger.info('-- set region success --')
         region = self.core.get_region()
         if not region:
@@ -283,7 +312,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_edit_config_success(self, _payload=None):
+    def _on_edit_config_success(self):
         logger.info('-- edit config success --')
         self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
@@ -301,7 +330,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_set_access_key_success(self, _payload=None):
+    def _on_set_access_key_success(self):
         logger.info('-- access key set success --')
         self._signal('Success', 'access key set')
         self._to_login_state()
@@ -317,12 +346,12 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_rotate_access_key_success(self, _payload=None):
+    def _on_rotate_access_key_success(self):
         logger.info('-- key was rotation success --')
         self._signal('Success', 'key was rotated')
         self._to_login_state()
 
-    def _on_rotate_access_key_failure(self, key_name: str, _payload=None):
+    def _on_rotate_access_key_failure(self, key_name: str):
         logger.info('-- rotation failure --')
 
         mfa_token = mfa.fetch_mfa_token_from_shell(self.core.config.mfa_shell_command)
@@ -347,7 +376,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_set_sso_session_success(self, _payload=None):
+    def _on_set_sso_session_success(self):
         logger.info('-- set sso session success --')
         self._signal('Success', 'sso session set')
         self._to_login_state()
@@ -362,9 +391,11 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_set_service_role_success(self, _payload=None):
+    def _on_set_service_role_success(self):
+        self._to_reset_state()
         logger.info('-- set service role success --')
-        self.login(profile_group=self.core.active_profile_group)
+        if self.core.active_profile_group:
+            self.login(profile_group=self.core.active_profile_group, force=True)
 
     def set_assumable_roles(self, profile: str, role_list: List[str]):
         self.task = BackgroundTask(
@@ -375,7 +406,7 @@ class Gui(QMainWindow):
         )
         self._start_task(self.task)
 
-    def _on_set_assumable_roles_success(self, _payload=None):
+    def _on_set_assumable_roles_success(self):
         logger.info('-- set assumable roles success --')
         self._signal('Success', 'available role list was set')
 
@@ -427,6 +458,7 @@ class Gui(QMainWindow):
 
     def _to_reset_state(self):
         self.login_repeater.stop()
+        self.last_login = None
         self.tray_icon.setIcon(self.assets.get_icon(ICON_STYLE_OUTLINE))
         self.tray_icon.set_service_role(None, None)
         self.tray_icon.refresh_profile_status(None)

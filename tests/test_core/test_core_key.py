@@ -34,6 +34,7 @@ def ctx(mocker) -> Ctx:
     mocker.patch.object(files, "load_toggles", return_value=get_test_toggles())
 
     core = Core()
+    core.default_profile_override = "default_overwrite"
     return Ctx(
         core=core,
         key_profile_group=core.config.get_group("development"),
@@ -132,7 +133,7 @@ def test_login_key__fetch_key_credentials_failure(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls
     mock_set_region.assert_not_called()
@@ -165,7 +166,7 @@ def test_login_key__set_region_failure(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls
     mock_handle_support_files.assert_not_called()
@@ -201,7 +202,7 @@ def test_login_key__run_script_failure(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls
 
@@ -237,7 +238,7 @@ def test_login_key__successful_login_with_run_script_disabled(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls
 
@@ -271,7 +272,7 @@ def test_login_key__successful_login(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls
 
@@ -325,8 +326,8 @@ def test_login_key__fetch_service_role_failure(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
-        call.fetch_key_service_profile(profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
+        call.fetch_key_service_profile(profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls
 
@@ -365,7 +366,7 @@ def test_login_key__successfull_login_with_service_role(ctx, mocker):
     expected_key_calls = [
         call.check_access_key(access_key="some-access-key"),
         call.get_user_name(access_key="some-access-key"),
-        call.fetch_key_credentials("user", profile_group),
-        call.fetch_key_service_profile(profile_group),
+        call.fetch_key_credentials("user", profile_group, "default_overwrite"),
+        call.fetch_key_service_profile(profile_group, "default_overwrite"),
     ]
     assert expected_key_calls == mock_key.mock_calls

@@ -55,7 +55,7 @@ def test_write_sso_credentials(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = sso.write_sso_credentials(profile_group)
+    result = sso.write_sso_credentials(profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -90,6 +90,58 @@ def test_write_sso_credentials(mocker):
     assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
 
 
+def test_write_sso_credentials__with_default_overwrite(mocker):
+    mock_load_config = mocker.patch.object(credentials, "load_config_file")
+    mock_add_sso_profile = mocker.patch.object(credentials, "add_sso_profile")
+    mock_add_sso_chain = mocker.patch.object(credentials, "add_sso_chain_profile")
+    mock_write_config = mocker.patch.object(credentials, "write_config_file")
+
+    mock_config_parser = mocker.Mock()
+    mock_load_config.return_value = mock_config_parser
+
+    profile_group = ProfileGroup(
+        "test",
+        test_accounts.get_test_group__with_sso(),
+        "default-access-key",
+        "default-sso-session",
+        "default-sso-interval",
+    )
+    result = sso.write_sso_credentials(profile_group, "developer")
+    assert result.was_success
+    assert not result.was_error
+
+    expected_mock_add_profile_calls = [
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="developer",
+            account_id="123456789012",
+            role="developer",
+            region="us-east-1",
+        ),
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="default",
+            account_id="123456789012",
+            role="developer",
+            region="us-east-1",
+        ),
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="readonly",
+            account_id="012345678901",
+            role="readonly",
+            region="us-east-1",
+        ),
+    ]
+
+    assert expected_mock_add_profile_calls == mock_add_sso_profile.mock_calls
+    mock_add_sso_chain.assert_not_called()
+    assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
+
+
 def test_write_sso_credentials__no_default(mocker):
     mock_load_config = mocker.patch.object(credentials, "load_config_file")
     mock_add_sso_profile = mocker.patch.object(credentials, "add_sso_profile")
@@ -106,7 +158,7 @@ def test_write_sso_credentials__no_default(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = sso.write_sso_credentials(profile_group)
+    result = sso.write_sso_credentials(profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -115,6 +167,56 @@ def test_write_sso_credentials__no_default(mocker):
             config_file=mock_config_parser,
             sso_session_name="specific-sso-session",
             profile="developer",
+            account_id="123456789012",
+            role="developer",
+            region="us-east-1",
+        ),
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="readonly",
+            account_id="012345678901",
+            role="readonly",
+            region="us-east-1",
+        ),
+    ]
+    assert expected_mock_add_profile_calls == mock_add_sso_profile.mock_calls
+    mock_add_sso_chain.assert_not_called()
+    assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
+
+def test_write_sso_credentials__no_default__with_default_overwrite(mocker):
+    mock_load_config = mocker.patch.object(credentials, "load_config_file")
+    mock_add_sso_profile = mocker.patch.object(credentials, "add_sso_profile")
+    mock_add_sso_chain = mocker.patch.object(credentials, "add_sso_chain_profile")
+    mock_write_config = mocker.patch.object(credentials, "write_config_file")
+
+    mock_config_parser = mocker.Mock()
+    mock_load_config.return_value = mock_config_parser
+
+    profile_group = ProfileGroup(
+        "test",
+        test_accounts.get_test_group__with_sso__no_default(),
+        "default-access-key",
+        "default-sso-session",
+        "default-sso-interval",
+    )
+    result = sso.write_sso_credentials(profile_group, "developer")
+    assert result.was_success
+    assert not result.was_error
+
+    expected_mock_add_profile_calls = [
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="developer",
+            account_id="123456789012",
+            role="developer",
+            region="us-east-1",
+        ),
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="default",
             account_id="123456789012",
             role="developer",
             region="us-east-1",
@@ -149,7 +251,7 @@ def test_write_sso_credentials__chain_assume(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = sso.write_sso_credentials(profile_group)
+    result = sso.write_sso_credentials(profile_group, None)
     assert result.was_success
     assert not result.was_error
 
@@ -158,6 +260,58 @@ def test_write_sso_credentials__chain_assume(mocker):
             config_file=mock_config_parser,
             sso_session_name="specific-sso-session",
             profile="developer",
+            account_id="123456789012",
+            role="developer",
+            region="us-east-1",
+        ),
+    ]
+    assert expected_mock_add_profile_calls == mock_add_sso_profile.mock_calls
+
+    expected_mock_chain_profile_calls = [
+        call(
+            config_file=mock_config_parser,
+            profile="pipeline",
+            role_arn="arn:aws:iam::123456789012:role/pipeline",
+            source_profile="developer",
+            region="us-east-1",
+        ),
+    ]
+    assert expected_mock_chain_profile_calls == mock_add_sso_chain.mock_calls
+    assert [call(mock_config_parser), call(mock_config_parser)] == mock_write_config.mock_calls
+
+def test_write_sso_credentials__chain_assume__with_default_overwrite(mocker):
+    mock_load_config = mocker.patch.object(credentials, "load_config_file")
+    mock_add_sso_profile = mocker.patch.object(credentials, "add_sso_profile")
+    mock_add_sso_chain = mocker.patch.object(credentials, "add_sso_chain_profile")
+    mock_write_config = mocker.patch.object(credentials, "write_config_file")
+
+    mock_config_parser = mocker.Mock()
+    mock_load_config.return_value = mock_config_parser
+
+    profile_group = ProfileGroup(
+        "test",
+        test_accounts.get_test_group__with_sso__chain_assume(),
+        "default-access-key",
+        "default-sso-session",
+        "default-sso-interval",
+    )
+    result = sso.write_sso_credentials(profile_group, "developer")
+    assert result.was_success
+    assert not result.was_error
+
+    expected_mock_add_profile_calls = [
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="developer",
+            account_id="123456789012",
+            role="developer",
+            region="us-east-1",
+        ),
+        call(
+            config_file=mock_config_parser,
+            sso_session_name="specific-sso-session",
+            profile="default",
             account_id="123456789012",
             role="developer",
             region="us-east-1",
@@ -203,7 +357,7 @@ def test_write_sso_credentials__source_profile_missing(mocker):
         "default-sso-interval",
     )
 
-    result = sso.write_sso_credentials(profile_group)
+    result = sso.write_sso_credentials(profile_group, None)
     assert not result.was_success
     assert result.was_error
     assert "Source profile missing not found" == result.error_message
@@ -223,13 +377,42 @@ def test_write_sso_service_profile(mocker):
     mock_fetch_role_arn.return_value = "some-arn"
 
     profile_group = test_accounts.get_test_profile_group(include_service_role=True)
-    result = sso.write_sso_service_profile(profile_group)
+    result = sso.write_sso_service_profile(profile_group, None)
     assert result.was_success
 
     mock_fetch_role_arn.assert_called_once_with(profile="developer", role_name="dummy")
     expected_add_profile_credentialscalls = [
         call(config_file="config-file", profile="service", role_arn="some-arn",
              source_profile="developer", region="us-east-1")
+    ]
+    assert expected_add_profile_credentialscalls == mock_add_sso_chain.mock_calls
+    mock_write_config.assert_called_once_with("config-file")
+
+def test_write_sso_service_profile__with_default_overwrite(mocker):
+    mock_load_config = mocker.patch.object(credentials, "load_config_file")
+    mock_add_sso_chain = mocker.patch.object(credentials, "add_sso_chain_profile")
+    mock_write_config = mocker.patch.object(credentials, "write_config_file")
+    mock_fetch_role_arn = mocker.patch.object(iam, "fetch_role_arn")
+
+    mock_load_config.return_value = "config-file"
+    mock_fetch_role_arn.return_value = "some-arn"
+
+    profile_group = test_accounts.get_test_profile_group(include_service_role=True)
+    result = sso.write_sso_service_profile(profile_group, "service")
+    assert result.was_success
+
+    mock_fetch_role_arn.assert_called_once_with(profile="developer", role_name="dummy")
+    expected_add_profile_credentialscalls = [
+        call(config_file="config-file", 
+             profile="service", 
+             role_arn="some-arn",
+             source_profile="developer", 
+             region="us-east-1"),
+        call(config_file="config-file", 
+             profile="default", 
+             role_arn="some-arn",
+             source_profile="developer", 
+             region="us-east-1")
     ]
     assert expected_add_profile_credentialscalls == mock_add_sso_chain.mock_calls
     mock_write_config.assert_called_once_with("config-file")
@@ -245,7 +428,7 @@ def test_write_sso_service_profile_as_key_credentials(mocker):
     mock_assume_role.return_value = test_secrets
 
     profile_group = test_accounts.get_test_profile_group_sso(include_service_role=True)
-    result = sso.write_sso_service_profile_as_key_credentials(profile_group)
+    result = sso.write_sso_service_profile_as_key_credentials(profile_group, None)
 
     assert result.was_success
     mock_assume_role.assert_called_once_with("developer", "dummy", "123456789012", "dummy")
@@ -263,7 +446,7 @@ def test_write_sso_service_profile_as_key_credentials__error(mocker):
     mock_assume_role.side_effect = Exception("boom")
 
     profile_group = test_accounts.get_test_profile_group_sso(include_service_role=True)
-    result = sso.write_sso_service_profile_as_key_credentials(profile_group)
+    result = sso.write_sso_service_profile_as_key_credentials(profile_group, None)
 
     assert result.was_error
     assert "error while fetching service role credentials" == result.error_message
@@ -326,7 +509,7 @@ def test_write_sso_as_key_credentials(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = sso.write_sso_as_key_credentials(profile_group)
+    result = sso.write_sso_as_key_credentials(profile_group, None)
     assert result.was_success
 
     expected_fetch_calls = [
@@ -367,7 +550,7 @@ def test_write_sso_as_key_credentials__chain_assume(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = sso.write_sso_as_key_credentials(profile_group)
+    result = sso.write_sso_as_key_credentials(profile_group, None)
     assert result.was_success
 
     mock_fetch_role.assert_called_once_with(account_id="123456789012", region="us-east-1", role_name="developer")
@@ -397,7 +580,7 @@ def test_write_sso_as_key_credentials__fetch_error(mocker):
         "default-sso-session",
         "default-sso-interval",
     )
-    result = sso.write_sso_as_key_credentials(profile_group)
+    result = sso.write_sso_as_key_credentials(profile_group, None)
 
     assert result.was_error
     assert error_result.error_message == result.error_message

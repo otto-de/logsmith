@@ -14,6 +14,7 @@ from app.util import util
 
 logger = logging.getLogger("logsmith")
 
+
 def has_access_key(access_key: str) -> Result:
     logger.info("has access key")
     result = Result()
@@ -120,7 +121,7 @@ def fetch_session_token(access_key: str, mfa_token: str) -> Result:
     return result
 
 
-def fetch_key_credentials(user_name: str, profile_group: ProfileGroup) -> Result:
+def fetch_key_credentials(user_name: str, profile_group: ProfileGroup, default_override: str | None) -> Result:
     result = Result()
     credentials_file = credentials.load_credentials_file()
     logger.info("fetch role credentials")
@@ -128,15 +129,14 @@ def fetch_key_credentials(user_name: str, profile_group: ProfileGroup) -> Result
     try:
         for profile in profile_group.get_profile_list():
             logger.info(f"fetch {profile.profile}")
-            source_profile = profile.source or util.generate_session_name(
-                profile_group.get_access_key()
-            )
-            secrets = iam.assume_role(
-                source_profile, user_name, profile.account, profile.role
-            )
+            source_profile = profile.source or util.generate_session_name(profile_group.get_access_key())
+            
+            secrets = iam.assume_role(source_profile, user_name, profile.account, profile.role)
+            
             credentials.add_profile_credentials(credentials_file, profile.profile, secrets)
-            if profile.default:
+            if util.use_as_default(profile, default_override):
                 credentials.add_profile_credentials(credentials_file, "default", secrets)
+
             credentials.write_credentials_file(credentials_file)
     except Exception:
         error_text = "error while fetching role credentials"
@@ -147,7 +147,8 @@ def fetch_key_credentials(user_name: str, profile_group: ProfileGroup) -> Result
     result.set_success()
     return result
 
-def fetch_key_service_profile(profile_group: ProfileGroup) -> Result:
+
+def fetch_key_service_profile(profile_group: ProfileGroup, default_override: str | None) -> Result:
     result = Result()
     credentials_file = credentials.load_credentials_file()
     logger.info("add service profile via access-key")
@@ -163,6 +164,9 @@ def fetch_key_service_profile(profile_group: ProfileGroup) -> Result:
             service_profile.role,
         )
         credentials.add_profile_credentials(credentials_file, service_profile.profile, secrets)
+        if util.use_as_default(service_profile, default_override):
+            credentials.add_profile_credentials(credentials_file, "default", secrets)
+
         credentials.write_credentials_file(credentials_file)
     except Exception:
         error_text = "error while fetching role credentials"
@@ -172,6 +176,7 @@ def fetch_key_service_profile(profile_group: ProfileGroup) -> Result:
 
     result.set_success()
     return result
+
 
 def set_access_key(key_name: str, key_id: str, key_secret: str) -> Result:
     result = Result()
@@ -186,6 +191,7 @@ def set_access_key(key_name: str, key_id: str, key_secret: str) -> Result:
     result.set_success()
     return result
 
+
 def get_access_key_list() -> list:
     credentials_file = credentials.load_credentials_file()
     access_key_list = []
@@ -198,6 +204,7 @@ def get_access_key_list() -> list:
 def get_access_key_id(key_name: str) -> str:
     credentials_file = credentials.load_credentials_file()
     return credentials_file.get(key_name, "aws_access_key_id")
+
 
 def get_user_name(access_key) -> str:
     logger.info("fetch user name")
