@@ -19,6 +19,11 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## Prerelease: 11.0.0-rc.1 - 2026-02-24
+
+### Changed
+- removed the need need to extract the sso session token by using sso shadow profiles and freeze their credentials every 10minutes
+
 ## Prerelease: 11.0.0-rc.1 - 2026-02-20
 
 ### Changed
