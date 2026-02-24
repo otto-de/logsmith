@@ -95,6 +95,9 @@ class Core:
                 return write_result
 
         elif profile_group.write_mode == "key":
+            write_result = self.login_with_sso__write_sso(profile_group, True)
+            if not write_result.was_success:
+                return write_result
             write_result = self.login_with_sso_write_key(profile_group)
             if not write_result.was_success:
                 return write_result
@@ -117,15 +120,15 @@ class Core:
         result.set_success()
         return result
 
-    def login_with_sso__write_sso(self, profile_group: ProfileGroup) -> Result:
+    def login_with_sso__write_sso(self, profile_group: ProfileGroup, shadow_mode=False) -> Result:
         result = Result()
         logger.info("write mode: sso")
-        sso_credentiol_result = sso.write_sso_credentials(profile_group, self.default_profile_override)
+        sso_credentiol_result = sso.write_sso_profiles(profile_group, self.default_profile_override, shadow_mode)
         if not sso_credentiol_result.was_success:
             return sso_credentiol_result
 
         if profile_group.service_profile is not None:
-            service_profile_result = sso.write_sso_service_profile(profile_group, self.default_profile_override)
+            service_profile_result = sso.write_sso_service_profile(profile_group, self.default_profile_override, shadow_mode)
             if not service_profile_result.was_success:
                 return service_profile_result
 

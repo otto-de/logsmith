@@ -105,6 +105,7 @@ def assume_role(profile: str, session_name: str, account_id: str, role: str) -> 
     )
     return response["Credentials"]
 
+
 def get_caller_identity(profile: str) -> bool:
     try:
         session = boto3.Session(profile_name=profile)
@@ -113,3 +114,13 @@ def get_caller_identity(profile: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def get_frozen_credentials(profile_name):
+    session = boto3.Session(profile_name=profile_name)
+    creds = session.get_credentials().get_frozen_credentials()
+    return {
+        "AccessKeyId": creds.access_key,
+        "SecretAccessKey": creds.secret_key,
+        "SessionToken": creds.token,
+    }

@@ -4,6 +4,7 @@ from app.core.profile import Profile
 def generate_session_name(key_name: str) -> str:
     return f'session-token-{key_name}'
 
+
 def is_positive_int(value) -> bool:
     try:
         s = str(value).strip()
@@ -12,7 +13,9 @@ def is_positive_int(value) -> bool:
         return False
 
 
-def use_as_default(profile: Profile, override: str | None):
+def use_as_default(profile: Profile, override: str | None, shadow_mode: bool = False):
+    if shadow_mode:
+        return False
     if override and profile.profile == override:
         return True
     if not override and profile.default:

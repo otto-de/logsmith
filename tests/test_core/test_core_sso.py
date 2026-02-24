@@ -86,7 +86,7 @@ def test_login_sso__sso_login_failure(ctx, mocker):
     mock_run_script.assert_not_called()
 
 
-def test_login_sso__write_sso_credentials_failure(ctx, mocker):
+def test_login_sso__write_sso_profiles_failure(ctx, mocker):
     mock_credentials = mocker.patch.object(core_module, "credentials")
     mock_sso = mocker.patch.object(core_module, "sso")
     mock_set_region = mocker.patch.object(Core, "set_region")
@@ -95,7 +95,7 @@ def test_login_sso__write_sso_credentials_failure(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.fail_result
+    mock_sso.write_sso_profiles.return_value = ctx.fail_result
 
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
     assert ctx.fail_result == result
@@ -103,7 +103,7 @@ def test_login_sso__write_sso_credentials_failure(ctx, mocker):
     mock_credentials.cleanup.assert_called_once_with()
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
-        call.write_sso_credentials(ctx.sso_profile_group, "default_overwrite"),
+        call.write_sso_profiles(ctx.sso_profile_group, "default_overwrite", False),
     ]
     assert expected_sso_calls == mock_sso.mock_calls
     mock_set_region.assert_not_called()
@@ -129,10 +129,10 @@ def test_login_sso__write_sso_as_key_credentials_failure(ctx, mocker):
     assert ctx.fail_result == result
 
     mock_credentials.cleanup.assert_called_once_with()
-    expected_sso_calls = [
-        call.sso_login(profile_group),
-        call.write_sso_as_key_credentials(profile_group, "default_overwrite"),
-    ]
+    expected_sso_calls = [call.sso_login(profile_group),
+                          call.write_sso_profiles(profile_group, 'default_overwrite', True),
+                          call.write_sso_profiles().was_success.__bool__(),
+                          call.write_sso_as_key_credentials(profile_group, 'default_overwrite')]
     assert expected_sso_calls == mock_sso.mock_calls
     mock_set_region.assert_not_called()
     mock_handle_support_files.assert_not_called()
@@ -148,7 +148,7 @@ def test_login_sso__set_region_failure(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_set_region.return_value = ctx.fail_result
 
     result = ctx.core.login_with_sso(ctx.sso_profile_group)
@@ -156,10 +156,8 @@ def test_login_sso__set_region_failure(ctx, mocker):
 
     mock_set_region.assert_called_once_with(None)
     assert [call.cleanup()] == mock_credentials.mock_calls
-    expected_sso_calls = [
-        call.sso_login(ctx.sso_profile_group),
-        call.write_sso_credentials(ctx.sso_profile_group, "default_overwrite"),
-    ]
+    expected_sso_calls = [call.sso_login(ctx.sso_profile_group),
+                          call.write_sso_profiles(ctx.sso_profile_group, 'default_overwrite', False)]
     assert expected_sso_calls == mock_sso.mock_calls
     mock_handle_support_files.assert_not_called()
     mock_run_script.assert_not_called()
@@ -174,7 +172,7 @@ def test_login_sso__run_script_failure(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_set_region.return_value = ctx.success_result
     mock_run_script.return_value = ctx.fail_result
 
@@ -187,7 +185,7 @@ def test_login_sso__run_script_failure(ctx, mocker):
     assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
-        call.write_sso_credentials(ctx.sso_profile_group, "default_overwrite"),
+        call.write_sso_profiles(ctx.sso_profile_group, "default_overwrite", False),
     ]
     assert expected_sso_calls == mock_sso.mock_calls
 
@@ -201,7 +199,7 @@ def test_login_sso__successful_login_with_run_script_disabled(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_set_region.return_value = ctx.success_result
 
     ctx.core.toggles.run_script = False
@@ -216,7 +214,7 @@ def test_login_sso__successful_login_with_run_script_disabled(ctx, mocker):
     assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
-        call.write_sso_credentials(ctx.sso_profile_group, "default_overwrite"),
+        call.write_sso_profiles(ctx.sso_profile_group, "default_overwrite", False),
     ]
     assert expected_sso_calls == mock_sso.mock_calls
 
@@ -230,7 +228,7 @@ def test_login_sso__successful_login(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_set_region.return_value = ctx.success_result
     mock_run_script.return_value = ctx.success_result
 
@@ -244,7 +242,7 @@ def test_login_sso__successful_login(ctx, mocker):
     assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(ctx.sso_profile_group),
-        call.write_sso_credentials(ctx.sso_profile_group, "default_overwrite"),
+        call.write_sso_profiles(ctx.sso_profile_group, "default_overwrite", False),
     ]
     assert expected_sso_calls == mock_sso.mock_calls
 
@@ -258,7 +256,7 @@ def test_login_sso__successful_login_with_region_overwrite(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_set_region.return_value = ctx.success_result
     mock_run_script.return_value = ctx.success_result
 
@@ -278,7 +276,7 @@ def test_login_sso__fetch_service_role_failure(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_sso.write_sso_service_profile.return_value = ctx.fail_result
 
     profile_group = get_test_profile_group_sso(include_service_role=True)
@@ -287,8 +285,8 @@ def test_login_sso__fetch_service_role_failure(ctx, mocker):
 
     expected_sso_calls = [
         call.sso_login(profile_group),
-        call.write_sso_credentials(profile_group, "default_overwrite"),
-        call.write_sso_service_profile(profile_group, "default_overwrite"),
+        call.write_sso_profiles(profile_group, "default_overwrite", False),
+        call.write_sso_service_profile(profile_group, "default_overwrite", False),
     ]
     assert expected_sso_calls == mock_sso.mock_calls
     assert [call.cleanup()] == mock_credentials.mock_calls
@@ -306,7 +304,7 @@ def test_login_sso__successfull_login_with_service_role(ctx, mocker):
 
     mock_credentials.cleanup.return_value = ctx.success_result
     mock_sso.sso_login.return_value = ctx.success_result
-    mock_sso.write_sso_credentials.return_value = ctx.success_result
+    mock_sso.write_sso_profiles.return_value = ctx.success_result
     mock_sso.write_sso_service_profile.return_value = ctx.success_result
     mock_set_region.return_value = ctx.success_result
     mock_run_script.return_value = ctx.success_result
@@ -322,7 +320,7 @@ def test_login_sso__successfull_login_with_service_role(ctx, mocker):
     assert [call.cleanup()] == mock_credentials.mock_calls
     expected_sso_calls = [
         call.sso_login(profile_group),
-        call.write_sso_credentials(profile_group, "default_overwrite"),
-        call.write_sso_service_profile(profile_group, "default_overwrite"),
+        call.write_sso_profiles(profile_group, "default_overwrite", False),
+        call.write_sso_service_profile(profile_group, "default_overwrite", False),
     ]
     assert expected_sso_calls == mock_sso.mock_calls
