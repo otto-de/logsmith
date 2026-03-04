@@ -19,22 +19,17 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
-## Prerelease: 11.0.0-rc.1 - 2026-02-24
-
-### Changed
-- removed the need need to extract the sso session token by using sso shadow profiles and freeze their credentials every 10minutes
-
-## Prerelease: 11.0.0-rc.1 - 2026-02-20
-
-### Changed
-- background tasks are now chained together and run in the same background thread, avoiding multiple threads and helping make the app state more consistent.
-- Repeater is simplified to one unified loop.
-- Credentials that were written with in sso-key mode get refreshed every 5 minutes, because chain-assume and service profiles can have a much shorter expiration time than sso sessions.
-
-## Prerelease: 10.1.0-rc.1 - 2026-01-19
+## 11.0.0 - 2026-03-04
 
 ### Added
 - switch default profiles in context menu.
+- Option to extend shell pathes.
+
+### Changed
+- removed the need need to extract the sso session token by using sso shadow profiles and freeze their credentials every 10minutes
+- background tasks are now chained together and run in the same background thread, avoiding multiple threads and helping make the app state more consistent.
+- Repeater is simplified to one unified loop.
+- Credentials that were written with in sso-key mode get refreshed every 5 minutes, because chain-assume and service profiles can have a much shorter expiration time than sso sessions.
 
 ### Fixed
 - profile status will not be wiped anymore when changing regions.

@@ -2,6 +2,12 @@
 
 The following document lists descriptions of features and changes that have been introduced to the application.
 
+### Default Quick Switch
+
+**since 11.0.0**
+
+You can now switch the current default profile directly from the tray icon menu with a single click.
+
 ### New Icon Set
 
 ***since 10.0.0***
