@@ -7,7 +7,7 @@ if [ -d ${dir}/.venv ]; then
 fi
 
 
-if ! command -v uv >/dev/null 2>&1; then
+if command -v uv >/dev/null 2>&1; then
   uv venv
   uv sync
 
