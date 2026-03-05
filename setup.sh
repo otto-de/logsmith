@@ -6,8 +6,14 @@ if [ -d ${dir}/.venv ]; then
   rm -rf ${dir}/.venv
 fi
 
-if [ ! -d ${dir}/.venv ]; then
-  python3 -m venv .venv
-fi
 
-./.venv/bin/pip3 install -r requirements.txt
+if ! command -v uv >/dev/null 2>&1; then
+  uv venv
+  uv sync
+
+else
+  echo "This project is build with uv, which could not be found."
+  echo "Using pip as fallback"
+  python3 -m venv .venv
+  ./.venv/bin/python -m pip install -r requirements.txt
+fi
