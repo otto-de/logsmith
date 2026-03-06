@@ -19,6 +19,11 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+## 11.0.1 - 2026-03-06
+
+### Added
+- button to config dialog to print shell debug output
+
 ## 11.0.0 - 2026-03-04
 
 ### Added
