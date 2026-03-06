@@ -93,7 +93,7 @@ while (( "$#" )); do
 done
 
 if git diff --quiet -- CHANGELOG.md && git diff --cached --quiet -- CHANGELOG.md; then
-    echo "CHANGELOG.md has no changes"
+    echo -e "${cy}WARNING: CHANGELOG.md has no changes${cc}"
 fi
 
 current_version=$(get_version)

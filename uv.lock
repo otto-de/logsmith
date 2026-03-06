@@ -68,7 +68,7 @@ wheels = [
 
 [[package]]
 name = "logsmith"
-version = "10.1.0rc2"
+version = "11.0.1rc1"
 source = { virtual = "." }
 dependencies = [
     { name = "boto3" },
