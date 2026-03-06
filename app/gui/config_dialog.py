@@ -10,6 +10,7 @@ from app import version
 from app.core import files
 from app.core.config import Config
 from app.gui import styles
+from app.shell import shell
 from app.util import util
 from app.yubico import mfa
 
@@ -37,7 +38,7 @@ class ConfigDialog(QDialog):
         self.mfa_command_label = QLabel("Shell command to fetch mfa token:", self)
         self.mfa_command_input = QLineEdit(self)
         self.mfa_command_input.setStyleSheet(styles.input_field_style)
-        
+
         self.shell_path_label = QLabel("Expand PATH for shell commands (seperate with :):", self)
         self.shell_path_input = QLineEdit(self)
         self.shell_path_input.setStyleSheet(styles.input_field_style)
@@ -45,12 +46,13 @@ class ConfigDialog(QDialog):
         self.default_access_key_label = QLabel("Default access key name:", self)
         self.default_access_key_input = QLineEdit(self)
         self.default_access_key_input.setStyleSheet(styles.input_field_style)
-        
+
         self.default_sso_session_label = QLabel("Default sso session name:", self)
         self.default_sso_session_input = QLineEdit(self)
         self.default_sso_session_input.setStyleSheet(styles.input_field_style)
-                
-        self.default_sso_interval_label = QLabel("Default sso renewal interval (in hours) or 0 to disable renewal:", self)
+
+        self.default_sso_interval_label = QLabel(
+            "Default sso renewal interval (in hours) or 0 to disable renewal:", self)
         self.default_sso_interval_input = QLineEdit(self)
         self.default_sso_interval_input.setStyleSheet(styles.input_field_style)
 
@@ -60,6 +62,8 @@ class ConfigDialog(QDialog):
         self.cancel_button.clicked.connect(self.cancel)
         self.check_command_button = QPushButton("test command")
         self.check_command_button.clicked.connect(self.check_command)
+        self.debug_shell_button = QPushButton("print shell debug")
+        self.debug_shell_button.clicked.connect(self.debug_shell)
 
         self.info_text = QLabel('', self)
         self.info_text.setGeometry(QRect(0, 0, self.width(), 30))
@@ -76,7 +80,12 @@ class ConfigDialog(QDialog):
 
         vbox.addWidget(self.mfa_command_label)
         vbox.addWidget(self.mfa_command_input)
-        vbox.addWidget(self.check_command_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        shell_hbox = QHBoxLayout()
+        shell_hbox.addWidget(self.check_command_button)
+        shell_hbox.addWidget(self.debug_shell_button)
+        vbox.addLayout(shell_hbox)
+
         vbox.addWidget(self.shell_path_label)
         vbox.addWidget(self.shell_path_input)
         vbox.addWidget(self.default_access_key_label)
@@ -103,13 +112,13 @@ class ConfigDialog(QDialog):
         if not default_access_key:
             self.set_error_text('default access-key must not be empty')
             return
-        
+
         default_sso_session = self.default_sso_session_input.text()
         default_sso_session = default_sso_session.strip()
         if not default_sso_session:
             self.set_error_text('default sso session must not be empty')
             return
-        
+
         default_sso_interval = self.default_sso_interval_input.text()
         default_sso_interval = default_sso_interval.strip()
         if not default_sso_interval:
@@ -121,7 +130,7 @@ class ConfigDialog(QDialog):
             return
 
         config = Config()
-        config.initialize_profile_groups(accounts=raw_config_dict, 
+        config.initialize_profile_groups(accounts=raw_config_dict,
                                          service_roles={},
                                          default_access_key=default_access_key,
                                          default_sso_session=default_sso_session,
@@ -146,6 +155,11 @@ class ConfigDialog(QDialog):
             self.set_success_text('command successful')
         else:
             self.set_error_text('command failed')
+
+    def debug_shell(self):
+        commands = ['echo "--env--"', 'env', 'echo "--lookup aws--"', 'which aws']
+        shell.run("&&".join(commands))
+        self.set_success_text('shell debug complete: see logs')
 
     def closeEvent(self, event):
         event.ignore()
