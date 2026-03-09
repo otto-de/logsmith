@@ -67,14 +67,13 @@ pyinstaller-hooks-contrib==2026.1 \
     --hash=sha256:66ad4888ba67de6f3cfd7ef554f9dd1a4389e2eb19f84d7129a5a6818e3f2180 \
     --hash=sha256:a5f0891a1e81e92406ab917d9e76adfd7a2b68415ee2e35c950a7b3910bc361b
     # via pyinstaller
-pyqt6==6.7.1 \
-    --hash=sha256:0adb7914c732ad1dee46d9cec838a98cb2b11bc38cc3b7b36fbd8701ae64bf47 \
-    --hash=sha256:2d771fa0981514cb1ee937633dfa64f14caa902707d9afffab66677f3a73e3da \
-    --hash=sha256:3672a82ccd3a62e99ab200a13903421e2928e399fda25ced98d140313ad59cb9 \
-    --hash=sha256:7f397f4b38b23b5588eb2c0933510deb953d96b1f0323a916c4839c2a66ccccc \
-    --hash=sha256:c2f202b7941aa74e5c7e1463a6f27d9131dbc1e6cabe85571d7364f5b3de7397 \
-    --hash=sha256:f053378e3aef6248fa612c8afddda17f942fb63f9fe8a9aeb2a6b6b4cbb0eba9 \
-    --hash=sha256:fa3954698233fe286a8afc477b84d8517f0788eb46b74da69d3ccc0170d3714c
+pyqt6==6.10.2 \
+    --hash=sha256:37ae7c1183fe4dd0c6aefd2006a35731245de1cb6f817bb9e414a3e4848dfd6d \
+    --hash=sha256:6c0db5d8cbb9a3e7e2b5b51d0ff3f283121fa27b864db6d2f35b663c9be5cc83 \
+    --hash=sha256:78e1b3d5763e4cbc84485aef600e0aba5e1932fd263b716f92cd1a40dfa5e924 \
+    --hash=sha256:7901ba1df024b7ee9fdacfb2b7661aeb3749ae8b0bef65428077de3e0450eabb \
+    --hash=sha256:bbc3af541bbecd27301bfe69fe445aa1611a9b490bd3de77306b12df632f7ec6 \
+    --hash=sha256:bd328cb70bc382c48861cd5f0a11b2b8ae6f5692d5a2d6679ba52785dced327b
     # via logsmith
 pyqt6-qt6==6.7.3 \
     --hash=sha256:36ea0892b8caeb983af3f285f45fb8dfbb93cfd972439f4e01b7efb2868f6230 \
