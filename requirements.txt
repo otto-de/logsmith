@@ -63,9 +63,9 @@ pyinstaller==6.10.0 \
     --hash=sha256:db05e3f2f10f9f78c56f1fb163d9cb453433429fe4281218ebaf1ebfd39ba942 \
     --hash=sha256:e9989f354ae4ed8a3bec7bdb37ae0d170751d6520e500f049c7cd0632d31d5c3
     # via logsmith
-pyinstaller-hooks-contrib==2026.1 \
-    --hash=sha256:66ad4888ba67de6f3cfd7ef554f9dd1a4389e2eb19f84d7129a5a6818e3f2180 \
-    --hash=sha256:a5f0891a1e81e92406ab917d9e76adfd7a2b68415ee2e35c950a7b3910bc361b
+pyinstaller-hooks-contrib==2026.2 \
+    --hash=sha256:cbd1eb00b5d13301b1cce602e1fffb17f0c531c0391f0a87a383d376be68a186 \
+    --hash=sha256:fc29f0481b58adf78ce9c1d9cf135fe96f38c708f74b2aa0670ef93e59578ab9
     # via pyinstaller
 pyqt6==6.7.1 \
     --hash=sha256:0adb7914c732ad1dee46d9cec838a98cb2b11bc38cc3b7b36fbd8701ae64bf47 \
