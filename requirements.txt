@@ -91,9 +91,9 @@ pyqt6-sip==13.11.0 \
     --hash=sha256:a75144e8a0bcf9d1a9069011890401748af353749f1de1b6a314b880781edf9d \
     --hash=sha256:d463af37738bda1856c9ef513e5620a37b7a005e9d589c986c3304db4a8a14d3
     # via pyqt6
-pytest==8.0.2 \
-    --hash=sha256:d4051d623a2e0b7e51960ba963193b09ce6daeb9759a451844a21e4ddedfc1bd \
-    --hash=sha256:edfaaef32ce5172d5466b5127b42e0d6d35ebbe4453f0e3505d96afd93f6b096
+pytest==9.0.2 \
+    --hash=sha256:711ffd45bf766d5264d487b917733b453d917afd2b0ad65223959f59089f875b \
+    --hash=sha256:75186651a92bd89611d1d9fc20f0b4345fd827c41ccd5c299a868a05d70edf11
     # via
     #   logsmith
     #   pytest-mock
