@@ -5,7 +5,7 @@ requires-python = "==3.13.7"
 dependencies = [
     "boto3==1.42.62",
     "pyinstaller==6.10.0",
-    "pyqt6==6.7.1",
+    "pyqt6==6.10.2",
     "pytest==8.0.2",
     "pytest-mock==3.15.1",
     "ruamel-yaml==0.19.1",
