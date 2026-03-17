@@ -6,9 +6,9 @@ altgraph==0.17.5 \
     # via
     #   macholib
     #   pyinstaller
-boto3==1.42.62 \
-    --hash=sha256:6b26ff56c458685caec3d42adde0549f6a55410e557e1f51bebde5c8abcf3037 \
-    --hash=sha256:eef0ee08f30e5ed16d8296719808801a827fa0f3126a3e2a9ef9be9eb5e6a313
+boto3==1.42.69 \
+    --hash=sha256:6823a4b59aa578c7d98124280a9b6d83cea04bdb02525cbaa79370e5b6f7f631 \
+    --hash=sha256:e59846f4ff467b23bae4751948298db554dbdda0d72b09028d2cacbeff27e1ad
     # via logsmith
 botocore==1.35.99 \
     --hash=sha256:1eab44e969c39c5f3d9a3104a0836c24715579a455f12b3979a31d7cde51b3c3 \
