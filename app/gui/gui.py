@@ -234,7 +234,7 @@ class Gui(QMainWindow):
         return int((datetime.now(timezone.utc) - self.last_login).total_seconds())
 
     def should_login(self, elapsed: int | None, threshold: int | str | None) -> bool:
-        logger.info(f'elapsed {elapsed}s / {threshold}s since login')
+        logger.info(f'elapsed {elapsed}s / {threshold}h since login')
         if elapsed is None:
             return True
 
@@ -242,7 +242,7 @@ class Gui(QMainWindow):
             return False
 
         elapsed_seconds = int(elapsed)
-        threshold_seconds = int(threshold)
+        threshold_seconds = int(threshold) * 60 * 60
         if elapsed_seconds >= threshold_seconds:
             return True
         return False
