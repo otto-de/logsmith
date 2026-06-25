@@ -583,7 +583,7 @@ def test_sso_login(mocker):
     result = sso.sso_login(profile_group)
 
     expected_command = (
-        "unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso login --sso-session specific-sso-session"
+        "env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE aws sso login --sso-session specific-sso-session"
     )
     mock_shell_run.assert_called_once_with(command=expected_command, timeout=600)
     assert result.was_success
@@ -594,7 +594,7 @@ def test_sso_logout(mocker):
 
     result = sso.sso_logout()
 
-    expected_command = "unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso logout"
+    expected_command = "env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE aws sso logout"
     mock_shell_run.assert_called_once_with(command=expected_command, timeout=600)
     assert result.was_success
 

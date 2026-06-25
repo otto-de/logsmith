@@ -250,13 +250,13 @@ def sso_login(profile_group: ProfileGroup) -> Result:
     # unset AWS_PROFILE and AWS_DEFAULT_PROFILE because sso login fails is profile is present
     # or aborts when profiles are not found.
     return shell.run(
-        command=f"unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso login --sso-session {sso_session_name}",
+        command=f"env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE aws sso login --sso-session {sso_session_name}",
         timeout=600,
     )
 
 
 def sso_logout() -> Result:
     return shell.run(
-        command=f"unset AWS_PROFILE && unset AWS_DEFAULT_PROFILE && aws sso logout",
+        command=f"env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE aws sso logout",
         timeout=600,
     )
