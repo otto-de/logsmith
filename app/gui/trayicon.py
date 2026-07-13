@@ -41,6 +41,7 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         QSystemTrayIcon.__init__(self, self.assets.standard, self.gui)
         self.setIcon(self.assets.get_icon(style=ICON_STYLE_OUTLINE))
+        self.setToolTip("Logsmith")
         self.populate_context_menu(profile_list)
 
     def populate_context_menu(self, profile_list: List[ProfileGroup]):
