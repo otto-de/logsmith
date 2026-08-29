@@ -15,3 +15,5 @@ legacy
 tmp
 __pycache__
 .pytest_cache
+.direnv
+result
