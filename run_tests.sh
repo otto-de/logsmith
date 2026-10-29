@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-cd tests || exit
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${dir}" || exit
 
-if [ -d ../venv ]; then
-  echo "Virtual environment found. Using nose2 from virtual environment to run tests"
-  ../venv/bin/nosetests
+if [ -d ./.venv ]; then
+  echo "Virtual environment found. Using pytest from virtual environment to run tests"
+  ./.venv/bin/pytest "$@"
 else
-  echo "Virtual environment not found. Trying system wide nose2 to run tests"
-  nosetests
+  echo "Virtual environment not found. Trying system wide pytest to run tests"
+  pytest "$@"
 fi

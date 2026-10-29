@@ -55,7 +55,7 @@ if ! ${ignore_mode} && [ "${untracked_files}" != "" ]; then
   exit 1
 fi
 
-if [[ ! -d ./venv/ ]] && [[ "${global_mode}" == "false" ]]; then
+if [[ ! -d ./.venv/ ]] && [[ "${global_mode}" == "false" ]]; then
   ./setup.sh
 fi
 if [[ -d ./dist/ ]]; then
@@ -66,7 +66,7 @@ if [[ -d ./build/ ]]; then
 fi
 
 if [[ "${global_mode}" == "false" ]]; then
-  bundler=${dir}/venv/bin/pyinstaller
+  bundler=${dir}/.venv/bin/pyinstaller
 else
   bundler="python3.8 -m PyInstaller"
 fi
