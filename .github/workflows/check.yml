@@ -6,10 +6,12 @@ on:
     paths:
       - "**/*.py"
       - "**/*.toml"
+      - "uv.lock"
   pull_request:
     paths:
       - "**/*.py"
       - "**/*.toml"
+      - "uv.lock"
 
 jobs:
   build:
