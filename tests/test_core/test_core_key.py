@@ -31,6 +31,7 @@ def ctx(mocker) -> Ctx:
     mocker.patch.object(files, "load_accounts", return_value=get_default_test_accounts())
     mocker.patch.object(files, "load_config", return_value=get_test_config())
     mocker.patch.object(files, "load_service_roles", return_value=get_test_service_roles())
+    mocker.patch.object(files, "load_accounts_state", return_value={})
     mocker.patch.object(files, "load_toggles", return_value=get_test_toggles())
 
     core = Core()

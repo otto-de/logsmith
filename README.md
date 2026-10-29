@@ -196,8 +196,11 @@ If the path has no yaml extension, logsmith shows a config error and uses the de
 Use "Switch accounts file" in the tray menu to switch between accounts files.
 It lists the last 10 accounts files you used (only those that still exist), with the active one checked.
 Use "Open accounts file..." to pick a new `.yaml` or `.yml` file.
-Switching logs you out, sets `accounts_path` to the selected file and reloads your profile groups.
-The history is stored as `accounts_path_history` in `config.yaml`.
+Switching logs you out and reloads your profile groups from the selected file.
+The selection and the history are stored in `${HOME}/.logsmith/accounts_state.yaml`, so `config.yaml` is never
+written when switching (it can be read-only, e.g. when managed by home-manager).
+The selected file takes precedence over `accounts_path` in `config.yaml`, until `accounts_path` is changed or the
+selected file no longer exists.
 
 ### Google Cloud login
 

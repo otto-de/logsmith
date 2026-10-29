@@ -31,6 +31,7 @@ def ctx(mocker) -> Ctx:
     mocker.patch.object(files, "load_accounts", return_value=get_default_test_accounts())
     mocker.patch.object(files, "load_config", return_value=get_test_config())
     mocker.patch.object(files, "load_service_roles", return_value=get_test_service_roles())
+    mocker.patch.object(files, "load_accounts_state", return_value={})
     mocker.patch.object(files, "load_toggles", return_value=get_test_toggles())
 
     core = Core()
@@ -446,7 +447,7 @@ def test__check_name__contain_spaces(ctx):
 def test_switch_accounts_file(ctx, mocker):
     mocker.patch.object(files, "is_file", return_value=True)
     mock_logout = mocker.patch.object(ctx.core, "logout", return_value=ctx.success_result)
-    mock_save_config = mocker.patch.object(ctx.core.config, "save_config")
+    mock_save_accounts_state = mocker.patch.object(ctx.core.config, "save_accounts_state")
     mock_initialize = mocker.patch.object(ctx.core.config, "initialize")
 
     result = ctx.core.switch_accounts_file("/some/dir/other-accounts.yaml")
@@ -454,40 +455,40 @@ def test_switch_accounts_file(ctx, mocker):
     assert result.was_success
     assert not result.was_error
     mock_logout.assert_called_once_with()
-    mock_save_config.assert_called_once_with()
+    mock_save_accounts_state.assert_called_once_with()
     mock_initialize.assert_called_once_with()
-    assert "/some/dir/other-accounts.yaml" == ctx.core.config.accounts_path
+    assert "/some/dir/other-accounts.yaml" == ctx.core.config.selected_accounts_path
     assert "/some/dir/other-accounts.yaml" == ctx.core.config.accounts_path_history[0]
 
 
 def test_switch_accounts_file__no_yaml_extension(ctx, mocker):
     mocker.patch.object(files, "is_file", return_value=True)
-    mock_save_config = mocker.patch.object(ctx.core.config, "save_config")
+    mock_save_accounts_state = mocker.patch.object(ctx.core.config, "save_accounts_state")
 
     result = ctx.core.switch_accounts_file("/some/dir/other-accounts.json")
 
     assert result.was_error
     assert result.error_message == "accounts file must have a yaml extension: /some/dir/other-accounts.json"
-    mock_save_config.assert_not_called()
+    mock_save_accounts_state.assert_not_called()
 
 
 def test_switch_accounts_file__file_does_not_exist(ctx, mocker):
     mocker.patch.object(files, "is_file", return_value=False)
-    mock_save_config = mocker.patch.object(ctx.core.config, "save_config")
+    mock_save_accounts_state = mocker.patch.object(ctx.core.config, "save_accounts_state")
 
     result = ctx.core.switch_accounts_file("/some/dir/other-accounts.yaml")
 
     assert result.was_error
     assert result.error_message == "accounts file does not exist: /some/dir/other-accounts.yaml"
-    mock_save_config.assert_not_called()
+    mock_save_accounts_state.assert_not_called()
 
 
 def test_switch_accounts_file__logout_failure(ctx, mocker):
     mocker.patch.object(files, "is_file", return_value=True)
     mocker.patch.object(ctx.core, "logout", return_value=ctx.error_result)
-    mock_save_config = mocker.patch.object(ctx.core.config, "save_config")
+    mock_save_accounts_state = mocker.patch.object(ctx.core.config, "save_accounts_state")
 
     result = ctx.core.switch_accounts_file("/some/dir/other-accounts.yaml")
 
     assert result.was_error
-    mock_save_config.assert_not_called()
+    mock_save_accounts_state.assert_not_called()

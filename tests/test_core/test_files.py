@@ -73,6 +73,48 @@ def test_get_accounts_path__empty_custom_path(mocker):
     assert 'home/.logsmith/accounts.yaml' == files.get_accounts_path()
 
 
+def test_get_accounts_state_path():
+    assert 'home/.logsmith/accounts_state.yaml' == files.get_accounts_state_path()
+
+
+def test_get_accounts_path__selected_path(mocker):
+    mocker.patch.object(files, "load_config", return_value={'accounts_path': '/config/accounts.yaml'})
+    mocker.patch.object(files, "load_accounts_state", return_value={'selected_path': '/selected/accounts.yaml',
+                                                                    'config_accounts_path': '/config/accounts.yaml'})
+    mocker.patch.object(files, "is_file", return_value=True)
+    assert '/selected/accounts.yaml' == files.get_accounts_path()
+
+
+def test_get_accounts_path__selected_path_without_config_path(mocker):
+    mocker.patch.object(files, "load_config", return_value={})
+    mocker.patch.object(files, "load_accounts_state", return_value={'selected_path': '/selected/accounts.yaml'})
+    mocker.patch.object(files, "is_file", return_value=True)
+    assert '/selected/accounts.yaml' == files.get_accounts_path()
+
+
+def test_get_accounts_path__selected_path_does_not_exist(mocker):
+    mocker.patch.object(files, "load_config", return_value={'accounts_path': '/config/accounts.yaml'})
+    mocker.patch.object(files, "load_accounts_state", return_value={'selected_path': '/selected/accounts.yaml',
+                                                                    'config_accounts_path': '/config/accounts.yaml'})
+    mocker.patch.object(files, "is_file", return_value=False)
+    assert '/config/accounts.yaml' == files.get_accounts_path()
+
+
+def test_get_accounts_path__config_path_changed_since_selection(mocker):
+    mocker.patch.object(files, "load_config", return_value={'accounts_path': '/new-config/accounts.yaml'})
+    mocker.patch.object(files, "load_accounts_state", return_value={'selected_path': '/selected/accounts.yaml',
+                                                                    'config_accounts_path': '/config/accounts.yaml'})
+    mocker.patch.object(files, "is_file", return_value=True)
+    assert '/new-config/accounts.yaml' == files.get_accounts_path()
+
+
+def test_get_accounts_path__selected_path_without_yaml_extension(mocker):
+    mocker.patch.object(files, "load_config", return_value={})
+    mocker.patch.object(files, "load_accounts_state", return_value={'selected_path': '/selected/accounts.txt'})
+    mocker.patch.object(files, "is_file", return_value=True)
+    assert 'home/.logsmith/accounts.yaml' == files.get_accounts_path()
+
+
 def test_is_yaml_file_path():
     assert files.is_yaml_file_path('/some/file.yaml')
     assert files.is_yaml_file_path('/some/file.yml')
@@ -220,6 +262,16 @@ def test_save_accounts_file__custom_path(mocker):
     mock_ensure_parent_dir.assert_called_once_with('/some/dir/my-accounts.yaml')
     expected = [
         call('/some/dir/my-accounts.yaml', 'test: true\n')
+    ]
+    assert expected == mock_write.mock_calls
+
+
+def test_save_accounts_state_file(mocker):
+    mock_write = mocker.patch.object(files, "_write_file")
+
+    files.save_accounts_state_file({'selected_path': '/some/accounts.yaml'})
+    expected = [
+        call('home/.logsmith/accounts_state.yaml', 'selected_path: /some/accounts.yaml\n')
     ]
     assert expected == mock_write.mock_calls
 

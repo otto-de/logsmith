@@ -344,7 +344,7 @@ class Core:
 
         try:
             self.config.select_accounts_path(accounts_path)
-            self.config.save_config()
+            self.config.save_accounts_state()
             self.config.initialize()
         except Exception as error:
             logger.error(str(error), exc_info=True)

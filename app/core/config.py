@@ -23,6 +23,8 @@ class Config:
         self.default_sso_session = None
         self.default_sso_interval = None
         self.accounts_path = None
+        self.selected_accounts_path = None
+        self.selected_with_accounts_path = None
         self.accounts_path_history: List[str] = []
 
     def initialize(self) -> None:
@@ -33,9 +35,13 @@ class Config:
         self.default_sso_session = config.get('default_sso_session', _default_sso_sesson)
         self.default_sso_interval = config.get('default_sso_interval', _default_sso_interval)
         self.accounts_path = config.get(files.accounts_path_config_key, None)
+
+        accounts_state = files.load_accounts_state()
+        self.selected_accounts_path = accounts_state.get(files.accounts_state_selected_path_key, None)
+        self.selected_with_accounts_path = accounts_state.get(files.accounts_state_config_accounts_path_key, None)
         self.accounts_path_history = self._add_to_accounts_path_history(
             accounts_path=self.get_active_accounts_path(),
-            history=config.get(files.accounts_path_history_config_key, None) or [])
+            history=accounts_state.get(files.accounts_state_history_key, None) or [])
 
         self.service_roles = files.load_service_roles()
 
@@ -88,16 +94,15 @@ class Config:
     def set_accounts_path(self, accounts_path: Optional[str]) -> None:
         self.accounts_path = accounts_path
 
-    def set_accounts_path_history(self, accounts_path_history: List[str]) -> None:
-        self.accounts_path_history = list(accounts_path_history or [])
-
     def select_accounts_path(self, accounts_path: str) -> None:
-        self.accounts_path = files.expand_path(accounts_path)
-        self.accounts_path_history = self._add_to_accounts_path_history(accounts_path=self.accounts_path,
+        self.selected_accounts_path = files.expand_path(accounts_path)
+        self.selected_with_accounts_path = self.accounts_path
+        self.accounts_path_history = self._add_to_accounts_path_history(accounts_path=self.selected_accounts_path,
                                                                         history=self.accounts_path_history)
 
     def get_active_accounts_path(self) -> str:
-        return files.resolve_accounts_path(self.accounts_path)
+        return files.resolve_active_accounts_path(config_accounts_path=self.accounts_path,
+                                                  accounts_state=self._accounts_state())
 
     def get_available_accounts_paths(self) -> List[str]:
         return [path for path in self.accounts_path_history if files.is_file(path)]
@@ -110,8 +115,17 @@ class Config:
             'default_sso_session': self.default_sso_session,
             'default_sso_interval': self.default_sso_interval,
             files.accounts_path_config_key: self.accounts_path,
-            files.accounts_path_history_config_key: self.accounts_path_history,
         })
+
+    def save_accounts_state(self) -> None:
+        files.save_accounts_state_file(self._accounts_state())
+
+    def _accounts_state(self) -> dict:
+        return {
+            files.accounts_state_selected_path_key: self.selected_accounts_path,
+            files.accounts_state_config_accounts_path_key: self.selected_with_accounts_path,
+            files.accounts_state_history_key: self.accounts_path_history,
+        }
 
     def save_accounts(self) -> None:
         files.save_accounts_file(self.to_dict())
