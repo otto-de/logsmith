@@ -10,9 +10,9 @@ boto3==1.42.62 \
     --hash=sha256:6b26ff56c458685caec3d42adde0549f6a55410e557e1f51bebde5c8abcf3037 \
     --hash=sha256:eef0ee08f30e5ed16d8296719808801a827fa0f3126a3e2a9ef9be9eb5e6a313
     # via logsmith
-botocore==1.42.78 \
-    --hash=sha256:038ab63c7f898e8b5db58cb6a45e4da56c31dd984e7e995839a3540c735564ea \
-    --hash=sha256:61cbd49728e23f68cfd945406ab40044d49abed143362f7ffa4a4f4bd4311791
+botocore==1.43.118 \
+    --hash=sha256:7f3f9d88cc9e847587690f82a42e3c3c292c3026c92c1e60d68a9310018e003f \
+    --hash=sha256:a45d7ae570674161e4a3542d8c68633bf7503f92d1de781ef7361b79488eda6f
     # via
     #   boto3
     #   s3transfer
