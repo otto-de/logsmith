@@ -6,7 +6,7 @@ dependencies = [
     "boto3==1.42.62",
     "pyinstaller==6.10.0",
     "pyqt6==6.7.1",
-    "pytest==8.0.2",
+    "pytest==9.1.1",
     "pytest-mock==3.17.0",
     "ruamel-yaml==0.19.1",
 ]
