@@ -16,6 +16,11 @@ from tests.test_data.test_service_roles import get_test_service_roles
 def config():
     return Config()
 
+
+@pytest.fixture(autouse=True)
+def no_accounts_state(mocker):
+    mocker.patch.object(files, "load_accounts_state", return_value={})
+
 #######################
 # Tests
 
@@ -92,7 +97,18 @@ def test_initialize(config, mocker):
     assert 'some-sso-session' == config.default_sso_session
     assert 'some-command' == config.mfa_shell_command
     assert '/some/dir/' == config.shell_path_extension
+    assert None == config.accounts_path
 
+
+def test_initialize__with_accounts_path(config, mocker):
+    mocker.patch.object(files, "load_service_roles", return_value={})
+    mocker.patch.object(files, "load_accounts", return_value={})
+    mocker.patch.object(files, "load_config", return_value={'accounts_path': '~/somewhere/my-accounts.yaml'})
+    mocker.patch.object(config, "initialize_profile_groups")
+
+    config.initialize()
+
+    assert '~/somewhere/my-accounts.yaml' == config.accounts_path
 
 def test_save_accounts__default(config, mocker):
     mock_save_accounts_file = mocker.patch.object(files, "save_accounts_file")
@@ -236,7 +252,8 @@ def test_save_config__defaults(config, mocker):
         'shell_path_extension': None,
         'default_access_key': None,
         'default_sso_session': None,
-        'default_sso_interval': None}
+        'default_sso_interval': None,
+        'accounts_path': None}
     mock_save_config_file.assert_called_once_with(expected)
 
 
@@ -248,6 +265,9 @@ def test_save_config(config, mocker):
     config.default_access_key = 'some access key'
     config.default_sso_session = 'some sso session'
     config.default_sso_interval = 'some interval'
+    config.accounts_path = '/some/dir/my-accounts.yaml'
+    config.accounts_path_history = ['/some/dir/my-accounts.yaml', '/other/accounts.yaml']
+    config.selected_accounts_path = '/other/accounts.yaml'
     config.save_config()
 
     expected = {
@@ -255,8 +275,121 @@ def test_save_config(config, mocker):
         'shell_path_extension': 'some path',
         'default_access_key': 'some access key',
         'default_sso_session': 'some sso session',
-        'default_sso_interval': 'some interval'}
+        'default_sso_interval': 'some interval',
+        'accounts_path': '/some/dir/my-accounts.yaml'}
     mock_save_config_file.assert_called_once_with(expected)
+
+
+def test_initialize__accounts_state(config, mocker):
+    mocker.patch.object(files, "load_service_roles", return_value={})
+    mocker.patch.object(files, "load_accounts", return_value={})
+    mocker.patch.object(files, "load_config", return_value={'accounts_path': '/config/accounts.yaml'})
+    mocker.patch.object(files, "load_accounts_state", return_value={
+        'selected_path': '/current/accounts.yaml',
+        'config_accounts_path': '/config/accounts.yaml',
+        'history': ['/old/accounts.yaml', '/current/accounts.yaml', '/invalid/accounts.txt'],
+    })
+    mocker.patch.object(files, "is_file", return_value=True)
+    mocker.patch.object(config, "initialize_profile_groups")
+
+    config.initialize()
+
+    assert '/config/accounts.yaml' == config.accounts_path
+    assert '/current/accounts.yaml' == config.selected_accounts_path
+    assert '/current/accounts.yaml' == config.get_active_accounts_path()
+    assert ['/current/accounts.yaml', '/old/accounts.yaml'] == config.accounts_path_history
+
+
+def test_initialize__accounts_history_is_not_read_from_config(config, mocker):
+    mocker.patch.object(files, "load_service_roles", return_value={})
+    mocker.patch.object(files, "load_accounts", return_value={})
+    mocker.patch.object(files, "load_config", return_value={'accounts_path_history': ['/old/accounts.yaml']})
+    mocker.patch.object(files, "load_accounts_state", return_value={})
+    mocker.patch.object(config, "initialize_profile_groups")
+
+    config.initialize()
+
+    assert [files.get_default_accounts_path()] == config.accounts_path_history
+
+
+def test_select_accounts_path(config):
+    config.accounts_path = '/config/accounts.yaml'
+    config.accounts_path_history = ['/a.yaml', '/b.yaml']
+
+    config.select_accounts_path('/b.yaml')
+
+    assert '/config/accounts.yaml' == config.accounts_path
+    assert '/b.yaml' == config.selected_accounts_path
+    assert '/config/accounts.yaml' == config.selected_with_accounts_path
+    assert ['/b.yaml', '/a.yaml'] == config.accounts_path_history
+
+
+def test_select_accounts_path__history_is_limited(config):
+    config.accounts_path_history = [f'/{i}.yaml' for i in range(10)]
+
+    config.select_accounts_path('/new.yaml')
+
+    assert 10 == len(config.accounts_path_history)
+    assert '/new.yaml' == config.accounts_path_history[0]
+    assert '/9.yaml' not in config.accounts_path_history
+
+
+def test_save_accounts_state(config, mocker):
+    mock_save_accounts_state_file = mocker.patch.object(files, "save_accounts_state_file")
+    mock_save_config_file = mocker.patch.object(files, "save_config_file")
+    config.accounts_path = '/config/accounts.yaml'
+    config.accounts_path_history = ['/a.yaml']
+    config.select_accounts_path('/b.yaml')
+
+    config.save_accounts_state()
+
+    mock_save_accounts_state_file.assert_called_once_with({
+        'selected_path': '/b.yaml',
+        'config_accounts_path': '/config/accounts.yaml',
+        'history': ['/b.yaml', '/a.yaml']})
+    mock_save_config_file.assert_not_called()
+
+
+def test_get_active_accounts_path(config):
+    config.accounts_path = '/some/dir/my-accounts.yaml'
+    assert '/some/dir/my-accounts.yaml' == config.get_active_accounts_path()
+
+
+def test_get_active_accounts_path__selected(config, mocker):
+    mocker.patch.object(files, "is_file", return_value=True)
+    config.accounts_path = '/some/dir/my-accounts.yaml'
+    config.select_accounts_path('/other/accounts.yaml')
+    assert '/other/accounts.yaml' == config.get_active_accounts_path()
+
+
+def test_get_available_accounts_paths__only_existing_files(config, mocker):
+    mocker.patch.object(files, "is_file", side_effect=lambda path: path != '/missing.yaml')
+    config.accounts_path_history = ['/a.yaml', '/missing.yaml', '/b.yaml']
+
+    assert ['/a.yaml', '/b.yaml'] == config.get_available_accounts_paths()
+
+
+def test_validate__accounts_path_without_yaml_extension(config):
+    config.accounts_path = '/some/dir/accounts.txt'
+    config.initialize_profile_groups(get_default_test_accounts(),
+                                     service_roles={},
+                                     default_access_key=_default_access_key,
+                                     default_sso_session=_default_sso_sesson,
+                                     default_sso_interval=_default_sso_interval)
+
+    assert config.valid is False
+    assert 'accounts_path must have a yaml extension' == config.error
+
+
+def test_validate__accounts_path_with_yaml_extension(config):
+    config.accounts_path = '/some/dir/my-accounts.yml'
+    config.initialize_profile_groups(get_default_test_accounts(),
+                                     service_roles={},
+                                     default_access_key=_default_access_key,
+                                     default_sso_session=_default_sso_sesson,
+                                     default_sso_interval=_default_sso_interval)
+
+    assert config.valid is True
 
 
 def test_save_selected_service_role__empty_data(config, mocker):

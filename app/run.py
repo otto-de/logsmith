@@ -14,8 +14,10 @@ def main():
         os.mkdir(app_path)
     if not os.path.isfile(files.get_config_path()):
         open(files.get_config_path(), 'w')
-    if not os.path.isfile(files.get_accounts_path()):
-        open(files.get_accounts_path(), 'w')
+    accounts_path = files.get_accounts_path()
+    if not os.path.isfile(accounts_path):
+        files.ensure_parent_dir(accounts_path)
+        open(accounts_path, 'w')
 
     aws_path = files.get_aws_path()
     if not os.path.exists(aws_path):
@@ -37,6 +39,7 @@ def main():
     logger.addHandler(console_handler)
 
     logging.info(f'config dir {app_path}')
+    logging.info(f'accounts file {accounts_path}')
     logging.info('start app')
 
     if arguments.use_cli(args):

@@ -180,7 +180,27 @@ gcp-project-prd:
   type: gcp
 ```
 
-This config will be stored in `${HOME}/.logsmith/accounts.yaml`.
+This config will be stored in `${HOME}/.logsmith/accounts.yaml` by default.
+
+To use a different location (and file name), set `accounts_path` in `${HOME}/.logsmith/config.yaml`:
+
+```yaml
+accounts_path: ~/some/dir/my-accounts.yaml
+```
+
+The file must have a `.yaml` or `.yml` extension. `~` and environment variables like `$HOME` will be expanded.
+If the path has no yaml extension, logsmith shows a config error and uses the default location instead.
+
+#### Switching accounts files
+
+Use "Switch accounts file" in the tray menu to switch between accounts files.
+It lists the last 10 accounts files you used (only those that still exist), with the active one checked.
+Use "Open accounts file..." to pick a new `.yaml` or `.yml` file.
+Switching logs you out and reloads your profile groups from the selected file.
+The selection and the history are stored in `${HOME}/.logsmith/accounts_state.yaml`, so `config.yaml` is never
+written when switching (it can be read-only, e.g. when managed by home-manager).
+The selected file takes precedence over `accounts_path` in `config.yaml`, until `accounts_path` is changed or the
+selected file no longer exists.
 
 ### Google Cloud login
 

@@ -11,6 +11,7 @@ logger = logging.getLogger('logsmith')
 config_file_name = 'config.yaml'
 toggles_file_name = 'toggles.yaml'
 accounts_file_name = 'accounts.yaml'
+accounts_state_file_name = 'accounts_state.yaml'
 service_roles_file_name = 'service_roles.yaml'
 log_file_name = 'app.log'
 active_group_file_name = 'active_group'
@@ -22,6 +23,11 @@ yamli.sort_base_mapping_type_on_output = False
 yamli.indent(sequence=4)
 
 home_variables = ['\"${HOME}\"', '\"$HOME\"', '${HOME}', '$HOME', '~']
+yaml_extensions = ('.yaml', '.yml')
+accounts_path_config_key = 'accounts_path'
+accounts_state_selected_path_key = 'selected_path'
+accounts_state_config_accounts_path_key = 'config_accounts_path'
+accounts_state_history_key = 'history'
 
 
 def get_app_path() -> str:
@@ -42,8 +48,47 @@ def get_toggles_path() -> str:
     return f'{get_app_path()}/{toggles_file_name}'
 
 
-def get_accounts_path() -> str:
+def get_default_accounts_path() -> str:
     return f'{get_app_path()}/{accounts_file_name}'
+
+
+def get_accounts_state_path() -> str:
+    return f'{get_app_path()}/{accounts_state_file_name}'
+
+
+def get_accounts_path() -> str:
+    return resolve_active_accounts_path(config_accounts_path=load_config().get(accounts_path_config_key),
+                                        accounts_state=load_accounts_state())
+
+
+def resolve_active_accounts_path(config_accounts_path: str | None, accounts_state: dict) -> str:
+    # The file selected in the tray menu wins, unless accounts_path in config.yaml was
+    # changed since the selection was made or the selected file no longer exists.
+    selected_path = accounts_state.get(accounts_state_selected_path_key)
+    selected_with = accounts_state.get(accounts_state_config_accounts_path_key)
+    if selected_path and selected_with == config_accounts_path and is_yaml_file_path(selected_path):
+        selected_path = expand_path(selected_path)
+        if is_file(selected_path):
+            return selected_path
+    return resolve_accounts_path(config_accounts_path)
+
+
+def resolve_accounts_path(custom_accounts_path: str | None) -> str:
+    if not custom_accounts_path:
+        return get_default_accounts_path()
+    if not is_yaml_file_path(custom_accounts_path):
+        logger.warning(f'{accounts_path_config_key} "{custom_accounts_path}" must have a yaml extension '
+                       f'{yaml_extensions}, falling back to {get_default_accounts_path()}')
+        return get_default_accounts_path()
+    return expand_path(custom_accounts_path)
+
+
+def is_yaml_file_path(path: str) -> bool:
+    return str(path).strip().lower().endswith(yaml_extensions)
+
+
+def expand_path(path: str) -> str:
+    return os.path.expandvars(os.path.expanduser(str(path).strip()))
 
 
 def get_service_roles_path() -> str:
@@ -108,6 +153,9 @@ def file_exists(file_path) -> bool:
 def path_exist(path):
     return os.path.exists(path)
 
+def is_file(path) -> bool:
+    return os.path.isfile(path)
+
 def load_config() -> dict:
     return parse_yaml(_load_file(get_config_path()))
 
@@ -118,6 +166,10 @@ def load_toggles() -> dict:
 
 def load_accounts() -> dict:
     return parse_yaml(_load_file(get_accounts_path()))
+
+
+def load_accounts_state() -> dict:
+    return parse_yaml(_load_file(get_accounts_state_path()))
 
 
 def load_service_roles() -> dict:
@@ -133,7 +185,19 @@ def save_toggles_file(toggles_dict: dict) -> None:
 
 
 def save_accounts_file(account_dict: dict) -> None:
-    _write_file(get_accounts_path(), dump_yaml(account_dict))
+    accounts_path = get_accounts_path()
+    ensure_parent_dir(accounts_path)
+    _write_file(accounts_path, dump_yaml(account_dict))
+
+
+def save_accounts_state_file(accounts_state: dict) -> None:
+    _write_file(get_accounts_state_path(), dump_yaml(accounts_state))
+
+
+def ensure_parent_dir(path: str) -> None:
+    parent_dir = os.path.dirname(path)
+    if parent_dir and not path_exist(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
 
 
 def save_service_roles_file(service_roles: dict) -> None:

@@ -22,6 +22,7 @@ class ConfigDialog(QDialog):
     def __init__(self, parent=None):
         super(ConfigDialog, self).__init__(parent)
         self.gui: Gui = parent
+        self.accounts_path = None
 
         self.setWindowTitle(f'Config - v{version.version}')
         self.initial_width = 600
@@ -141,6 +142,7 @@ class ConfigDialog(QDialog):
             config.set_default_access_key(default_access_key)
             config.set_default_sso_session(default_sso_session)
             config.set_default_sso_interval(default_sso_interval)
+            config.set_accounts_path(self.accounts_path)
             self.gui.edit_config(config)
             self.hide()
         else:
@@ -199,6 +201,7 @@ class ConfigDialog(QDialog):
         self.text_box.setPlainText(raw_config)
         self.update_error_text(config)
 
+        self.accounts_path = config.accounts_path
         self.mfa_command_input.setText(config.mfa_shell_command)
         self.shell_path_input.setText(config.shell_path_extension)
         self.default_access_key_input.setText(config.default_access_key)

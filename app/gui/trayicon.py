@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from typing import List, TYPE_CHECKING
 
@@ -33,6 +34,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.add_sso_session_action = None
         self.service_role_action = None
         self.service_role_info = None
+        self.accounts_file_menu = None
 
         self.actions = []
         self.all_actions = []
@@ -129,6 +131,11 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.config_action = menu.addAction('Edit config')
         self.config_action.triggered.connect(self.gui.show_config_dialog)
 
+        self.accounts_file_menu = QMenu('Switch accounts file', menu)
+        self.accounts_file_menu.aboutToShow.connect(self.refresh_accounts_file_menu)
+        menu.addMenu(self.accounts_file_menu)
+        self.refresh_accounts_file_menu()
+
         self.log_action = menu.addAction("Show logs")
         self.log_action.triggered.connect(self.gui.show_logs)
 
@@ -165,9 +172,29 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         self.all_actions = self.actions + [self.script_checkbox, self.service_role_action, self.region_menu,
                                            self.add_access_key_action, self.rotate_access_key_action,
+                                           self.accounts_file_menu,
                                            #    self.copy_name_menu,
                                            self.copy_id_menu]
 
+    def refresh_accounts_file_menu(self):
+        self.accounts_file_menu.clear()
+        active_accounts_path = self.gui.get_active_accounts_path()
+        for accounts_path in self.gui.get_available_accounts_paths():
+            action = self.accounts_file_menu.addAction(self._shorten_home(accounts_path).replace('&', '&&'))
+            action.setCheckable(True)
+            action.setChecked(accounts_path == active_accounts_path)
+            action.triggered.connect(partial(self.gui.switch_accounts_file, accounts_path=accounts_path))
+
+        self.accounts_file_menu.addSeparator()
+        open_action = self.accounts_file_menu.addAction('Open accounts file...')
+        open_action.triggered.connect(self.gui.show_open_accounts_file_dialog)
+
+    @staticmethod
+    def _shorten_home(path: str) -> str:
+        home = os.path.expanduser('~')
+        if path == home or path.startswith(home + os.sep):
+            return '~' + path[len(home):]
+        return path
     def highlight_profile_group(self, profile_group_name: str | None):
         self.last_profile_group_name = profile_group_name
         self._apply_profile_group_highlight()
