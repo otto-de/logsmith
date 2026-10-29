@@ -22,6 +22,9 @@ yamli.sort_base_mapping_type_on_output = False
 yamli.indent(sequence=4)
 
 home_variables = ['\"${HOME}\"', '\"$HOME\"', '${HOME}', '$HOME', '~']
+yaml_extensions = ('.yaml', '.yml')
+accounts_path_config_key = 'accounts_path'
+accounts_path_history_config_key = 'accounts_path_history'
 
 
 def get_app_path() -> str:
@@ -42,8 +45,30 @@ def get_toggles_path() -> str:
     return f'{get_app_path()}/{toggles_file_name}'
 
 
-def get_accounts_path() -> str:
+def get_default_accounts_path() -> str:
     return f'{get_app_path()}/{accounts_file_name}'
+
+
+def get_accounts_path() -> str:
+    return resolve_accounts_path(load_config().get(accounts_path_config_key))
+
+
+def resolve_accounts_path(custom_accounts_path: str | None) -> str:
+    if not custom_accounts_path:
+        return get_default_accounts_path()
+    if not is_yaml_file_path(custom_accounts_path):
+        logger.warning(f'{accounts_path_config_key} "{custom_accounts_path}" must have a yaml extension '
+                       f'{yaml_extensions}, falling back to {get_default_accounts_path()}')
+        return get_default_accounts_path()
+    return expand_path(custom_accounts_path)
+
+
+def is_yaml_file_path(path: str) -> bool:
+    return str(path).strip().lower().endswith(yaml_extensions)
+
+
+def expand_path(path: str) -> str:
+    return os.path.expandvars(os.path.expanduser(str(path).strip()))
 
 
 def get_service_roles_path() -> str:
@@ -108,6 +133,9 @@ def file_exists(file_path) -> bool:
 def path_exist(path):
     return os.path.exists(path)
 
+def is_file(path) -> bool:
+    return os.path.isfile(path)
+
 def load_config() -> dict:
     return parse_yaml(_load_file(get_config_path()))
 
@@ -133,7 +161,15 @@ def save_toggles_file(toggles_dict: dict) -> None:
 
 
 def save_accounts_file(account_dict: dict) -> None:
-    _write_file(get_accounts_path(), dump_yaml(account_dict))
+    accounts_path = get_accounts_path()
+    ensure_parent_dir(accounts_path)
+    _write_file(accounts_path, dump_yaml(account_dict))
+
+
+def ensure_parent_dir(path: str) -> None:
+    parent_dir = os.path.dirname(path)
+    if parent_dir and not path_exist(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
 
 
 def save_service_roles_file(service_roles: dict) -> None:

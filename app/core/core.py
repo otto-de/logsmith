@@ -327,6 +327,32 @@ class Core:
         result.set_success()
         return result
 
+    def switch_accounts_file(self, accounts_path: str) -> Result:
+        result = Result()
+        accounts_path = files.expand_path(accounts_path)
+        logger.info(f"switch accounts file to {accounts_path}")
+        if not files.is_yaml_file_path(accounts_path):
+            result.error(f"accounts file must have a yaml extension: {accounts_path}")
+            return result
+        if not files.is_file(accounts_path):
+            result.error(f"accounts file does not exist: {accounts_path}")
+            return result
+
+        logout_result = self.logout()
+        if not logout_result.was_success:
+            return logout_result
+
+        try:
+            self.config.select_accounts_path(accounts_path)
+            self.config.save_config()
+            self.config.initialize()
+        except Exception as error:
+            logger.error(str(error), exc_info=True)
+            result.error("could not switch accounts file")
+            return result
+        result.set_success()
+        return result
+
     def set_service_role(self, profile_name: str, role_name: str) -> Result:
         result = Result()
         logger.info("set service role")

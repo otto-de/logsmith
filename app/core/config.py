@@ -6,6 +6,7 @@ from app.core.profile_group import ProfileGroup
 _default_access_key = 'access-key'
 _default_sso_sesson = 'sso'
 _default_sso_interval = '8'
+_accounts_path_history_size = 10
 
 
 class Config:
@@ -21,6 +22,8 @@ class Config:
         self.default_access_key = None
         self.default_sso_session = None
         self.default_sso_interval = None
+        self.accounts_path = None
+        self.accounts_path_history: List[str] = []
 
     def initialize(self) -> None:
         config = files.load_config()
@@ -29,6 +32,10 @@ class Config:
         self.default_access_key = config.get('default_access_key', _default_access_key)
         self.default_sso_session = config.get('default_sso_session', _default_sso_sesson)
         self.default_sso_interval = config.get('default_sso_interval', _default_sso_interval)
+        self.accounts_path = config.get(files.accounts_path_config_key, None)
+        self.accounts_path_history = self._add_to_accounts_path_history(
+            accounts_path=self.get_active_accounts_path(),
+            history=config.get(files.accounts_path_history_config_key, None) or [])
 
         self.service_roles = files.load_service_roles()
 
@@ -78,6 +85,23 @@ class Config:
     def set_default_sso_session(self, default_sso_session: str) -> None:
         self.default_sso_session = default_sso_session
 
+    def set_accounts_path(self, accounts_path: Optional[str]) -> None:
+        self.accounts_path = accounts_path
+
+    def set_accounts_path_history(self, accounts_path_history: List[str]) -> None:
+        self.accounts_path_history = list(accounts_path_history or [])
+
+    def select_accounts_path(self, accounts_path: str) -> None:
+        self.accounts_path = files.expand_path(accounts_path)
+        self.accounts_path_history = self._add_to_accounts_path_history(accounts_path=self.accounts_path,
+                                                                        history=self.accounts_path_history)
+
+    def get_active_accounts_path(self) -> str:
+        return files.resolve_accounts_path(self.accounts_path)
+
+    def get_available_accounts_paths(self) -> List[str]:
+        return [path for path in self.accounts_path_history if files.is_file(path)]
+
     def save_config(self) -> None:
         files.save_config_file({
             'mfa_shell_command': self.mfa_shell_command,
@@ -85,6 +109,8 @@ class Config:
             'default_access_key': self.default_access_key,
             'default_sso_session': self.default_sso_session,
             'default_sso_interval': self.default_sso_interval,
+            files.accounts_path_config_key: self.accounts_path,
+            files.accounts_path_history_config_key: self.accounts_path_history,
         })
 
     def save_accounts(self) -> None:
@@ -139,6 +165,17 @@ class Config:
                 clean_history.append(item)
         return list(clean_history[:10])
 
+    @staticmethod
+    def _add_to_accounts_path_history(accounts_path: str, history: List[str]) -> List[str]:
+        clean_history = []
+        for path in [accounts_path, *history]:
+            if not path or not files.is_yaml_file_path(path):
+                continue
+            path = files.expand_path(path)
+            if path not in clean_history:
+                clean_history.append(path)
+        return clean_history[:_accounts_path_history_size]
+
     def validate(self) -> None:
         valid = False
         error = ''
@@ -150,6 +187,10 @@ class Config:
             valid, error = profile_group.validate()
             if not valid:
                 break
+
+        if self.accounts_path and not files.is_yaml_file_path(self.accounts_path):
+            valid = False
+            error = f'{files.accounts_path_config_key} must have a yaml extension'
 
         self.valid = valid
         self.error = error

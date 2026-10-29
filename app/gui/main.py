@@ -12,6 +12,7 @@ logger = logging.getLogger('logsmith')
 def start_gui():
     try:
         app = QApplication(sys.argv)
+        app.setQuitOnLastWindowClosed(False)
         Gui(app)
 
         timer = QTimer()

@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from functools import partial
 from typing import List, Optional
@@ -6,7 +7,7 @@ from datetime import timezone
 from datetime import datetime
 
 from PyQt6.QtCore import QCoreApplication
-from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QMainWindow, QFileDialog
 from app.core.profile import Profile
 from app.util import util
 from core.core import Core
@@ -316,6 +317,42 @@ class Gui(QMainWindow):
         logger.info('-- edit config success --')
         self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
         self._to_reset_state()
+
+    ########################
+    # ACCOUNTS FILE
+    def get_active_accounts_path(self) -> str:
+        return self.core.config.get_active_accounts_path()
+
+    def get_available_accounts_paths(self) -> List[str]:
+        return self.core.config.get_available_accounts_paths()
+
+    def show_open_accounts_file_dialog(self):
+        accounts_path, _ = QFileDialog.getOpenFileName(None, 'Open accounts file',
+                                                       os.path.dirname(self.get_active_accounts_path()),
+                                                       'YAML files (*.yaml *.yml)')
+        if accounts_path:
+            self.switch_accounts_file(accounts_path)
+
+    def switch_accounts_file(self, accounts_path: str):
+        if accounts_path == self.get_active_accounts_path():
+            return
+        self.login_repeater.stop()
+        self._to_busy_state()
+        self.task = BackgroundTask(
+            task=Task(self.core.switch_accounts_file, accounts_path=accounts_path),
+            on_success=self._on_switch_accounts_file_success,
+            on_failure=self._on_error,
+            on_error=self._on_error
+        )
+        self._start_task(self.task)
+
+    def _on_switch_accounts_file_success(self):
+        logger.info('-- switch accounts file success --')
+        self.tray_icon.populate_context_menu(self.core.get_profile_group_list())
+        self._to_reset_state()
+        self.tray_icon.update_region_text('not logged in')
+        if not self.core.config.valid:
+            self._signal_error(self.core.config.error)
 
     ########################
     # MANAGE ACCESS KEY
