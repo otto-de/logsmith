@@ -31,7 +31,7 @@ class Core:
         self, profile_group: ProfileGroup, mfa_token: Optional[str]
     ) -> Result:
         result = Result()
-        logger.info(f"start key login {profile_group.name} with token {mfa_token}")
+        logger.info(f"start key login {profile_group.name} (mfa token provided: {mfa_token is not None})")
         self.active_profile_group = profile_group
 
         cleanup_resul = credentials.cleanup()
@@ -273,7 +273,7 @@ class Core:
 
     def rotate_access_key(self, access_key: str, mfa_token: Optional[str]) -> Result:
         result = Result()
-        logger.info(f"initiate key rotation for {access_key} with token {mfa_token}")
+        logger.info(f"initiate key rotation for {access_key} (mfa token provided: {mfa_token is not None})")
 
         logger.info("logout before key rotation")
         self.logout()
