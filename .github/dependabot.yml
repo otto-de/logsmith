@@ -2,6 +2,10 @@ version: 2
 updates:
   - package-ecosystem: uv
     directory: "/"
+    exclude-paths:
+      - "requirements.txt"
+    allow:
+      - dependency-type: all
     schedule:
       interval: daily
       time: "06:00"
