@@ -1,0 +1,61 @@
+name: Nix
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "flake.nix"
+      - "nix/**"
+      - "flake.lock"
+      - "uv.lock"
+      - "**/*.py"
+      - "pyproject.toml"
+      - ".github/workflows/nix.yml"
+  pull_request:
+    paths:
+      - "flake.nix"
+      - "nix/**"
+      - "flake.lock"
+      - "uv.lock"
+      - "**/*.py"
+      - "pyproject.toml"
+      - ".github/workflows/nix.yml"
+
+jobs:
+  check:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Check flake
+        run: nix flake check --print-build-logs
+
+      - name: Build package
+        run: nix build .#default --print-build-logs
+
+      - name: Evaluate home-manager module
+        run: |
+          nix eval --impure --json --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs { system = builtins.currentSystem; };
+              module = flake.homeManagerModules.logsmith {
+                config.programs.logsmith = {
+                  enable = true;
+                  autostart = true;
+                };
+                lib = pkgs.lib;
+                inherit pkgs;
+              };
+            in
+            builtins.attrNames module.options.programs.logsmith
+          '
