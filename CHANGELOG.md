@@ -19,6 +19,9 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
+### Added
+- checkmark for the last logged in config in the context menu
+
 ## 11.0.2 - 2026-06-26
 
 ### Fixed

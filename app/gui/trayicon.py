@@ -36,6 +36,8 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         self.actions = []
         self.all_actions = []
+        self.profile_group_actions: dict[str, QAction] = {}
+        self.last_profile_group_name: str | None = None
         self.profile_status_list = []
         self.profile_status_anchor = None
 
@@ -49,13 +51,17 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.menu = menu
 
         self.actions = []
+        self.profile_group_actions = {}
         for profile_group in profile_list:
             if profile_group.type == "aws":
                 action = menu.addAction(profile_group.name)
                 action.setIconVisibleInMenu(True)
+                action.setCheckable(True)
                 action.triggered.connect(partial(self.gui.login, profile_group=profile_group, force=True))
+                action.triggered.connect(self._apply_profile_group_highlight)
                 action.setIcon(self.assets.get_icon(style=ICON_STYLE_FULL, color_code=profile_group.color))
                 self.actions.append(action)
+                self.profile_group_actions[profile_group.name] = action
 
         # log out
         logut_action = menu.addAction('logout')
@@ -70,9 +76,12 @@ class SystemTrayIcon(QSystemTrayIcon):
             if profile_group.type == "gcp":
                 action = menu.addAction("[GCP] " + profile_group.name)
                 action.setIconVisibleInMenu(True)
+                action.setCheckable(True)
                 action.triggered.connect(partial(self.gui.login, profile_group=profile_group, force=True))
+                action.triggered.connect(self._apply_profile_group_highlight)
                 action.setIcon(self.assets.get_icon(style=ICON_STYLE_GCP, color_code=profile_group.color))
                 self.actions.append(action)
+                self.profile_group_actions[profile_group.name] = action
 
         menu.addSeparator()
         # script checkbox
@@ -150,6 +159,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         exit_action = menu.addAction("Exit")
         exit_action.triggered.connect(self.gui.stop_and_exit)
 
+        self._apply_profile_group_highlight()
         self.setContextMenu(menu)
         menu.repaint()
 
@@ -157,6 +167,15 @@ class SystemTrayIcon(QSystemTrayIcon):
                                            self.add_access_key_action, self.rotate_access_key_action,
                                            #    self.copy_name_menu,
                                            self.copy_id_menu]
+
+    def highlight_profile_group(self, profile_group_name: str | None):
+        self.last_profile_group_name = profile_group_name
+        self._apply_profile_group_highlight()
+
+    def _apply_profile_group_highlight(self):
+        # checkable actions toggle themselves on click, so the state is always re-applied explicitly
+        for name, action in self.profile_group_actions.items():
+            action.setChecked(name == self.last_profile_group_name)
 
     def refresh_profile_status(self, active_profile_group: ProfileGroup, default_profile_name: str | None = None):
         for action in self.profile_status_list:
