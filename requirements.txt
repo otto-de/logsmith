@@ -10,9 +10,9 @@ boto3==1.43.118 \
     --hash=sha256:ab8f3d2c622ef039338b4f228d97ea55f1abd573d84bb9b9a5ee8cb6780c0ccd \
     --hash=sha256:c0620f799e0f0c222ba42c337b65cdbcd3da38a3121187f634d8926cbbb28a9c
     # via logsmith
-botocore==1.42.78 \
-    --hash=sha256:038ab63c7f898e8b5db58cb6a45e4da56c31dd984e7e995839a3540c735564ea \
-    --hash=sha256:61cbd49728e23f68cfd945406ab40044d49abed143362f7ffa4a4f4bd4311791
+botocore==1.43.121 \
+    --hash=sha256:39bfd17e69f3370350e6aac2072df64045d002f9878e09115e85b87c772bd473 \
+    --hash=sha256:69eb571c74ff140cc3a716aed3bc25d09eb7b12de4ea2f990c03785a634f9dcf
     # via
     #   boto3
     #   s3transfer
@@ -49,6 +49,10 @@ pluggy==1.6.0 \
     --hash=sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
     # via pytest
+pygments==2.21.0 \
+    --hash=sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9 \
+    --hash=sha256:610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c
+    # via pytest
 pyinstaller==6.22.3 \
     --hash=sha256:020d4fe0627f5c73dfbcfad1a6578ef354d5fe4bdccd9d8e5a615528f5a45d2b \
     --hash=sha256:052f4a1cd4f81092ccb7a18fe8ebc9ecf832a5917317e39fb3775af4e959b253 \
@@ -63,9 +67,9 @@ pyinstaller==6.22.3 \
     --hash=sha256:ea240b5dfa831ff673c97505eee0ec24670bccf71396c83109440348944c83d0 \
     --hash=sha256:f82d0fb89f21c3ed6f482ee16f341bc59e8a31dbabb9bae9ef04e53ade4dc0d9
     # via logsmith
-pyinstaller-hooks-contrib==2026.1 \
-    --hash=sha256:66ad4888ba67de6f3cfd7ef554f9dd1a4389e2eb19f84d7129a5a6818e3f2180 \
-    --hash=sha256:a5f0891a1e81e92406ab917d9e76adfd7a2b68415ee2e35c950a7b3910bc361b
+pyinstaller-hooks-contrib==2026.9 \
+    --hash=sha256:2748767901acb5cecd1304652b6c7add5bffcff1d71d01207fe24a5d42942a56 \
+    --hash=sha256:fb3e67dd64122561724c48ad0366ac9e8c16e638b63bf7d85de03bf3fdbf06c3
     # via pyinstaller
 pyqt6==6.11.0 \
     --hash=sha256:0734959955adde095af9a074213a7f73386d1bbbddfc27346b4c0621641a692e \
@@ -75,12 +79,13 @@ pyqt6==6.11.0 \
     --hash=sha256:bd11b459c54dca068e988a42cf838303334f0d441b9d16d92ae6719fcb5ac6ba \
     --hash=sha256:f7100bc7f72b12581ec479a733f4ad11b8002668e6786e8a445ab6f4d1c743d4
     # via logsmith
-pyqt6-qt6==6.7.3 \
-    --hash=sha256:36ea0892b8caeb983af3f285f45fb8dfbb93cfd972439f4e01b7efb2868f6230 \
-    --hash=sha256:50c7482bcdcf2bb78af257fb10ed8b582f8daf91d829782393bc50ac5a0a900c \
-    --hash=sha256:8551732984fb36a5f4f3db51eafc4e8e6caf18617365830285306f2db17a94c2 \
-    --hash=sha256:cb525fdd393332de60887953029276a44de480fce1d785251ae639580f5e7246 \
-    --hash=sha256:f517a93b6b1a814d4aa6587adc312e812ebaf4d70415bb15cfb44268c5ad3f5f
+pyqt6-qt6==6.11.2 \
+    --hash=sha256:2c38ee8b797c0d7f327afef4cfbb97c73676954ef2d1d503779d62c982bf5a66 \
+    --hash=sha256:4b424ed1babbef07133eb2a4174c56c848d518767bca8e759aca2c8c9c313636 \
+    --hash=sha256:4f21ff2ffaacfb8a8df6ab1d619d0da7aa4e808e86f41b6daa1a7bff9c0d6eab \
+    --hash=sha256:6a4372baa674ca91de5caf31f241b0660fd3da90fe27fefed9a7a459e630ea89 \
+    --hash=sha256:8c49432936681f325f2925f20ceef35b8fb7599e0c3e63e76d6e50397354ee1f \
+    --hash=sha256:da7d747ad917f044d841ff834f17d2c50a0cc5d0e3b16479d8662544207d0567
     # via pyqt6
 pyqt6-sip==13.11.0 \
     --hash=sha256:293eac1b53c66c54b03266cc30015ec77454af679043a4f188b9bb80a9656996 \
@@ -112,16 +117,14 @@ ruamel-yaml==0.19.1 \
     --hash=sha256:27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93 \
     --hash=sha256:53eb66cd27849eff968ebf8f0bf61f46cdac2da1d1f3576dd4ccee9b25c31993
     # via logsmith
-s3transfer==0.16.0 \
-    --hash=sha256:18e25d66fed509e3868dc1572b3f427ff947dd2c56f844a5bf09481ad3f3b2fe \
-    --hash=sha256:8e990f13268025792229cd52fa10cb7163744bf56e719e0b9cb925ab79abf920
+s3transfer==0.19.3 \
+    --hash=sha256:24eb7535804306355e31c952a90022bf5b2f9d760f9a11062c7493a217c08553 \
+    --hash=sha256:8326acc3d056d7f7b8a37110c7d2aea41f67e83f6ae79cd3b5fbcca34c726406
     # via boto3
 setuptools==82.0.0 \
     --hash=sha256:22e0a2d69474c6ae4feb01951cb69d515ed23728cf96d05513d36e42b62b37cb \
     --hash=sha256:70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0
-    # via
-    #   pyinstaller
-    #   pyinstaller-hooks-contrib
+    # via pyinstaller
 six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
