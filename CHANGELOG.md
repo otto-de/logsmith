@@ -22,6 +22,7 @@ Release dates will be in YYYY-MM-DD format.
 ### Added
 - `accounts_path` option in `config.yaml` to set a custom location and name for the accounts file (must be `.yaml` or `.yml`)
 - "Switch accounts file" tray menu to switch between the last 10 used (existing) accounts files or open a new one. The selection is stored in `accounts_state.yaml`, `config.yaml` is not modified
+- checkmark for the last logged in config in the context menu
 
 ## 11.0.2 - 2026-06-26
 

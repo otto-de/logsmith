@@ -279,6 +279,7 @@ class Gui(QMainWindow):
     def _on_logout_success(self):
         logger.info('logout success')
         self._to_reset_state()
+        self.tray_icon.highlight_profile_group(None)
         self.tray_icon.update_region_text('not logged in')
         self.tray_icon.reset_copy_menus()
 
@@ -478,6 +479,7 @@ class Gui(QMainWindow):
         if self.core.active_profile_group:
             style = ICON_STYLE_FULL if self.core.active_profile_group.type == "aws" else ICON_STYLE_GCP
             color = self.core.get_active_profile_color()
+            self.tray_icon.highlight_profile_group(self.core.active_profile_group.name)
             if all(profile.verified for profile in self.core.active_profile_group.get_profile_list(include_service_profile=True)):
                 self.tray_icon.setIcon(self.assets.get_icon(style=style, color_code=color))
             else:
