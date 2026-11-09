@@ -2,6 +2,37 @@
 
 The following document lists descriptions of features and changes that have been introduced to the application.
 
+### Highlight Last Used Profile Group
+**since 11.1.0**
+
+Shows a checkmark besides the profile group that was last used to login.
+
+Logging out removes the checkmark.
+
+### Account File Switch
+**since 11.1.0**
+
+Makes the location of the accounts file configurable and adds a tray menu to switch between the last 10 used accounts files.
+
+There is a `accounts_path` option in `~/.logsmith/config.yaml`, e.g. accounts_path: `~/some/dir/my-accounts.yaml`
+
+The file name can be anything, but it must have a .yaml or .yml extension and environment variables (like ~ or $HOME) are expanded.
+
+### Shadow Profiles
+**since 11.0.0**
+
+When using SSO the in conjunction with the write mode key, logsmith will now trigger a normal SSO login and write profiles as normal, with the exception that they will be prefixed with `sso-shadow-`.
+
+These shadow profiles can now be used to "freeze" their credentials and write them as keys to the credentials file, making the refresh of said profile much easier because the underlying sso session will now handle the refresh of the original profiles.
+
+### Default Quick Switch
+**since 11.0.0**
+
+You can now switch the current default profile directly from the tray icon menu with a single click.
+
+This is pretty straightforward: the copy menu is replaced with the default switch. Click on the profile you want to designate as the default profile.
+This feature made it necessary to redesign how the login process work, so it warrents its own majow release.
+
 ### Default Quick Switch
 
 **since 11.0.0**
