@@ -19,8 +19,8 @@ Release dates will be in YYYY-MM-DD format.
 
 ## Unreleased
 
-### Fixed
-- hide the python dock icon on macOS when started via the `./logsmith` script, quitting it via the dock no longer causes a "quit unexpectedly" crash report
+### Notes
+- hide the python dock icon on macOS when started via the `./logsmith` script, so the app is tray-only like the packaged app. This removes the dock "Quit" entry, which could end in a "quit unexpectedly" crash report. The underlying crash is not fixed yet
 
 ## 11.1.0 - 2026-11-09
 
