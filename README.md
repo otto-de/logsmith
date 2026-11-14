@@ -133,6 +133,74 @@ brew install logsmith-beta
 
 This will copy the binary into your Application folder. Start the application from there an follow the steps above from step 4.
 
+### Nix / home-manager
+
+The flake exposes `packages.default` and a home-manager module as `homeManagerModules.logsmith`.
+
+```nix
+{
+  inputs.logsmith.url = "github:redvox/logsmith";
+
+  # in your home-manager configuration
+  imports = [ inputs.logsmith.homeManagerModules.logsmith ];
+
+  programs.logsmith = {
+    enable = true;
+    autostart = true; # run as a systemd user service in the graphical session
+  };
+}
+```
+
+The aws cli and the google cloud sdk are installed along with logsmith. The service is
+started by systemd and not by an interactive shell, so tools that are only on the PATH
+via `~/.zshrc` or `~/.bashrc` are neither found by logsmith nor by the post login
+scripts of a profile group. Use `extraPackages` and `extraPaths` for those:
+
+```nix
+programs.logsmith = {
+  enable = true;
+  extraPackages = [ pkgs.kubectl ];
+  extraPaths = [ "${config.home.homeDirectory}/.asdf/shims" ];
+};
+```
+
+`programs.logsmith.settings` and `programs.logsmith.accounts` can be used to declare
+`~/.logsmith/config.yaml` and `~/.logsmith/accounts.yaml`. Both take a nix attribute
+set (not a yaml string), which is rendered to the config file:
+
+```nix
+programs.logsmith = {
+  enable = true;
+
+  settings = {
+    mfa_shell_command = "ykman oath accounts code AWS=AWS -s ";
+    default_access_key = "access-key";
+    default_sso_session = "sso";
+    default_sso_interval = "8";
+  };
+
+  accounts = {
+    productive = {
+      team = "team1";
+      region = "eu-central-1";
+      color = "#388E3C";
+      auth_mode = "sso";
+      profiles = [
+        {
+          profile = "nonlive";
+          account = "123456789123";
+          role = "developer";
+          default = true;
+        }
+      ];
+    };
+  };
+};
+```
+
+Note that these files then become read-only symlinks into the nix store, so the in-app
+config dialog can no longer write to them.
+
 ## Configuration
 
 The configuration is a YAML file that contains any number of profile groups. Each profile group can contain any number of profiles which will be assumed when the profile group is selected.
